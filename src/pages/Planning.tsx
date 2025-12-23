@@ -290,8 +290,8 @@ export default function Planning() {
         </CardHeader>
         <CardContent className="p-3 pt-0 space-y-3">
           {/* Target Input Row */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <div>
               <label className="text-xs text-muted-foreground mb-1 block">My Target (Enrollments)</label>
               <div className="flex items-center gap-2">
                 <Input
