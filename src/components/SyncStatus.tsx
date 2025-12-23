@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Cloud, CloudOff, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { Cloud, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { swManager, SyncStatus as SWStatus } from '@/lib/serviceWorker';
-import { crmSync } from '@/services/crmSync';
 import { db } from '@/lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { toast } from 'sonner';
@@ -42,11 +41,7 @@ export function SyncStatus() {
   const handleManualSync = async () => {
     setIsSyncing(true);
     try {
-      if (swStatus.registered) {
-        await swManager.requestSync();
-      } else {
-        await crmSync.pushPendingChanges();
-      }
+      await swManager.requestSync();
       toast.success('Sync completed');
     } catch (error) {
       toast.error('Sync failed', {

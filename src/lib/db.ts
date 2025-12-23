@@ -84,7 +84,7 @@ export interface FormResponse {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'visit' | 'photo' | 'form' | 'communication';
+  type: 'visit' | 'photo' | 'form' | 'communication' | 'customer';
   entityId: string;
   action: 'create' | 'update' | 'delete';
   data: any;

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, Customer } from '@/lib/db';
 import { toast } from 'sonner';
-import { crmSync } from '@/services/crmSync';
 import { useAuthStore } from '@/store/authStore';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useContacts = () => {
   const [syncing, setSyncing] = useState(false);
@@ -33,14 +33,8 @@ export const useContacts = () => {
     return matchesOrg && matchesSearch && matchesStatus;
   });
 
-  // Automatic sync on mount and organization change
-  useEffect(() => {
-    if (currentOrganization?.id) {
-      syncFromCRM();
-    }
-  }, [currentOrganization?.id]);
-
-  const syncFromCRM = async () => {
+  // Sync contacts from Supabase to IndexedDB
+  const syncFromDatabase = async () => {
     if (!currentOrganization?.id) {
       toast.error('Please select an organization first');
       return;
@@ -48,10 +42,43 @@ export const useContacts = () => {
 
     setSyncing(true);
     try {
-      await crmSync.syncContacts(currentOrganization.id);
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('organization_id', currentOrganization.id);
+
+      if (error) throw error;
+
+      // Clear existing customers for this org and add fresh data
+      await db.customers.where('organizationId').equals(currentOrganization.id).delete();
+      
+      if (data && data.length > 0) {
+        const customers: Customer[] = data.map(c => ({
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          phone: c.phone,
+          address: c.address,
+          city: c.city,
+          state: c.state,
+          postalCode: c.postal_code,
+          country: c.country,
+          latitude: c.latitude ? Number(c.latitude) : undefined,
+          longitude: c.longitude ? Number(c.longitude) : undefined,
+          status: c.status,
+          territory: c.territory,
+          organizationId: c.organization_id,
+          syncStatus: 'synced',
+          updatedAt: new Date(c.updated_at),
+        }));
+        
+        await db.customers.bulkAdd(customers);
+      }
+
+      toast.success(`Synced ${data?.length || 0} contacts`);
     } catch (error) {
       console.error('Error syncing contacts:', error);
-      // Error toast already shown in crmSync
+      toast.error('Failed to sync contacts');
     } finally {
       setSyncing(false);
     }
@@ -71,7 +98,7 @@ export const useContacts = () => {
       // Add to sync queue
       await db.syncQueue.add({
         id: crypto.randomUUID(),
-        type: 'visit',
+        type: 'customer',
         entityId: newContact.id,
         action: 'create',
         data: newContact,
@@ -101,7 +128,7 @@ export const useContacts = () => {
       // Add to sync queue
       await db.syncQueue.add({
         id: crypto.randomUUID(),
-        type: 'visit',
+        type: 'customer',
         entityId: id,
         action: 'update',
         data: updates,
@@ -130,7 +157,7 @@ export const useContacts = () => {
     setSearchQuery,
     filterStatus,
     setFilterStatus,
-    syncFromCRM,
+    syncFromDatabase,
     addContact,
     updateContact,
     getContact,

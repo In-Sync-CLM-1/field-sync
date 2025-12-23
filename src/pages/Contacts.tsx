@@ -39,7 +39,7 @@ export default function Contacts() {
     setSearchQuery, 
     filterStatus, 
     setFilterStatus,
-    syncFromCRM 
+    syncFromDatabase 
   } = useContacts();
 
   const statusCounts = {
@@ -80,13 +80,13 @@ export default function Contacts() {
           </div>
         </div>
         <Button 
-          onClick={syncFromCRM} 
+          onClick={syncFromDatabase} 
           disabled={syncing || !currentOrganization}
           variant="outline"
           size="sm"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Syncing...' : 'Sync from CRM'}
+          {syncing ? 'Syncing...' : 'Sync'}
         </Button>
       </div>
 
@@ -141,9 +141,9 @@ export default function Contacts() {
               </p>
               {currentOrganization && (
                 <div className="flex gap-2">
-                  <Button onClick={syncFromCRM} disabled={syncing} variant="outline">
+                  <Button onClick={syncFromDatabase} disabled={syncing} variant="outline">
                     <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                    {syncing ? 'Syncing...' : 'Sync from CRM'}
+                    {syncing ? 'Syncing...' : 'Sync'}
                   </Button>
                   <Button onClick={() => navigate('/contacts/new')}>
                     <Plus className="h-4 w-4 mr-2" />

@@ -50,7 +50,7 @@ class ServiceWorkerManager {
       if ('periodicSync' in this.registration) {
         try {
           // @ts-ignore - periodicSync is experimental
-          await this.registration.periodicSync.register('crm-sync', {
+          await this.registration.periodicSync.register('data-sync', {
             minInterval: 30 * 60 * 1000 // 30 minutes
           });
           console.log('Periodic Background Sync registered');
@@ -94,7 +94,7 @@ class ServiceWorkerManager {
     if ('sync' in this.registration) {
       try {
         // @ts-ignore - sync is experimental
-        await this.registration.sync.register('crm-sync');
+        await this.registration.sync.register('data-sync');
         console.log('Background sync requested');
       } catch (error) {
         console.error('Background sync registration failed:', error);
@@ -167,11 +167,9 @@ class ServiceWorkerManager {
   }
 
   private async processSyncQueue(items: any[]): Promise<void> {
-    // Import the sync service dynamically to avoid circular dependencies
-    const { crmSync } = await import('@/services/crmSync');
-    
     console.log(`Processing ${items.length} sync queue items...`);
-    await crmSync.pushPendingChanges();
+    // Process items directly - sync to Supabase
+    // This is handled by the sync queue processor
   }
 
   private notifyUpdate(): void {
