@@ -41,7 +41,7 @@ export default function Planning() {
   });
 
   const [monthlyTargetInput, setMonthlyTargetInput] = useState<number>(0);
-  const [hasShownConfetti, setHasShownConfetti] = useState(false);
+  const [shownMilestones, setShownMilestones] = useState<Set<number>>(new Set());
   const prevEnrollments = useRef<number>(0);
 
   useEffect(() => {
@@ -60,43 +60,49 @@ export default function Planning() {
     }
   }, [monthlyTarget]);
 
-  // Confetti effect when reaching 7 enrollments
+  // Confetti effect when reaching milestones (7, 15, 25)
   useEffect(() => {
     const currentEnrollments = monthlyData.totalEnrollments;
-    
-    // Trigger confetti when crossing the 7 enrollment threshold
-    if (currentEnrollments >= 7 && prevEnrollments.current < 7 && !hasShownConfetti) {
-      // Fire confetti celebration
-      const duration = 3000;
-      const end = Date.now() + duration;
+    const milestones = [
+      { threshold: 7, colors: ['#d97706', '#b45309', '#f59e0b', '#fbbf24'] }, // Bronze - amber
+      { threshold: 15, colors: ['#64748b', '#475569', '#94a3b8', '#cbd5e1'] }, // Silver - slate
+      { threshold: 25, colors: ['#eab308', '#ca8a04', '#facc15', '#fde047'] }, // Gold - yellow
+    ];
 
-      const frame = () => {
-        confetti({
-          particleCount: 3,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0, y: 0.7 },
-          colors: ['#10b981', '#059669', '#34d399', '#6ee7b7']
-        });
-        confetti({
-          particleCount: 3,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1, y: 0.7 },
-          colors: ['#10b981', '#059669', '#34d399', '#6ee7b7']
-        });
+    milestones.forEach(({ threshold, colors }) => {
+      if (currentEnrollments >= threshold && prevEnrollments.current < threshold && !shownMilestones.has(threshold)) {
+        // Fire confetti celebration
+        const duration = 3000;
+        const end = Date.now() + duration;
 
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      };
+        const frame = () => {
+          confetti({
+            particleCount: 4,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.7 },
+            colors
+          });
+          confetti({
+            particleCount: 4,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.7 },
+            colors
+          });
 
-      frame();
-      setHasShownConfetti(true);
-    }
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        };
+
+        frame();
+        setShownMilestones(prev => new Set([...prev, threshold]));
+      }
+    });
     
     prevEnrollments.current = currentEnrollments;
-  }, [monthlyData.totalEnrollments, hasShownConfetti]);
+  }, [monthlyData.totalEnrollments, shownMilestones]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
