@@ -9,9 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { swManager } from '@/lib/serviceWorker';
 import { toast } from 'sonner';
-import { CrmConnectionTest } from '@/components/CrmConnectionTest';
-import { crmSync } from '@/services/crmSync';
-import { checkDatabaseVersion, DB_VERSION, db } from '@/lib/db';
+import { checkDatabaseVersion, db } from '@/lib/db';
 import {
   Pagination,
   PaginationContent,
@@ -53,8 +51,6 @@ export default function SyncMonitoring() {
   }, []);
 
   const handleManualSync = async () => {
-    // Cancel any pending syncs first
-    crmSync.cancelCurrentSync();
     syncAnalytics.cancelPendingAttempts();
     
     if (syncing) {
@@ -173,9 +169,6 @@ export default function SyncMonitoring() {
           </CardContent>
         </Card>
       )}
-
-      {/* CRM Connection Test */}
-      <CrmConnectionTest />
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -22,12 +22,10 @@ export type Database = {
           company_name: string | null
           country: string | null
           created_at: string
-          crm_customer_id: string | null
           customer_type: string | null
           email: string | null
           id: string
           industry: string | null
-          last_synced_from_crm: string | null
           last_visit_date: string | null
           latitude: number | null
           longitude: number | null
@@ -49,12 +47,10 @@ export type Database = {
           company_name?: string | null
           country?: string | null
           created_at?: string
-          crm_customer_id?: string | null
           customer_type?: string | null
           email?: string | null
           id?: string
           industry?: string | null
-          last_synced_from_crm?: string | null
           last_visit_date?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -76,12 +72,10 @@ export type Database = {
           company_name?: string | null
           country?: string | null
           created_at?: string
-          crm_customer_id?: string | null
           customer_type?: string | null
           email?: string | null
           id?: string
           industry?: string | null
-          last_synced_from_crm?: string | null
           last_visit_date?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -247,8 +241,6 @@ export type Database = {
           avatar_url: string | null
           calling_enabled: boolean
           created_at: string
-          crm_role: string | null
-          crm_user_id: string | null
           designation_id: string | null
           email: string | null
           email_enabled: boolean
@@ -258,7 +250,6 @@ export type Database = {
           is_active: boolean
           is_platform_admin: boolean
           last_name: string | null
-          last_synced_from_crm: string | null
           onboarding_completed: boolean
           organization_id: string | null
           phone: string | null
@@ -271,8 +262,6 @@ export type Database = {
           avatar_url?: string | null
           calling_enabled?: boolean
           created_at?: string
-          crm_role?: string | null
-          crm_user_id?: string | null
           designation_id?: string | null
           email?: string | null
           email_enabled?: boolean
@@ -282,7 +271,6 @@ export type Database = {
           is_active?: boolean
           is_platform_admin?: boolean
           last_name?: string | null
-          last_synced_from_crm?: string | null
           onboarding_completed?: boolean
           organization_id?: string | null
           phone?: string | null
@@ -295,8 +283,6 @@ export type Database = {
           avatar_url?: string | null
           calling_enabled?: boolean
           created_at?: string
-          crm_role?: string | null
-          crm_user_id?: string | null
           designation_id?: string | null
           email?: string | null
           email_enabled?: boolean
@@ -306,7 +292,6 @@ export type Database = {
           is_active?: boolean
           is_platform_admin?: boolean
           last_name?: string | null
-          last_synced_from_crm?: string | null
           onboarding_completed?: boolean
           organization_id?: string | null
           phone?: string | null

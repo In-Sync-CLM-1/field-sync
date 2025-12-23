@@ -15,7 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, AlertCircle, Users, Search, UserPlus, KeyRound, RefreshCw } from 'lucide-react';
-import { crmSync } from '@/services/crmSync';
 import { toast } from '@/hooks/use-toast';
 import { usePagination } from '@/hooks/usePagination';
 import { z } from 'zod';
@@ -68,8 +67,6 @@ export default function Forms() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [isRefreshingOrgs, setIsRefreshingOrgs] = useState(false);
-  const [isSyncingUsers, setIsSyncingUsers] = useState(false);
 
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -269,57 +266,6 @@ export default function Forms() {
     setResetDialogOpen(true);
   };
 
-  const handleRefreshOrganizations = async () => {
-    setIsRefreshingOrgs(true);
-    try {
-      await crmSync.refreshOrganizations();
-      toast({
-        title: 'Organizations Refreshed',
-        description: 'Organizations have been synced from CRM successfully.',
-      });
-    } catch (error) {
-      console.error('Refresh organizations error:', error);
-      toast({
-        title: 'Failed to Refresh',
-        description: error instanceof Error ? error.message : 'An error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsRefreshingOrgs(false);
-    }
-  };
-
-  const handleSyncUsers = async () => {
-    if (!currentOrganization) {
-      toast({
-        title: 'No Organization',
-        description: 'Please select an organization first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsSyncingUsers(true);
-    try {
-      await crmSync.syncUsers(currentOrganization.id);
-      await crmSync.syncRoles();
-      refetchUsers();
-      toast({
-        title: 'Users Synced',
-        description: 'Users and roles have been synced from CRM successfully.',
-      });
-    } catch (error) {
-      console.error('Sync users error:', error);
-      toast({
-        title: 'Failed to Sync Users',
-        description: error instanceof Error ? error.message : 'An error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSyncingUsers(false);
-    }
-  };
-
   if (!isAdmin) {
     return (
       <div className="container py-6">
@@ -344,24 +290,6 @@ export default function Forms() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={handleSyncUsers}
-            disabled={isSyncingUsers}
-            title="Sync Users from CRM"
-          >
-            <Users className={`h-4 w-4 ${isSyncingUsers ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={handleRefreshOrganizations}
-            disabled={isRefreshingOrgs}
-            title="Refresh Organizations from CRM"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshingOrgs ? 'animate-spin' : ''}`} />
-          </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button size="icon">
