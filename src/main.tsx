@@ -14,8 +14,8 @@ if (cachedBranding && cachedBranding.primary_color) {
   document.documentElement.style.setProperty('--primary', cachedBranding.primary_color);
 }
 
-// Register service worker for offline support
-if ('serviceWorker' in navigator) {
+// Register service worker for offline support (production only)
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     swManager.register().catch(console.error);
   });
