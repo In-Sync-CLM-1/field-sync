@@ -191,13 +191,13 @@ export default function Planning() {
                   min="0"
                   value={monthlyTargetInput}
                   onChange={(e) => setMonthlyTargetInput(parseInt(e.target.value) || 0)}
-                  className="h-6 w-14 text-xs px-1.5 py-0"
+                  className="h-5 w-14 text-xs px-1.5 py-0"
                   placeholder="0"
                 />
                 <Button 
                   size="sm" 
                   variant="outline"
-                  className="h-6 px-1.5 text-xs"
+                  className="h-5 px-1.5 text-xs"
                   onClick={handleMonthlyTargetSave}
                   disabled={upsertTarget.isPending}
                 >
@@ -314,7 +314,7 @@ export default function Planning() {
                           min="0"
                           value={formData.leads_target}
                           onChange={(e) => setFormData(prev => ({ ...prev, leads_target: parseInt(e.target.value) || 0 }))}
-                          className="h-6 w-16 text-xs text-center mx-auto px-1"
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">
@@ -334,7 +334,7 @@ export default function Planning() {
                           min="0"
                           value={formData.logins_target}
                           onChange={(e) => setFormData(prev => ({ ...prev, logins_target: parseInt(e.target.value) || 0 }))}
-                          className="h-6 w-16 text-xs text-center mx-auto px-1"
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">
@@ -354,7 +354,7 @@ export default function Planning() {
                           min="0"
                           value={formData.enroll_target}
                           onChange={(e) => setFormData(prev => ({ ...prev, enroll_target: parseInt(e.target.value) || 0 }))}
-                          className="h-6 w-16 text-xs text-center mx-auto px-1"
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">
