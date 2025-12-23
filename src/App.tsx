@@ -1,0 +1,84 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OfflineBanner } from "@/components/OfflineBanner";
+import { AdminRoute } from "@/components/AdminRoute";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
+import Layout from "@/components/Layout";
+import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import TeamDashboard from "./pages/TeamDashboard";
+import AnalyticsHub from "./pages/AnalyticsHub";
+import TerritoryMap from "./pages/TerritoryMap";
+import PerformanceBoard from "./pages/PerformanceBoard";
+import Contacts from "./pages/Contacts";
+import ContactDetail from "./pages/ContactDetail";
+import Visits from "./pages/Visits";
+import VisitDetail from "./pages/VisitDetail";
+import NewVisit from "./pages/NewVisit";
+import Users from "./pages/Users";
+import SyncMonitoring from "./pages/SyncMonitoring";
+import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <OrganizationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <OfflineBanner />
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Dashboard />} />
+                <Route path="team" element={<TeamDashboard />} />
+                <Route path="analytics" element={<AnalyticsHub />} />
+                <Route path="territory" element={<TerritoryMap />} />
+                <Route path="performance" element={
+                  <AdminRoute>
+                    <PerformanceBoard />
+                  </AdminRoute>
+                } />
+                <Route path="contacts" element={<Contacts />} />
+                <Route path="contacts/:id" element={<ContactDetail />} />
+                <Route path="visits" element={<Visits />} />
+                <Route path="visits/map" element={<Visits />} />
+                <Route path="visits/new" element={<NewVisit />} />
+                <Route path="visits/new-checkin" element={<VisitDetail />} />
+                <Route path="visits/:id" element={<VisitDetail />} />
+                <Route path="users" element={
+                  <AdminRoute>
+                    <Users />
+                  </AdminRoute>
+                } />
+                <Route path="sync-monitoring" element={
+                  <AdminRoute>
+                    <SyncMonitoring />
+                  </AdminRoute>
+                } />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </OrganizationProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
+);
+
+export default App;

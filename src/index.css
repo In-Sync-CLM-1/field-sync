@@ -1,0 +1,251 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  In-Sync Design System v1.0
+  Intelligently Adaptive. Effortlessly Powerful.
+  All colors are HSL for accessibility and theming
+*/
+
+@layer base {
+  :root {
+    /* Base Colors */
+    --background: 0 0% 100%;
+    --foreground: 190 14% 25%; /* Deep Slate #374649 */
+
+    /* Card Colors */
+    --card: 0 0% 100%;
+    --card-foreground: 190 14% 25%;
+
+    /* Popover & Dropdown */
+    --popover: 0 0% 100%;
+    --popover-foreground: 190 14% 25%;
+
+    /* Primary - In-Sync Teal */
+    --primary: 177 99% 36%; /* #01B8AA */
+    --primary-foreground: 0 0% 100%;
+    --primary-dark: 170 49% 40%; /* Deep Teal #359988 */
+    
+    /* Secondary - Soft neutral */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 190 14% 25%;
+
+    /* Muted - Light gray backgrounds */
+    --muted: 210 40% 96%;
+    --muted-foreground: 189 7% 40%; /* Medium Gray #5F6B6D */
+
+    /* Accent - In-Sync Coral */
+    --accent: 2 98% 68%; /* #FD625E */
+    --accent-foreground: 0 0% 100%;
+
+    /* Success - In-Sync Green */
+    --success: 175 72% 31%; /* #168980 */
+    --success-foreground: 0 0% 100%;
+    --success-bg: 170 58% 94%; /* #E6F7F5 */
+
+    /* Warning - In-Sync Yellow */
+    --warning: 47 87% 65%; /* #F4D25A */
+    --warning-foreground: 190 14% 25%;
+    --warning-bg: 54 100% 95%; /* #FFF9E6 */
+
+    /* Error/Destructive - Coral */
+    --destructive: 2 98% 68%; /* #FD625E */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-bg: 0 100% 95%; /* #FFE6E6 */
+
+    /* Info - Sky Blue */
+    --info: 194 71% 73%; /* #8AD4EB */
+    --info-foreground: 190 14% 25%;
+    --info-bg: 194 78% 95%; /* #E6F7FC */
+
+    /* Border & Input */
+    --border: 0 35% 81%; /* #DFBFBF */
+    --input: 0 35% 81%;
+    --ring: 177 99% 36%;
+
+    /* Border Radius - In-Sync System */
+    --radius: 0.5rem; /* 8px - buttons, inputs, cards */
+    --radius-sm: 0.25rem; /* 4px - tags, badges */
+    --radius-lg: 1rem; /* 16px - modals */
+    --radius-full: 9999px; /* pills, avatars */
+
+    /* Spacing System - 8px base */
+    --space-1: 0.25rem; /* 4px - Micro */
+    --space-2: 0.5rem; /* 8px - Tight */
+    --space-3: 1rem; /* 16px - Base */
+    --space-4: 1.5rem; /* 24px - Comfortable */
+    --space-5: 2rem; /* 32px - Section */
+    --space-6: 3rem; /* 48px - Major */
+    --space-7: 4rem; /* 64px - Hero */
+    --space-8: 6rem; /* 96px - Mega */
+
+    /* Shadows - In-Sync Specifications */
+    --shadow-sm: 0 1px 3px rgba(55, 70, 73, 0.08); /* Cards */
+    --shadow-md: 0 2px 8px rgba(55, 70, 73, 0.12); /* Hover */
+    --shadow-lg: 0 4px 16px rgba(55, 70, 73, 0.16); /* Raised */
+    --shadow-xl: 0 8px 32px rgba(55, 70, 73, 0.24); /* Modals */
+
+    /* Motion - In-Sync Durations & Easing */
+    --duration-instant: 100ms; /* Button press */
+    --duration-fast: 150ms; /* Hover */
+    --duration-base: 200ms; /* Standard */
+    --duration-medium: 300ms; /* Dropdowns */
+    --duration-slow: 400ms; /* Modals */
+    --ease-out: cubic-bezier(0.33, 1, 0.68, 1); /* Entrances */
+    --ease-in: cubic-bezier(0.32, 0, 0.67, 0); /* Exits */
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 190 14% 25%;
+    --sidebar-primary: 177 99% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 190 14% 25%;
+    --sidebar-border: 0 35% 81%;
+    --sidebar-ring: 177 99% 36%;
+  }
+
+  .dark {
+    /* Dark Mode - In-Sync Specifications */
+    --background: 188 7% 11%; /* #1A1D1E */
+    --foreground: 210 20% 92%; /* #E8EAED */
+
+    /* Card Colors - Elevated surfaces */
+    --card: 188 7% 15%; /* #242728 */
+    --card-foreground: 210 20% 92%;
+
+    /* Popover & Dropdown */
+    --popover: 188 7% 18%; /* #2D3132 */
+    --popover-foreground: 210 20% 92%;
+
+    /* Primary - Brighter in dark mode */
+    --primary: 177 99% 42%; /* Increased saturation */
+    --primary-foreground: 0 0% 100%;
+    --primary-dark: 170 49% 46%;
+    
+    /* Secondary */
+    --secondary: 188 7% 18%;
+    --secondary-foreground: 210 20% 92%;
+
+    /* Muted */
+    --muted: 188 7% 18%;
+    --muted-foreground: 210 8% 76%; /* #BDC1C6 */
+
+    /* Accent - Increased saturation */
+    --accent: 2 98% 72%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Success */
+    --success: 175 72% 38%;
+    --success-foreground: 0 0% 100%;
+    --success-bg: 170 58% 15%;
+
+    /* Warning */
+    --warning: 47 87% 70%;
+    --warning-foreground: 190 14% 25%;
+    --warning-bg: 54 100% 15%;
+
+    /* Error */
+    --destructive: 2 98% 72%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-bg: 0 100% 15%;
+
+    /* Info */
+    --info: 194 71% 78%;
+    --info-foreground: 190 14% 25%;
+    --info-bg: 194 78% 15%;
+
+    /* Border & Input */
+    --border: 188 7% 18%;
+    --input: 188 7% 18%;
+    --ring: 177 99% 42%;
+
+    /* Shadows - More pronounced in dark mode */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.6);
+
+    /* Sidebar */
+    --sidebar-background: 188 7% 15%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 177 99% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 188 7% 20%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 188 7% 18%;
+    --sidebar-ring: 177 99% 42%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  /* Typography - Compact Type Scale */
+  h1 {
+    @apply text-2xl font-bold leading-tight;
+  }
+
+  h2 {
+    @apply text-xl font-bold leading-snug;
+  }
+
+  h3 {
+    @apply text-lg font-semibold leading-normal;
+  }
+
+  h4 {
+    @apply text-base font-semibold leading-normal;
+  }
+
+  p {
+    @apply text-sm leading-relaxed;
+  }
+
+  /* Reduced Motion Support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Button Animations - In-Sync Micro-interactions */
+  .btn-press {
+    @apply transition-transform;
+    transition-duration: var(--duration-instant);
+  }
+
+  .btn-press:active {
+    transform: scale(0.98);
+  }
+
+  /* Card Hover - In-Sync Specifications */
+  .card-hover {
+    transition: transform var(--duration-base) var(--ease-out),
+                box-shadow var(--duration-base) var(--ease-out);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Input Focus - In-Sync Specifications */
+  .input-focus:focus {
+    outline: none;
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px rgba(1, 184, 170, 0.1);
+  }
+}
