@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import {
   useMonthlyEnrollments, 
   calculateIncentive 
 } from '@/hooks/useMonthlyIncentive';
+import confetti from 'canvas-confetti';
 
 export default function Planning() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -40,6 +41,8 @@ export default function Planning() {
   });
 
   const [monthlyTargetInput, setMonthlyTargetInput] = useState<number>(0);
+  const [hasShownConfetti, setHasShownConfetti] = useState(false);
+  const prevEnrollments = useRef<number>(0);
 
   useEffect(() => {
     if (plan) {
@@ -56,6 +59,44 @@ export default function Planning() {
       setMonthlyTargetInput(monthlyTarget.enrollment_target);
     }
   }, [monthlyTarget]);
+
+  // Confetti effect when reaching 7 enrollments
+  useEffect(() => {
+    const currentEnrollments = monthlyData.totalEnrollments;
+    
+    // Trigger confetti when crossing the 7 enrollment threshold
+    if (currentEnrollments >= 7 && prevEnrollments.current < 7 && !hasShownConfetti) {
+      // Fire confetti celebration
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.7 },
+          colors: ['#10b981', '#059669', '#34d399', '#6ee7b7']
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.7 },
+          colors: ['#10b981', '#059669', '#34d399', '#6ee7b7']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+
+      frame();
+      setHasShownConfetti(true);
+    }
+    
+    prevEnrollments.current = currentEnrollments;
+  }, [monthlyData.totalEnrollments, hasShownConfetti]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,7 +275,12 @@ export default function Planning() {
               : "bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30"
           )}>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">Incentive Earned</span>
+              <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                Incentive Earned
+                {monthlyData.incentiveEarned > 0 && (
+                  <Sparkles className="h-4 w-4 text-success animate-pulse" />
+                )}
+              </span>
               <span className={cn(
                 "text-2xl font-bold",
                 monthlyData.incentiveEarned > 0 ? "text-success" : "text-primary"
