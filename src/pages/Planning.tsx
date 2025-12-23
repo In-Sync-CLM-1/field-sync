@@ -181,6 +181,25 @@ export default function Planning() {
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold">Daily Planning</h1>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-6 text-xs px-2">
+                <CalendarIcon className="mr-1 h-3 w-3" />
+                {format(selectedDate, 'MMM d, yyyy')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        
+        <div className="flex items-center gap-1">
           {plan && getStatusBadge(plan.status)}
           {plan && getSyncBadge(plan.syncStatus)}
           {!isOnline && (
@@ -189,26 +208,118 @@ export default function Planning() {
             </Badge>
           )}
         </div>
-        
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 text-xs px-2">
-              <CalendarIcon className="mr-1 h-3 w-3" />
-              {format(selectedDate, 'MMM d, yyyy')}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
       </div>
 
-      {/* Monthly Incentive Card */}
+      {/* Target vs Achievement Card - First */}
+      {isLoading ? (
+        <Card className="glass-card"><CardContent className="p-3"><Skeleton className="h-24" /></CardContent></Card>
+      ) : (
+        <Card className="glass-card">
+          <CardHeader className="compact-header pb-1">
+            <CardTitle className="text-sm font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-primary" />
+                Target vs Achievement
+              </span>
+              <Button 
+                size="sm"
+                className="h-5 px-2 text-xs"
+                onClick={handleSubmit}
+                disabled={createPlan.isPending || updatePlan.isPending}
+              >
+                {plan ? 'Update' : 'Submit'}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            <form onSubmit={handleSubmit}>
+              {/* Target vs Achievement Table */}
+              <div className="border rounded overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="text-left py-1.5 px-3 text-xs font-medium text-muted-foreground">Metric</th>
+                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Target</th>
+                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Actual</th>
+                      <th className="text-right py-1.5 px-3 text-xs font-medium text-muted-foreground">%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Leads Row */}
+                    <tr className="border-t border-border/50">
+                      <td className="py-1.5 px-3 text-xs font-medium">Leads</td>
+                      <td className="py-1 px-2 text-center">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={formData.leads_target}
+                          onChange={(e) => setFormData(prev => ({ ...prev, leads_target: parseInt(e.target.value) || 0 }))}
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
+                        />
+                      </td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">
+                        {plan?.leadsActual ?? 0}
+                      </td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.leadsActual, plan.leadsTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.leadsActual, plan.leadsTarget).percent : 0}%
+                      </td>
+                    </tr>
+                    
+                    {/* Logins Row */}
+                    <tr className="border-t border-border/50">
+                      <td className="py-1.5 px-3 text-xs font-medium">Logins</td>
+                      <td className="py-1 px-2 text-center">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={formData.logins_target}
+                          onChange={(e) => setFormData(prev => ({ ...prev, logins_target: parseInt(e.target.value) || 0 }))}
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
+                        />
+                      </td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">
+                        {plan?.loginsActual ?? 0}
+                      </td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.loginsActual, plan.loginsTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.loginsActual, plan.loginsTarget).percent : 0}%
+                      </td>
+                    </tr>
+                    
+                    {/* Enroll Row */}
+                    <tr className="border-t border-border/50">
+                      <td className="py-1.5 px-3 text-xs font-medium">Enroll</td>
+                      <td className="py-1 px-2 text-center">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={formData.enroll_target}
+                          onChange={(e) => setFormData(prev => ({ ...prev, enroll_target: parseInt(e.target.value) || 0 }))}
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
+                        />
+                      </td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">
+                        {plan?.enrollActual ?? 0}
+                      </td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.enrollActual, plan.enrollTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.enrollActual, plan.enrollTarget).percent : 0}%
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {plan?.originalValues && (
+                <div className="mt-2 p-1.5 bg-warning-bg border border-warning/20 rounded text-xs flex items-center gap-1.5">
+                  <CheckCircle className="h-3 w-3 text-warning" />
+                  <span className="text-warning-foreground">Adjusted by manager</span>
+                </div>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Monthly Incentive Card - Second */}
       <Card className="glass-card">
         <CardHeader className="compact-header pb-1">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
@@ -317,114 +428,6 @@ export default function Planning() {
           )}
         </CardContent>
       </Card>
-
-      {isLoading ? (
-        <Card className="glass-card"><CardContent className="p-3"><Skeleton className="h-24" /></CardContent></Card>
-      ) : (
-        <Card className="glass-card">
-          <CardHeader className="compact-header pb-1">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
-                Target vs Achievement
-              </span>
-              <Button 
-                size="sm"
-                className="h-5 px-2 text-xs"
-                onClick={handleSubmit}
-                disabled={createPlan.isPending || updatePlan.isPending}
-              >
-                {plan ? 'Update' : 'Submit'}
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 pt-0">
-            <form onSubmit={handleSubmit}>
-              {/* Target vs Achievement Table */}
-              <div className="border rounded overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="text-left py-1.5 px-3 text-xs font-medium text-muted-foreground">Metric</th>
-                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Target</th>
-                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Actual</th>
-                      <th className="text-right py-1.5 px-3 text-xs font-medium text-muted-foreground">%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Leads Row */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Leads</td>
-                      <td className="py-1 px-2 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={formData.leads_target}
-                          onChange={(e) => setFormData(prev => ({ ...prev, leads_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-14 text-xs text-center mx-auto px-1"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.leadsActual ?? 0}
-                      </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.leadsActual, plan.leadsTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.leadsActual, plan.leadsTarget).percent : 0}%
-                      </td>
-                    </tr>
-                    
-                    {/* Logins Row */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Logins</td>
-                      <td className="py-1 px-2 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={formData.logins_target}
-                          onChange={(e) => setFormData(prev => ({ ...prev, logins_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-14 text-xs text-center mx-auto px-1"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.loginsActual ?? 0}
-                      </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.loginsActual, plan.loginsTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.loginsActual, plan.loginsTarget).percent : 0}%
-                      </td>
-                    </tr>
-                    
-                    {/* Enroll Row */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Enroll</td>
-                      <td className="py-1 px-2 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={formData.enroll_target}
-                          onChange={(e) => setFormData(prev => ({ ...prev, enroll_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-14 text-xs text-center mx-auto px-1"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.enrollActual ?? 0}
-                      </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.enrollActual, plan.enrollTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.enrollActual, plan.enrollTarget).percent : 0}%
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {plan?.originalValues && (
-                <div className="mt-2 p-1.5 bg-warning-bg border border-warning/20 rounded text-xs flex items-center gap-1.5">
-                  <CheckCircle className="h-3 w-3 text-warning" />
-                  <span className="text-warning-foreground">Adjusted by manager</span>
-                </div>
-              )}
-            </form>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
