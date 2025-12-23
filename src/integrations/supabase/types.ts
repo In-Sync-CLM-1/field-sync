@@ -100,6 +100,94 @@ export type Database = {
           },
         ]
       }
+      daily_plans: {
+        Row: {
+          corrected_by: string | null
+          created_at: string
+          db_actual: number | null
+          db_target: number | null
+          enroll_actual: number
+          enroll_target: number
+          fi_actual: number | null
+          fi_target: number | null
+          id: string
+          leads_actual: number
+          leads_target: number
+          logins_actual: number
+          logins_target: number
+          organization_id: string
+          original_values: Json | null
+          plan_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          corrected_by?: string | null
+          created_at?: string
+          db_actual?: number | null
+          db_target?: number | null
+          enroll_actual?: number
+          enroll_target?: number
+          fi_actual?: number | null
+          fi_target?: number | null
+          id?: string
+          leads_actual?: number
+          leads_target?: number
+          logins_actual?: number
+          logins_target?: number
+          organization_id: string
+          original_values?: Json | null
+          plan_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          corrected_by?: string | null
+          created_at?: string
+          db_actual?: number | null
+          db_target?: number | null
+          enroll_actual?: number
+          enroll_target?: number
+          fi_actual?: number | null
+          fi_target?: number | null
+          id?: string
+          leads_actual?: number
+          leads_target?: number
+          logins_actual?: number
+          logins_target?: number
+          organization_id?: string
+          original_values?: Json | null
+          plan_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_plans_corrected_by_fkey"
+            columns: ["corrected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_plans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispositions: {
         Row: {
           code: string | null

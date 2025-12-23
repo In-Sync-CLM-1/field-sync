@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users } from 'lucide-react';
+import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users, ClipboardList } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -50,6 +50,9 @@ export function AppSidebar() {
 
   const dashboards = [
     { icon: Home, label: 'My Dashboard', path: '/', roles: ['all'] },
+    { icon: ClipboardList, label: 'Planning', path: '/planning', roles: ['all'] },
+    { icon: ClipboardList, label: 'Team Planning', path: '/planning/team', roles: ['sales_manager', 'manager', 'admin', 'super_admin'] },
+    { icon: ClipboardList, label: 'Planning Overview', path: '/planning/overview', roles: ['admin', 'super_admin'] },
     { icon: LayoutDashboard, label: 'Team', path: '/team', roles: ['manager', 'admin', 'super_admin'] },
     { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['manager', 'admin', 'super_admin'] },
     { icon: Globe, label: 'Territory', path: '/territory', roles: ['all'] },
