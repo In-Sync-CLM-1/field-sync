@@ -167,6 +167,110 @@ export default function Planning() {
         </Popover>
       </div>
 
+      {/* Monthly Incentive Card */}
+      <Card className="glass-card">
+        <CardHeader className="compact-header pb-1">
+          <CardTitle className="text-sm font-semibold flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <IndianRupee className="h-4 w-4 text-success" />
+              Monthly Incentive
+            </span>
+            <Badge variant="outline" className="text-xs h-5">
+              {format(selectedDate, 'MMM yyyy')}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 pt-0 space-y-3">
+          {/* Target Input Row */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">My Target (Enrollments)</label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  value={monthlyTargetInput}
+                  onChange={(e) => setMonthlyTargetInput(parseInt(e.target.value) || 0)}
+                  className="h-7 w-20 text-xs px-2"
+                  placeholder="0"
+                />
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={handleMonthlyTargetSave}
+                  disabled={upsertTarget.isPending}
+                >
+                  {upsertTarget.isPending ? '...' : 'Set'}
+                </Button>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground">Achieved</div>
+              <div className="text-lg font-bold">{monthlyData.totalEnrollments}</div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          {monthlyTargetInput > 0 && (
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Progress to target</span>
+                <span>{getTargetProgress()}%</span>
+              </div>
+              <Progress value={getTargetProgress()} className="h-2" />
+              {monthlyData.totalEnrollments < monthlyTargetInput && (
+                <div className="text-xs text-muted-foreground">
+                  {monthlyTargetInput - monthlyData.totalEnrollments} more to reach your target
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Incentive Earned */}
+          <div className={cn(
+            "p-2.5 rounded-lg border",
+            monthlyData.incentiveEarned > 0 ? "bg-success/10 border-success/20" : "bg-muted/50 border-border"
+          )}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Incentive Earned</span>
+              <span className={cn(
+                "text-lg font-bold",
+                monthlyData.incentiveEarned > 0 ? "text-success" : "text-muted-foreground"
+              )}>
+                ₹{monthlyData.incentiveEarned.toLocaleString('en-IN')}
+              </span>
+            </div>
+            
+            {/* Breakdown */}
+            {monthlyData.incentiveEarned > 0 && (
+              <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Base (7 enrollments)</span>
+                  <span>₹{monthlyData.baseIncentive.toLocaleString('en-IN')}</span>
+                </div>
+                {monthlyData.additionalIncentive > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Additional ({monthlyData.totalEnrollments - 7} × ₹250)</span>
+                    <span>₹{monthlyData.additionalIncentive.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Next Tier Hint */}
+          {getNextTierHint() && (
+            <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded text-xs">
+              <TrendingUp className="h-3.5 w-3.5 text-primary" />
+              <span>
+                <strong>{getNextTierHint()?.needed} more</strong> enrollment{getNextTierHint()!.needed > 1 ? 's' : ''} to earn {getNextTierHint()?.reward}!
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {isLoading ? (
         <Card className="glass-card"><CardContent className="p-3"><Skeleton className="h-24" /></CardContent></Card>
       ) : (
@@ -274,110 +378,6 @@ export default function Planning() {
           </CardContent>
         </Card>
       )}
-
-      {/* Monthly Incentive Card */}
-      <Card className="glass-card">
-        <CardHeader className="compact-header pb-1">
-          <CardTitle className="text-sm font-semibold flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <IndianRupee className="h-4 w-4 text-success" />
-              Monthly Incentive
-            </span>
-            <Badge variant="outline" className="text-xs h-5">
-              {format(selectedDate, 'MMM yyyy')}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 pt-0 space-y-3">
-          {/* Target Input Row */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">My Target (Enrollments)</label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min="0"
-                  value={monthlyTargetInput}
-                  onChange={(e) => setMonthlyTargetInput(parseInt(e.target.value) || 0)}
-                  className="h-7 w-20 text-xs px-2"
-                  placeholder="0"
-                />
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="h-7 px-2 text-xs"
-                  onClick={handleMonthlyTargetSave}
-                  disabled={upsertTarget.isPending}
-                >
-                  {upsertTarget.isPending ? '...' : 'Set'}
-                </Button>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-muted-foreground">Achieved</div>
-              <div className="text-lg font-bold">{monthlyData.totalEnrollments}</div>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          {monthlyTargetInput > 0 && (
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Progress to target</span>
-                <span>{getTargetProgress()}%</span>
-              </div>
-              <Progress value={getTargetProgress()} className="h-2" />
-              {monthlyData.totalEnrollments < monthlyTargetInput && (
-                <div className="text-xs text-muted-foreground">
-                  {monthlyTargetInput - monthlyData.totalEnrollments} more to reach your target
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Incentive Earned */}
-          <div className={cn(
-            "p-2.5 rounded-lg border",
-            monthlyData.incentiveEarned > 0 ? "bg-success/10 border-success/20" : "bg-muted/50 border-border"
-          )}>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Incentive Earned</span>
-              <span className={cn(
-                "text-lg font-bold",
-                monthlyData.incentiveEarned > 0 ? "text-success" : "text-muted-foreground"
-              )}>
-                ₹{monthlyData.incentiveEarned.toLocaleString('en-IN')}
-              </span>
-            </div>
-            
-            {/* Breakdown */}
-            {monthlyData.incentiveEarned > 0 && (
-              <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Base (7 enrollments)</span>
-                  <span>₹{monthlyData.baseIncentive.toLocaleString('en-IN')}</span>
-                </div>
-                {monthlyData.additionalIncentive > 0 && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Additional ({monthlyData.totalEnrollments - 7} × ₹250)</span>
-                    <span>₹{monthlyData.additionalIncentive.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Next Tier Hint */}
-          {getNextTierHint() && (
-            <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded text-xs">
-              <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              <span>
-                <strong>{getNextTierHint()?.needed} more</strong> enrollment{getNextTierHint()!.needed > 1 ? 's' : ''} to earn {getNextTierHint()?.reward}!
-              </span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
