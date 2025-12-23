@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -252,6 +252,63 @@ export default function Planning() {
               )}
             </div>
           )}
+
+          {/* Milestone Badges */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Bronze - 7 enrollments */}
+            <div className={cn(
+              "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
+              monthlyData.totalEnrollments >= 7
+                ? "bg-gradient-to-b from-amber-600/20 to-amber-700/10 border-amber-600/50"
+                : "bg-muted/30 border-muted-foreground/20 opacity-50"
+            )}>
+              <Award className={cn(
+                "h-6 w-6 mb-1",
+                monthlyData.totalEnrollments >= 7 ? "text-amber-600" : "text-muted-foreground"
+              )} />
+              <span className={cn(
+                "text-[10px] font-bold",
+                monthlyData.totalEnrollments >= 7 ? "text-amber-600" : "text-muted-foreground"
+              )}>BRONZE</span>
+              <span className="text-[9px] text-muted-foreground">7 Enroll</span>
+            </div>
+
+            {/* Silver - 15 enrollments */}
+            <div className={cn(
+              "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
+              monthlyData.totalEnrollments >= 15
+                ? "bg-gradient-to-b from-slate-300/30 to-slate-400/10 border-slate-400/60"
+                : "bg-muted/30 border-muted-foreground/20 opacity-50"
+            )}>
+              <Award className={cn(
+                "h-6 w-6 mb-1",
+                monthlyData.totalEnrollments >= 15 ? "text-slate-400" : "text-muted-foreground"
+              )} />
+              <span className={cn(
+                "text-[10px] font-bold",
+                monthlyData.totalEnrollments >= 15 ? "text-slate-400" : "text-muted-foreground"
+              )}>SILVER</span>
+              <span className="text-[9px] text-muted-foreground">15 Enroll</span>
+            </div>
+
+            {/* Gold - 25 enrollments */}
+            <div className={cn(
+              "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
+              monthlyData.totalEnrollments >= 25
+                ? "bg-gradient-to-b from-yellow-400/30 to-yellow-500/10 border-yellow-500/60"
+                : "bg-muted/30 border-muted-foreground/20 opacity-50"
+            )}>
+              <Award className={cn(
+                "h-6 w-6 mb-1",
+                monthlyData.totalEnrollments >= 25 ? "text-yellow-500" : "text-muted-foreground"
+              )} />
+              <span className={cn(
+                "text-[10px] font-bold",
+                monthlyData.totalEnrollments >= 25 ? "text-yellow-500" : "text-muted-foreground"
+              )}>GOLD</span>
+              <span className="text-[9px] text-muted-foreground">25 Enroll</span>
+            </div>
+          </div>
 
           {/* Incentive Earned */}
           <div className={cn(
