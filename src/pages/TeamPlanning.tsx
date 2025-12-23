@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon, Users, Edit2, Save, X } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { useTeamPlans, useCorrectPlan, useMyPlan, useCreatePlan, useUpdatePlan, DailyPlan } from '@/hooks/useDailyPlans';
-import { useAuth } from '@/hooks/useAuth';
 
 export default function TeamPlanning() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -27,7 +26,6 @@ export default function TeamPlanning() {
   const [editValues, setEditValues] = useState<Record<string, number>>({});
   
   const planDate = format(selectedDate, 'yyyy-MM-dd');
-  const { user } = useAuth();
   
   const { data: teamPlans, isLoading } = useTeamPlans(planDate);
   const { data: myPlan } = useMyPlan(planDate);
@@ -35,16 +33,10 @@ export default function TeamPlanning() {
   const createPlan = useCreatePlan();
   const updatePlan = useUpdatePlan();
 
-  // Manager's own FI/DB values
-  const [managerTargets, setManagerTargets] = useState({
-    fi_target: 0,
-    db_target: 0,
-  });
+  const [managerTargets, setManagerTargets] = useState({ fi_target: 0, db_target: 0 });
 
-  // Calculate aggregates
   const aggregates = useMemo(() => {
     if (!teamPlans) return { leads: 0, logins: 0, enroll: 0, fi: 0, db: 0 };
-    
     return teamPlans.reduce((acc, plan) => ({
       leads: acc.leads + plan.leads_target,
       logins: acc.logins + plan.logins_target,
@@ -103,213 +95,140 @@ export default function TeamPlanning() {
     if (plan.user?.first_name || plan.user?.last_name) {
       return `${plan.user.first_name || ''} ${plan.user.last_name || ''}`.trim();
     }
-    return 'Unknown Agent';
+    return 'Unknown';
   };
 
   const getStatusBadge = (status: string) => {
+    const baseClass = "text-xs";
     switch (status) {
-      case 'draft':
-        return <Badge variant="outline">Draft</Badge>;
-      case 'submitted':
-        return <Badge variant="default">Submitted</Badge>;
-      case 'corrected':
-        return <Badge variant="secondary">Corrected</Badge>;
-      case 'approved':
-        return <Badge className="bg-green-500">Approved</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+      case 'draft': return <Badge variant="outline" className={baseClass}>Draft</Badge>;
+      case 'submitted': return <Badge className={cn(baseClass, "bg-primary text-primary-foreground")}>Submitted</Badge>;
+      case 'corrected': return <Badge className={cn(baseClass, "bg-warning text-warning-foreground")}>Corrected</Badge>;
+      case 'approved': return <Badge className={cn(baseClass, "bg-success text-success-foreground")}>Approved</Badge>;
+      default: return <Badge variant="outline" className={baseClass}>{status}</Badge>;
     }
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Team Planning</h1>
-          <p className="text-muted-foreground">Review and adjust your team's daily plans</p>
+    <div className="p-4 space-y-3">
+      {/* Compact Header Row */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" />
+          <h1 className="text-xl font-bold">Team Planning</h1>
+          <span className="text-xs text-muted-foreground">({teamPlans?.length || 0} plans)</span>
         </div>
         
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal")}>
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {format(selectedDate, 'PPP')}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              initialFocus
+        <div className="flex items-center gap-2">
+          {/* Manager FI/DB inline */}
+          <div className="flex items-center gap-2 bg-muted/50 rounded px-2 py-1">
+            <Label className="text-xs">FI:</Label>
+            <Input
+              type="number"
+              min="0"
+              className="w-14 h-6 text-xs px-1"
+              value={myPlan?.fi_target ?? managerTargets.fi_target}
+              onChange={(e) => setManagerTargets(prev => ({ ...prev, fi_target: parseInt(e.target.value) || 0 }))}
             />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* Manager's FI/DB Targets */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Targets (FI & DB)</CardTitle>
-          <CardDescription>Set your additional targets for FI and DB</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="space-y-2">
-              <Label htmlFor="fi">FI Target</Label>
-              <Input
-                id="fi"
-                type="number"
-                min="0"
-                className="w-32"
-                value={myPlan?.fi_target ?? managerTargets.fi_target}
-                onChange={(e) => setManagerTargets(prev => ({ ...prev, fi_target: parseInt(e.target.value) || 0 }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="db">DB Target</Label>
-              <Input
-                id="db"
-                type="number"
-                min="0"
-                className="w-32"
-                value={myPlan?.db_target ?? managerTargets.db_target}
-                onChange={(e) => setManagerTargets(prev => ({ ...prev, db_target: parseInt(e.target.value) || 0 }))}
-              />
-            </div>
-            <Button onClick={handleSaveManagerTargets} disabled={updatePlan.isPending || createPlan.isPending}>
-              Save FI/DB
+            <Label className="text-xs">DB:</Label>
+            <Input
+              type="number"
+              min="0"
+              className="w-14 h-6 text-xs px-1"
+              value={myPlan?.db_target ?? managerTargets.db_target}
+              onChange={(e) => setManagerTargets(prev => ({ ...prev, db_target: parseInt(e.target.value) || 0 }))}
+            />
+            <Button size="sm" className="h-6 px-2 text-xs" onClick={handleSaveManagerTargets} disabled={updatePlan.isPending || createPlan.isPending}>
+              Save
             </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Aggregates */}
-      <div className="grid gap-4 md:grid-cols-5">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Leads</CardDescription>
-            <CardTitle className="text-2xl">{aggregates.leads}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Logins</CardDescription>
-            <CardTitle className="text-2xl">{aggregates.logins}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Enroll</CardDescription>
-            <CardTitle className="text-2xl">{aggregates.enroll}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total FI</CardDescription>
-            <CardTitle className="text-2xl">{aggregates.fi + (myPlan?.fi_target || 0)}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total DB</CardDescription>
-            <CardTitle className="text-2xl">{aggregates.db + (myPlan?.db_target || 0)}</CardTitle>
-          </CardHeader>
-        </Card>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 text-sm">
+                <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                {format(selectedDate, 'MMM d')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
-      {/* Team Plans Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Team Plans
-          </CardTitle>
-          <CardDescription>
-            {teamPlans?.length || 0} plans submitted for {format(selectedDate, 'MMMM d, yyyy')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Aggregates - Compact Inline Row */}
+      <div className="flex items-center gap-3 p-2 bg-primary/5 rounded border border-primary/10">
+        <span className="text-xs font-medium text-muted-foreground">Totals:</span>
+        <div className="stats-row">
+          <div className="stat-badge bg-primary/10 text-primary">Leads: {aggregates.leads}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Logins: {aggregates.logins}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Enroll: {aggregates.enroll}</div>
+          <div className="stat-badge bg-success/10 text-success">FI: {aggregates.fi + (myPlan?.fi_target || 0)}</div>
+          <div className="stat-badge bg-success/10 text-success">DB: {aggregates.db + (myPlan?.db_target || 0)}</div>
+        </div>
+      </div>
+
+      {/* Team Plans Table - Compact */}
+      <Card className="glass-card">
+        <CardContent className="p-0">
           {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+            <div className="p-3 space-y-2">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-8 w-full" />)}
             </div>
           ) : teamPlans && teamPlans.length > 0 ? (
-            <Table>
+            <Table className="compact-table">
               <TableHeader>
-                <TableRow>
-                  <TableHead>Agent</TableHead>
-                  <TableHead className="text-right">Leads</TableHead>
-                  <TableHead className="text-right">Logins</TableHead>
-                  <TableHead className="text-right">Enroll</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="py-2 px-3 text-xs">Agent</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right">Leads</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right">Logins</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right">Enroll</TableHead>
+                  <TableHead className="py-2 px-3 text-xs">Status</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right w-20">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teamPlans.map((plan) => (
-                  <TableRow key={plan.id}>
-                    <TableCell className="font-medium">{getUserName(plan)}</TableCell>
-                    <TableCell className="text-right">
+                  <TableRow key={plan.id} className="hover:bg-muted/30">
+                    <TableCell className="py-1.5 px-3 text-sm font-medium">{getUserName(plan)}</TableCell>
+                    <TableCell className="py-1.5 px-3 text-sm text-right">
                       {editingPlanId === plan.id ? (
-                        <Input
-                          type="number"
-                          min="0"
-                          className="w-20 ml-auto"
-                          value={editValues.leads_target}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, leads_target: parseInt(e.target.value) || 0 }))}
-                        />
-                      ) : (
-                        plan.leads_target
-                      )}
+                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.leads_target}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, leads_target: parseInt(e.target.value) || 0 }))} />
+                      ) : plan.leads_target}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="py-1.5 px-3 text-sm text-right">
                       {editingPlanId === plan.id ? (
-                        <Input
-                          type="number"
-                          min="0"
-                          className="w-20 ml-auto"
-                          value={editValues.logins_target}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, logins_target: parseInt(e.target.value) || 0 }))}
-                        />
-                      ) : (
-                        plan.logins_target
-                      )}
+                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.logins_target}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, logins_target: parseInt(e.target.value) || 0 }))} />
+                      ) : plan.logins_target}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="py-1.5 px-3 text-sm text-right">
                       {editingPlanId === plan.id ? (
-                        <Input
-                          type="number"
-                          min="0"
-                          className="w-20 ml-auto"
-                          value={editValues.enroll_target}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, enroll_target: parseInt(e.target.value) || 0 }))}
-                        />
-                      ) : (
-                        plan.enroll_target
-                      )}
+                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.enroll_target}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, enroll_target: parseInt(e.target.value) || 0 }))} />
+                      ) : plan.enroll_target}
                     </TableCell>
-                    <TableCell>{getStatusBadge(plan.status)}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="py-1.5 px-3">{getStatusBadge(plan.status)}</TableCell>
+                    <TableCell className="py-1.5 px-3 text-right">
                       {editingPlanId === plan.id ? (
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleSaveEdit(plan)}
-                            disabled={correctPlan.isPending}
-                          >
-                            <Save className="h-4 w-4" />
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleSaveEdit(plan)} disabled={correctPlan.isPending}>
+                            <Save className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
-                            <X className="h-4 w-4" />
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCancelEdit}>
+                            <X className="h-3 w-3" />
                           </Button>
                         </div>
                       ) : (
-                        <Button size="sm" variant="ghost" onClick={() => handleStartEdit(plan)}>
-                          <Edit2 className="h-4 w-4" />
+                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleStartEdit(plan)}>
+                          <Edit2 className="h-3 w-3" />
                         </Button>
                       )}
                     </TableCell>
@@ -319,9 +238,8 @@ export default function TeamPlanning() {
             </Table>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No plans submitted by team members</p>
-              <p className="text-sm">Plans will appear here once agents submit them</p>
+              <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">No plans submitted</p>
             </div>
           )}
         </CardContent>
