@@ -238,7 +238,7 @@
   }
 
   .card-hover:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
   }
 
@@ -246,6 +246,65 @@
   .input-focus:focus {
     outline: none;
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 3px rgba(1, 184, 170, 0.1);
+    box-shadow: 0 0 0 2px rgba(1, 184, 170, 0.1);
+  }
+
+  /* Glass Card Effect */
+  .glass-card {
+    @apply bg-card/90 backdrop-blur-sm border-border/50;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Compact Card */
+  .compact-card {
+    @apply p-3;
+  }
+
+  /* Compact Header */
+  .compact-header {
+    @apply py-2 px-3;
+  }
+
+  /* Stat Value - Primary Gradient */
+  .stat-value {
+    @apply text-xl font-bold text-primary;
+  }
+
+  /* Stat Badge */
+  .stat-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium;
+  }
+
+  /* Compact Table */
+  .compact-table th,
+  .compact-table td {
+    @apply py-1.5 px-2 text-sm;
+  }
+
+  /* Compact Input */
+  .compact-input {
+    @apply h-8 text-sm px-2;
+  }
+
+  /* Compact Button */
+  .compact-btn {
+    @apply h-7 px-2 text-xs;
+  }
+
+  /* Inline Stats Row */
+  .stats-row {
+    @apply flex items-center gap-4 flex-wrap;
+  }
+
+  .stats-row .stat-item {
+    @apply flex items-center gap-1.5;
+  }
+
+  .stats-row .stat-label {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .stats-row .stat-number {
+    @apply text-sm font-semibold text-foreground;
   }
 }
