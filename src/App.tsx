@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { AdminRoute } from "@/components/AdminRoute";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
+import { ServiceWorkerUpdateHandler } from "@/components/ServiceWorkerUpdateHandler";
 import Layout from "@/components/Layout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -36,6 +37,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <ServiceWorkerUpdateHandler />
           <BrowserRouter>
             <OfflineBanner />
             <Routes>

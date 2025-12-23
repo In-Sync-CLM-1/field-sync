@@ -173,10 +173,8 @@ class ServiceWorkerManager {
   }
 
   private notifyUpdate(): void {
-    // Notify user about available update
-    if (window.confirm('New version available! Reload to update?')) {
-      window.location.reload();
-    }
+    // Dispatch custom event instead of blocking confirm
+    window.dispatchEvent(new CustomEvent('sw-update-available'));
   }
 
   private notifySyncComplete(count: number): void {
