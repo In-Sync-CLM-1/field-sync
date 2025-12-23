@@ -181,22 +181,6 @@ export default function Planning() {
         <div className="flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold">Daily Planning</h1>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-6 text-xs px-2">
-                <CalendarIcon className="mr-1 h-3 w-3" />
-                {format(selectedDate, 'MMM d, yyyy')}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
         </div>
         
         <div className="flex items-center gap-1">
@@ -221,14 +205,23 @@ export default function Planning() {
                 <Target className="h-4 w-4 text-primary" />
                 Target vs Achievement
               </span>
-              <Button 
-                size="sm"
-                className="h-5 px-2 text-xs"
-                onClick={handleSubmit}
-                disabled={createPlan.isPending || updatePlan.isPending}
-              >
-                {plan ? 'Update' : 'Submit'}
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-5 text-xs px-2">
+                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    {format(selectedDate, 'MMM d, yyyy')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 pointer-events-auto" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
@@ -314,6 +307,18 @@ export default function Planning() {
                   <span className="text-warning-foreground">Adjusted by manager</span>
                 </div>
               )}
+
+              {/* Submit Button at bottom */}
+              <div className="mt-3 flex justify-end">
+                <Button 
+                  size="sm"
+                  className="h-6 px-4 text-xs"
+                  type="submit"
+                  disabled={createPlan.isPending || updatePlan.isPending}
+                >
+                  {plan ? 'Update' : 'Submit'}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
