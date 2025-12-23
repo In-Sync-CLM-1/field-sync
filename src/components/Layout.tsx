@@ -16,7 +16,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Home, Users, MapPin, Map, LogOut, User, Activity } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { SyncStatus } from '@/components/SyncStatus';
+import inSyncLogo from '@/assets/in-sync-logo.png';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
@@ -64,12 +64,10 @@ export default function Layout() {
             <div className="flex h-12 items-center justify-between px-3 md:px-4">
               <div className="flex items-center space-x-1.5">
                 <SidebarTrigger className="-ml-2" />
-                <MapPin className="h-5 w-5 text-primary" />
-                <span className="font-bold text-base">In-Sync</span>
+                <img src={inSyncLogo} alt="In-Sync" className="h-6 w-auto" />
               </div>
 
               <div className="flex items-center gap-2">
-                <SyncStatus />
                 
                 <DropdownMenu>
               <DropdownMenuTrigger asChild>
