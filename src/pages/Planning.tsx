@@ -185,19 +185,19 @@ export default function Planning() {
           <div className="flex items-center justify-between">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">My Target (Enrollments)</label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Input
                   type="number"
                   min="0"
                   value={monthlyTargetInput}
                   onChange={(e) => setMonthlyTargetInput(parseInt(e.target.value) || 0)}
-                  className="h-7 w-20 text-xs px-2"
+                  className="h-6 w-16 text-xs px-2 py-0"
                   placeholder="0"
                 />
                 <Button 
                   size="sm" 
                   variant="outline"
-                  className="h-7 px-2 text-xs"
+                  className="h-6 px-2 text-xs"
                   onClick={handleMonthlyTargetSave}
                   disabled={upsertTarget.isPending}
                 >
