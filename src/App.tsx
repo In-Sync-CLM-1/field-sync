@@ -22,6 +22,9 @@ import VisitDetail from "./pages/VisitDetail";
 import NewVisit from "./pages/NewVisit";
 import Users from "./pages/Users";
 import SyncMonitoring from "./pages/SyncMonitoring";
+import Planning from "./pages/Planning";
+import TeamPlanning from "./pages/TeamPlanning";
+import PlanningOverview from "./pages/PlanningOverview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +49,9 @@ const App = () => (
                 }
               >
                 <Route index element={<Dashboard />} />
+                <Route path="planning" element={<Planning />} />
+                <Route path="planning/team" element={<TeamPlanning />} />
+                <Route path="planning/overview" element={<PlanningOverview />} />
                 <Route path="team" element={<TeamDashboard />} />
                 <Route path="analytics" element={<AnalyticsHub />} />
                 <Route path="territory" element={<TerritoryMap />} />
