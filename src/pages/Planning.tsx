@@ -196,8 +196,7 @@ export default function Planning() {
                 />
                 <Button 
                   size="sm" 
-                  variant="outline"
-                  className="h-5 px-1.5 text-xs"
+                  className="h-5 px-2 text-xs"
                   onClick={handleMonthlyTargetSave}
                   disabled={upsertTarget.isPending}
                 >
@@ -283,7 +282,7 @@ export default function Planning() {
               </span>
               <Button 
                 size="sm"
-                className="h-6 px-3 text-xs btn-press bg-primary hover:bg-primary-dark"
+                className="h-5 px-2 text-xs"
                 onClick={handleSubmit}
                 disabled={createPlan.isPending || updatePlan.isPending}
               >
