@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, ChevronDown, ChevronRight, Building2, Users } from 'lucide-react';
+import { CalendarIcon, ChevronDown, ChevronRight, Building2, Users, Cloud, CloudOff } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -21,12 +21,13 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { useOrgPlans, DailyPlan } from '@/hooks/useDailyPlans';
+import { useOrgPlansOffline } from '@/hooks/useDailyPlansOffline';
+import { DailyPlanLocal } from '@/lib/db';
 
 interface ManagerGroup {
   managerId: string | null;
   managerName: string;
-  plans: DailyPlan[];
+  plans: DailyPlanLocal[];
   totals: { leads: number; logins: number; enroll: number; fi: number; db: number };
 }
 
@@ -35,20 +36,21 @@ export default function PlanningOverview() {
   const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
   
   const planDate = format(selectedDate, 'yyyy-MM-dd');
-  const { data: plans, isLoading } = useOrgPlans(planDate);
+  const { data: plans, isLoading, isOnline } = useOrgPlansOffline(planDate);
 
   const managerGroups = useMemo(() => {
     if (!plans) return [];
     const groups = new Map<string | null, ManagerGroup>();
     
     plans.forEach((plan) => {
-      const managerId = plan.user?.reporting_manager_id || null;
-      const key = managerId || 'unassigned';
+      // For offline, we don't have user info - group by organization
+      const managerId = null;
+      const key = 'all';
       
       if (!groups.has(key)) {
         groups.set(key, {
           managerId,
-          managerName: managerId ? 'Manager' : 'Unassigned',
+          managerName: 'All Team Members',
           plans: [],
           totals: { leads: 0, logins: 0, enroll: 0, fi: 0, db: 0 },
         });
@@ -56,11 +58,11 @@ export default function PlanningOverview() {
       
       const group = groups.get(key)!;
       group.plans.push(plan);
-      group.totals.leads += plan.leads_target;
-      group.totals.logins += plan.logins_target;
-      group.totals.enroll += plan.enroll_target;
-      group.totals.fi += plan.fi_target || 0;
-      group.totals.db += plan.db_target || 0;
+      group.totals.leads += plan.leadsTarget;
+      group.totals.logins += plan.loginsTarget;
+      group.totals.enroll += plan.enrollTarget;
+      group.totals.fi += plan.fiTarget || 0;
+      group.totals.db += plan.dbTarget || 0;
     });
 
     return Array.from(groups.values());
@@ -88,12 +90,8 @@ export default function PlanningOverview() {
     });
   };
 
-  const getUserName = (plan: DailyPlan) => {
-    if (plan.user?.full_name) return plan.user.full_name;
-    if (plan.user?.first_name || plan.user?.last_name) {
-      return `${plan.user.first_name || ''} ${plan.user.last_name || ''}`.trim();
-    }
-    return 'Unknown';
+  const getUserName = (plan: DailyPlanLocal) => {
+    return plan.userId.substring(0, 8) + '...';
   };
 
   const getStatusBadge = (status: string) => {
@@ -107,6 +105,19 @@ export default function PlanningOverview() {
     }
   };
 
+  const getSyncBadge = (syncStatus: string) => {
+    switch (syncStatus) {
+      case 'synced':
+        return <Cloud className="h-3 w-3 text-success" />;
+      case 'pending':
+        return <CloudOff className="h-3 w-3 text-warning" />;
+      case 'failed':
+        return <CloudOff className="h-3 w-3 text-destructive" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="p-4 space-y-3">
       {/* Compact Header */}
@@ -115,6 +126,11 @@ export default function PlanningOverview() {
           <Building2 className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold">Planning Overview</h1>
           <span className="text-xs text-muted-foreground">({plans?.length || 0} plans)</span>
+          {!isOnline && (
+            <Badge variant="outline" className="text-xs h-5 bg-muted text-muted-foreground">
+              <CloudOff className="h-3 w-3 mr-1" />Offline
+            </Badge>
+          )}
         </div>
         
         <Popover>
@@ -156,7 +172,7 @@ export default function PlanningOverview() {
       ) : managerGroups.length > 0 ? (
         <div className="space-y-2">
           {managerGroups.map((group) => {
-            const key = group.managerId || 'unassigned';
+            const key = group.managerId || 'all';
             const isExpanded = expandedManagers.has(key);
             
             return (
@@ -192,18 +208,20 @@ export default function PlanningOverview() {
                             <TableHead className="py-1.5 px-3 text-xs text-right">FI</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-right">DB</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs">Status</TableHead>
+                            <TableHead className="py-1.5 px-3 text-xs text-center">Sync</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {group.plans.map((plan) => (
                             <TableRow key={plan.id} className="hover:bg-muted/20">
                               <TableCell className="py-1 px-3 text-xs">{getUserName(plan)}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.leads_target}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.logins_target}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.enroll_target}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.fi_target || 0}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.db_target || 0}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.leadsTarget}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.loginsTarget}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.enrollTarget}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.fiTarget || 0}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.dbTarget || 0}</TableCell>
                               <TableCell className="py-1 px-3">{getStatusBadge(plan.status)}</TableCell>
+                              <TableCell className="py-1 px-3 text-center">{getSyncBadge(plan.syncStatus)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>

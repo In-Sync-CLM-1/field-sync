@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,15 +9,19 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { useMyPlan, useCreatePlan, useUpdatePlan } from '@/hooks/useDailyPlans';
+import { 
+  useMyPlanOffline, 
+  useCreatePlanOffline, 
+  useUpdatePlanOffline 
+} from '@/hooks/useDailyPlansOffline';
 
 export default function Planning() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const planDate = format(selectedDate, 'yyyy-MM-dd');
   
-  const { data: plan, isLoading } = useMyPlan(planDate);
-  const createPlan = useCreatePlan();
-  const updatePlan = useUpdatePlan();
+  const { data: plan, isLoading, isOnline } = useMyPlanOffline(planDate);
+  const createPlan = useCreatePlanOffline();
+  const updatePlan = useUpdatePlanOffline();
 
   const [formData, setFormData] = useState({
     leads_target: 0,
@@ -28,9 +32,9 @@ export default function Planning() {
   useEffect(() => {
     if (plan) {
       setFormData({
-        leads_target: plan.leads_target,
-        logins_target: plan.logins_target,
-        enroll_target: plan.enroll_target,
+        leads_target: plan.leadsTarget,
+        logins_target: plan.loginsTarget,
+        enroll_target: plan.enrollTarget,
       });
     }
   }, [plan]);
@@ -41,7 +45,9 @@ export default function Planning() {
     if (plan) {
       await updatePlan.mutateAsync({
         id: plan.id,
-        ...formData,
+        leads_target: formData.leads_target,
+        logins_target: formData.logins_target,
+        enroll_target: formData.enroll_target,
       });
     } else {
       await createPlan.mutateAsync({
@@ -66,6 +72,19 @@ export default function Planning() {
     }
   };
 
+  const getSyncBadge = (syncStatus: string) => {
+    switch (syncStatus) {
+      case 'synced':
+        return <Badge variant="outline" className="text-xs h-5 bg-success/10 text-success border-success/20"><Cloud className="h-3 w-3 mr-1" />Synced</Badge>;
+      case 'pending':
+        return <Badge variant="outline" className="text-xs h-5 bg-warning/10 text-warning border-warning/20"><CloudOff className="h-3 w-3 mr-1" />Pending</Badge>;
+      case 'failed':
+        return <Badge variant="outline" className="text-xs h-5 bg-destructive/10 text-destructive border-destructive/20"><CloudOff className="h-3 w-3 mr-1" />Failed</Badge>;
+      default:
+        return null;
+    }
+  };
+
   const getProgress = (actual: number, target: number) => {
     if (target === 0) return { percent: 0, color: 'text-muted-foreground' };
     const percent = Math.round((actual / target) * 100);
@@ -83,6 +102,12 @@ export default function Planning() {
           <Target className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold">Daily Planning</h1>
           {plan && getStatusBadge(plan.status)}
+          {plan && getSyncBadge(plan.syncStatus)}
+          {!isOnline && (
+            <Badge variant="outline" className="text-xs h-5 bg-muted text-muted-foreground">
+              <CloudOff className="h-3 w-3 mr-1" />Offline
+            </Badge>
+          )}
         </div>
         
         <Popover>
@@ -144,16 +169,16 @@ export default function Planning() {
                         <Input
                           type="number"
                           min="0"
-                          value={plan?.leads_target ?? formData.leads_target}
+                          value={formData.leads_target}
                           onChange={(e) => setFormData(prev => ({ ...prev, leads_target: parseInt(e.target.value) || 0 }))}
                           className="h-6 w-16 text-xs text-center mx-auto px-1"
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.leads_actual ?? 0}
+                        {plan?.leadsActual ?? 0}
                       </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.leads_actual, plan.leads_target).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.leads_actual, plan.leads_target).percent : 0}%
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.leadsActual, plan.leadsTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.leadsActual, plan.leadsTarget).percent : 0}%
                       </td>
                     </tr>
                     
@@ -164,16 +189,16 @@ export default function Planning() {
                         <Input
                           type="number"
                           min="0"
-                          value={plan?.logins_target ?? formData.logins_target}
+                          value={formData.logins_target}
                           onChange={(e) => setFormData(prev => ({ ...prev, logins_target: parseInt(e.target.value) || 0 }))}
                           className="h-6 w-16 text-xs text-center mx-auto px-1"
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.logins_actual ?? 0}
+                        {plan?.loginsActual ?? 0}
                       </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.logins_actual, plan.logins_target).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.logins_actual, plan.logins_target).percent : 0}%
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.loginsActual, plan.loginsTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.loginsActual, plan.loginsTarget).percent : 0}%
                       </td>
                     </tr>
                     
@@ -184,23 +209,23 @@ export default function Planning() {
                         <Input
                           type="number"
                           min="0"
-                          value={plan?.enroll_target ?? formData.enroll_target}
+                          value={formData.enroll_target}
                           onChange={(e) => setFormData(prev => ({ ...prev, enroll_target: parseInt(e.target.value) || 0 }))}
                           className="h-6 w-16 text-xs text-center mx-auto px-1"
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.enroll_actual ?? 0}
+                        {plan?.enrollActual ?? 0}
                       </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.enroll_actual, plan.enroll_target).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.enroll_actual, plan.enroll_target).percent : 0}%
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.enrollActual, plan.enrollTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.enrollActual, plan.enrollTarget).percent : 0}%
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              {plan?.original_values && (
+              {plan?.originalValues && (
                 <div className="mt-2 p-1.5 bg-warning-bg border border-warning/20 rounded text-xs flex items-center gap-1.5">
                   <CheckCircle className="h-3 w-3 text-warning" />
                   <span className="text-warning-foreground">Adjusted by manager</span>

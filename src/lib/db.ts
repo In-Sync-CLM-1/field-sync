@@ -82,9 +82,34 @@ export interface FormResponse {
   updatedAt: Date;
 }
 
+export interface DailyPlanLocal {
+  id: string;
+  odataId?: string; // Remote ID for syncing
+  userId: string;
+  organizationId: string;
+  planDate: string;
+  leadsTarget: number;
+  loginsTarget: number;
+  enrollTarget: number;
+  leadsActual: number;
+  loginsActual: number;
+  enrollActual: number;
+  fiTarget: number | null;
+  dbTarget: number | null;
+  fiActual: number | null;
+  dbActual: number | null;
+  status: string;
+  correctedBy: string | null;
+  originalValues: Record<string, unknown> | null;
+  syncStatus: 'synced' | 'pending' | 'failed';
+  lastSyncedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface SyncQueueItem {
   id: string;
-  type: 'visit' | 'photo' | 'form' | 'communication' | 'customer';
+  type: 'visit' | 'photo' | 'form' | 'communication' | 'customer' | 'daily_plan';
   entityId: string;
   action: 'create' | 'update' | 'delete';
   data: any;
@@ -110,8 +135,8 @@ export interface Communication {
 }
 
 // Database version - ONLY increment this when schema actually changes
-// Current: 12 (added organizationId to Contact)
-export const DB_VERSION = 12;
+// Current: 13 (added dailyPlans table for offline-first planning)
+export const DB_VERSION = 13;
 
 class FieldVisitDatabase extends Dexie {
   customers!: Table<Customer, string>;
@@ -121,6 +146,7 @@ class FieldVisitDatabase extends Dexie {
   formResponses!: Table<FormResponse, string>;
   syncQueue!: Table<SyncQueueItem, string>;
   communications!: Table<Communication, string>;
+  dailyPlans!: Table<DailyPlanLocal, string>;
 
   constructor() {
     super('FieldVisitDB');
@@ -134,7 +160,8 @@ class FieldVisitDatabase extends Dexie {
       forms: 'id, name, isActive, version, createdAt',
       formResponses: 'id, visitId, formId, userId, syncStatus, createdAt',
       syncQueue: 'id, type, priority, createdAt, retryCount',
-      communications: 'id, customerId, visitId, userId, type, initiatedAt, syncStatus'
+      communications: 'id, customerId, visitId, userId, type, initiatedAt, syncStatus',
+      dailyPlans: 'id, odataId, userId, organizationId, planDate, syncStatus, updatedAt'
     });
   }
 }
