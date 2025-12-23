@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,18 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { 
   useMyPlanOffline, 
   useCreatePlanOffline, 
   useUpdatePlanOffline 
 } from '@/hooks/useDailyPlansOffline';
+import { 
+  useMonthlyIncentiveTarget, 
+  useMonthlyEnrollments, 
+  calculateIncentive 
+} from '@/hooks/useMonthlyIncentive';
 
 export default function Planning() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -23,11 +29,17 @@ export default function Planning() {
   const createPlan = useCreatePlanOffline();
   const updatePlan = useUpdatePlanOffline();
 
+  // Monthly incentive hooks
+  const { target: monthlyTarget, upsertTarget } = useMonthlyIncentiveTarget(selectedDate);
+  const { data: monthlyData, isLoading: isLoadingMonthly } = useMonthlyEnrollments(selectedDate);
+
   const [formData, setFormData] = useState({
     leads_target: 0,
     logins_target: 0,
     enroll_target: 0,
   });
+
+  const [monthlyTargetInput, setMonthlyTargetInput] = useState<number>(0);
 
   useEffect(() => {
     if (plan) {
@@ -38,6 +50,12 @@ export default function Planning() {
       });
     }
   }, [plan]);
+
+  useEffect(() => {
+    if (monthlyTarget) {
+      setMonthlyTargetInput(monthlyTarget.enrollment_target);
+    }
+  }, [monthlyTarget]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +110,27 @@ export default function Planning() {
     if (percent >= 75) return { percent, color: 'text-primary' };
     if (percent >= 50) return { percent, color: 'text-warning' };
     return { percent, color: 'text-accent' };
+  };
+
+  const handleMonthlyTargetSave = async () => {
+    if (monthlyTargetInput >= 0) {
+      await upsertTarget.mutateAsync(monthlyTargetInput);
+    }
+  };
+
+  // Calculate progress towards personal target
+  const getTargetProgress = () => {
+    if (!monthlyTargetInput || monthlyTargetInput === 0) return 0;
+    return Math.min(100, Math.round((monthlyData.totalEnrollments / monthlyTargetInput) * 100));
+  };
+
+  // Get next tier hint
+  const getNextTierHint = () => {
+    const enrollments = monthlyData.totalEnrollments;
+    if (enrollments < 7) {
+      return { needed: 7 - enrollments, reward: '₹1,500' };
+    }
+    return null;
   };
 
   return (
@@ -235,6 +274,127 @@ export default function Planning() {
           </CardContent>
         </Card>
       )}
+
+      {/* Monthly Incentive Card */}
+      <Card className="glass-card">
+        <CardHeader className="compact-header pb-1">
+          <CardTitle className="text-sm font-semibold flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <IndianRupee className="h-4 w-4 text-success" />
+              Monthly Incentive
+            </span>
+            <Badge variant="outline" className="text-xs h-5">
+              {format(selectedDate, 'MMM yyyy')}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 pt-0 space-y-3">
+          {/* Target Input Row */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground mb-1 block">My Target (Enrollments)</label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  value={monthlyTargetInput}
+                  onChange={(e) => setMonthlyTargetInput(parseInt(e.target.value) || 0)}
+                  className="h-7 w-20 text-xs px-2"
+                  placeholder="0"
+                />
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={handleMonthlyTargetSave}
+                  disabled={upsertTarget.isPending}
+                >
+                  {upsertTarget.isPending ? '...' : 'Set'}
+                </Button>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground">Achieved</div>
+              <div className="text-lg font-bold">{monthlyData.totalEnrollments}</div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          {monthlyTargetInput > 0 && (
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Progress to target</span>
+                <span>{getTargetProgress()}%</span>
+              </div>
+              <Progress value={getTargetProgress()} className="h-2" />
+              {monthlyData.totalEnrollments < monthlyTargetInput && (
+                <div className="text-xs text-muted-foreground">
+                  {monthlyTargetInput - monthlyData.totalEnrollments} more to reach your target
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Incentive Earned */}
+          <div className={cn(
+            "p-2.5 rounded-lg border",
+            monthlyData.incentiveEarned > 0 ? "bg-success/10 border-success/20" : "bg-muted/50 border-border"
+          )}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Incentive Earned</span>
+              <span className={cn(
+                "text-lg font-bold",
+                monthlyData.incentiveEarned > 0 ? "text-success" : "text-muted-foreground"
+              )}>
+                ₹{monthlyData.incentiveEarned.toLocaleString('en-IN')}
+              </span>
+            </div>
+            
+            {/* Breakdown */}
+            {monthlyData.incentiveEarned > 0 && (
+              <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Base (7 enrollments)</span>
+                  <span>₹{monthlyData.baseIncentive.toLocaleString('en-IN')}</span>
+                </div>
+                {monthlyData.additionalIncentive > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Additional ({monthlyData.totalEnrollments - 7} × ₹250)</span>
+                    <span>₹{monthlyData.additionalIncentive.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Next Tier Hint */}
+          {getNextTierHint() && (
+            <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded text-xs">
+              <TrendingUp className="h-3.5 w-3.5 text-primary" />
+              <span>
+                <strong>{getNextTierHint()?.needed} more</strong> enrollment{getNextTierHint()!.needed > 1 ? 's' : ''} to earn {getNextTierHint()?.reward}!
+              </span>
+            </div>
+          )}
+
+          {/* Tier Reference */}
+          <div className="text-xs text-muted-foreground space-y-0.5 pt-1 border-t border-border/50">
+            <div className="font-medium mb-1">Incentive Tiers:</div>
+            <div className="flex justify-between">
+              <span>• 1-6 enrollments</span>
+              <span>₹0</span>
+            </div>
+            <div className="flex justify-between">
+              <span>• 7 enrollments</span>
+              <span>₹1,500 flat</span>
+            </div>
+            <div className="flex justify-between">
+              <span>• 8+ enrollments</span>
+              <span>₹1,500 + ₹250/extra</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
