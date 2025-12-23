@@ -65,19 +65,26 @@ export function useMyPlanOffline(planDate: string) {
   const { user } = useAuth();
   const isOnline = useOnlineStatus();
   
+  // Use a sentinel value to distinguish "loading" from "no data"
+  const LOADING = Symbol('loading');
+  
   // Read from IndexedDB
-  const localPlan = useLiveQuery(
+  const queryResult = useLiveQuery(
     async () => {
       if (!user) return null;
-      return db.dailyPlans
+      const result = await db.dailyPlans
         .where('userId')
         .equals(user.id)
         .filter(plan => plan.planDate === planDate)
-        .first() || null;
+        .first();
+      return result || null; // Explicitly return null if no data
     },
     [user?.id, planDate],
-    null
+    LOADING as any
   );
+  
+  const isLoading = queryResult === LOADING;
+  const localPlan = isLoading ? null : queryResult;
 
   // Sync from server when online
   useEffect(() => {
@@ -125,7 +132,7 @@ export function useMyPlanOffline(planDate: string) {
 
   return {
     data: localPlan,
-    isLoading: localPlan === undefined,
+    isLoading,
     isOnline,
   };
 }
