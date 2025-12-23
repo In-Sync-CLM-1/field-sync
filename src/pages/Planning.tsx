@@ -228,14 +228,16 @@ export default function Planning() {
 
           {/* Incentive Earned */}
           <div className={cn(
-            "p-2.5 rounded-lg border",
-            monthlyData.incentiveEarned > 0 ? "bg-success/10 border-success/20" : "bg-muted/50 border-border"
+            "p-4 rounded-xl border-2 shadow-sm",
+            monthlyData.incentiveEarned > 0 
+              ? "bg-gradient-to-r from-success/20 to-success/5 border-success/40" 
+              : "bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30"
           )}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Incentive Earned</span>
+              <span className="text-sm font-semibold text-foreground">Incentive Earned</span>
               <span className={cn(
-                "text-lg font-bold",
-                monthlyData.incentiveEarned > 0 ? "text-success" : "text-muted-foreground"
+                "text-2xl font-bold",
+                monthlyData.incentiveEarned > 0 ? "text-success" : "text-primary"
               )}>
                 ₹{monthlyData.incentiveEarned.toLocaleString('en-IN')}
               </span>
@@ -243,15 +245,15 @@ export default function Planning() {
             
             {/* Breakdown */}
             {monthlyData.incentiveEarned > 0 && (
-              <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+              <div className="mt-3 pt-3 border-t border-success/30 space-y-1">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Base (7 enrollments)</span>
-                  <span>₹{monthlyData.baseIncentive.toLocaleString('en-IN')}</span>
+                  <span className="font-medium">₹{monthlyData.baseIncentive.toLocaleString('en-IN')}</span>
                 </div>
                 {monthlyData.additionalIncentive > 0 && (
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Additional ({monthlyData.totalEnrollments - 7} × ₹250)</span>
-                    <span>₹{monthlyData.additionalIncentive.toLocaleString('en-IN')}</span>
+                    <span className="font-medium">₹{monthlyData.additionalIncentive.toLocaleString('en-IN')}</span>
                   </div>
                 )}
               </div>
