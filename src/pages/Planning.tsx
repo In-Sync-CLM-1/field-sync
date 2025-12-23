@@ -376,23 +376,6 @@ export default function Planning() {
               </span>
             </div>
           )}
-
-          {/* Tier Reference */}
-          <div className="text-xs text-muted-foreground space-y-0.5 pt-1 border-t border-border/50">
-            <div className="font-medium mb-1">Incentive Tiers:</div>
-            <div className="flex justify-between">
-              <span>• 1-6 enrollments</span>
-              <span>₹0</span>
-            </div>
-            <div className="flex justify-between">
-              <span>• 7 enrollments</span>
-              <span>₹1,500 flat</span>
-            </div>
-            <div className="flex justify-between">
-              <span>• 8+ enrollments</span>
-              <span>₹1,500 + ₹250/extra</span>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
