@@ -70,8 +70,9 @@ export function useMyPlanOffline(planDate: string) {
     async () => {
       if (!user) return null;
       return db.dailyPlans
-        .where(['userId', 'planDate'])
-        .equals([user.id, planDate])
+        .where('userId')
+        .equals(user.id)
+        .filter(plan => plan.planDate === planDate)
         .first() || null;
     },
     [user?.id, planDate],
@@ -216,8 +217,9 @@ export function useOrgPlansOffline(planDate: string) {
     async () => {
       if (!user || !currentOrganization) return [];
       return db.dailyPlans
-        .where(['organizationId', 'planDate'])
-        .equals([currentOrganization.id, planDate])
+        .where('organizationId')
+        .equals(currentOrganization.id)
+        .filter(plan => plan.planDate === planDate)
         .toArray();
     },
     [currentOrganization?.id, planDate],
