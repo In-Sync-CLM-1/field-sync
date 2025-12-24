@@ -85,9 +85,8 @@ export default function Visits() {
           <h1 className="text-xl font-bold tracking-tight">Visits</h1>
           <p className="text-sm text-muted-foreground">Manage field visits</p>
         </div>
-        <Button size="sm" onClick={() => navigate('/visits/new')}>
-          <Plus className="w-4 h-4 mr-1" />
-          New Visit
+        <Button size="icon" onClick={() => navigate('/visits/new')}>
+          <Plus className="w-4 h-4" />
         </Button>
       </div>
 
