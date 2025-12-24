@@ -323,12 +323,18 @@ export default function TerritoryMap() {
     const sourceId = 'visit-routes';
     const layerId = 'visit-routes-layer';
 
-    // Remove existing layer and source
-    if (map.current.getLayer(layerId)) {
-      map.current.removeLayer(layerId);
-    }
-    if (map.current.getSource(sourceId)) {
-      map.current.removeSource(sourceId);
+    // Safety check - ensure map style is loaded
+    try {
+      // Remove existing layer and source
+      if (map.current.getLayer(layerId)) {
+        map.current.removeLayer(layerId);
+      }
+      if (map.current.getSource(sourceId)) {
+        map.current.removeSource(sourceId);
+      }
+    } catch (e) {
+      // Map not ready yet, skip
+      return;
     }
 
     if (!showRoutes || visits.length < 2) return;
