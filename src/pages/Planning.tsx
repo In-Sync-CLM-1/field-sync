@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award, FileText } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award, FileText, Users, Trophy } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { 
   useMyPlanOffline, 
@@ -20,6 +28,11 @@ import {
   useMonthlyEnrollments, 
   calculateIncentive 
 } from '@/hooks/useMonthlyIncentive';
+import { 
+  useIsManager, 
+  useTeamAggregates, 
+  useTeamIncentiveToppers 
+} from '@/hooks/useManagerView';
 import { EnrollmentDialog } from '@/components/EnrollmentDialog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
@@ -33,6 +46,11 @@ export default function Planning() {
   const createPlan = useCreatePlanOffline();
   const updatePlan = useUpdatePlanOffline();
 
+  // Manager view hooks
+  const { data: isManager, isLoading: isLoadingManager } = useIsManager();
+  const { data: teamAggregates, isLoading: isLoadingAggregates } = useTeamAggregates(planDate);
+  const { data: teamToppers, isLoading: isLoadingToppers } = useTeamIncentiveToppers(selectedDate);
+
   // Monthly incentive hooks
   const { target: monthlyTarget, upsertTarget } = useMonthlyIncentiveTarget(selectedDate);
   const { data: monthlyData, isLoading: isLoadingMonthly } = useMonthlyEnrollments(selectedDate);
@@ -41,6 +59,12 @@ export default function Planning() {
     leads_target: 0,
     logins_target: 0,
     enroll_target: 0,
+  });
+
+  // Manager's own IL/DB targets
+  const [managerTargets, setManagerTargets] = useState({
+    fi_target: 0,
+    db_target: 0,
   });
 
   const [monthlyTargetInput, setMonthlyTargetInput] = useState<number>(0);
@@ -74,6 +98,10 @@ export default function Planning() {
         leads_target: plan.leadsTarget,
         logins_target: plan.loginsTarget,
         enroll_target: plan.enrollTarget,
+      });
+      setManagerTargets({
+        fi_target: plan.fiTarget || 0,
+        db_target: plan.dbTarget || 0,
       });
     }
   }, [plan]);
@@ -137,11 +165,15 @@ export default function Planning() {
         leads_target: formData.leads_target,
         logins_target: formData.logins_target,
         enroll_target: formData.enroll_target,
+        fi_target: managerTargets.fi_target,
+        db_target: managerTargets.db_target,
       });
     } else {
       await createPlan.mutateAsync({
         plan_date: planDate,
         ...formData,
+        fi_target: managerTargets.fi_target,
+        db_target: managerTargets.db_target,
       });
     }
   };
@@ -204,6 +236,232 @@ export default function Planning() {
     return null;
   };
 
+  // Render Manager View
+  if (isManager && !isLoadingManager) {
+    return (
+      <div className="p-4 space-y-3">
+        {/* Manager Header */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-bold">Branch Planning</h1>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            {!isOnline && (
+              <Badge variant="outline" className="text-xs h-5 bg-muted text-muted-foreground">
+                <CloudOff className="h-3 w-3 mr-1" />Offline
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Team Aggregates Card */}
+        <Card className="glass-card">
+          <CardHeader className="compact-header pb-1">
+            <CardTitle className="text-sm font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-primary" />
+                Team Targets (Aggregated)
+              </span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-5 text-xs px-2">
+                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    {format(selectedDate, 'MMM d, yyyy')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 pointer-events-auto" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            {isLoadingAggregates ? (
+              <Skeleton className="h-32" />
+            ) : (
+              <div className="border rounded overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="text-left py-1.5 px-3 text-xs font-medium text-muted-foreground">Metric</th>
+                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Target</th>
+                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Actual</th>
+                      <th className="text-right py-1.5 px-3 text-xs font-medium text-muted-foreground">%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Leads */}
+                    <tr className="border-t border-border/50">
+                      <td className="py-1.5 px-3 text-xs font-medium">Leads</td>
+                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.leads_target || 0}</td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.leads_actual || 0}</td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
+                        teamAggregates ? getProgress(teamAggregates.leads_actual, teamAggregates.leads_target).color : 'text-muted-foreground')}>
+                        {teamAggregates ? getProgress(teamAggregates.leads_actual, teamAggregates.leads_target).percent : 0}%
+                      </td>
+                    </tr>
+                    {/* Logins */}
+                    <tr className="border-t border-border/50">
+                      <td className="py-1.5 px-3 text-xs font-medium">Logins</td>
+                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.logins_target || 0}</td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.logins_actual || 0}</td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
+                        teamAggregates ? getProgress(teamAggregates.logins_actual, teamAggregates.logins_target).color : 'text-muted-foreground')}>
+                        {teamAggregates ? getProgress(teamAggregates.logins_actual, teamAggregates.logins_target).percent : 0}%
+                      </td>
+                    </tr>
+                    {/* Enroll */}
+                    <tr className="border-t border-border/50">
+                      <td className="py-1.5 px-3 text-xs font-medium">Enroll</td>
+                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.enroll_target || 0}</td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.enroll_actual || 0}</td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
+                        teamAggregates ? getProgress(teamAggregates.enroll_actual, teamAggregates.enroll_target).color : 'text-muted-foreground')}>
+                        {teamAggregates ? getProgress(teamAggregates.enroll_actual, teamAggregates.enroll_target).percent : 0}%
+                      </td>
+                    </tr>
+                    {/* IL (FI) - Manager specific */}
+                    <tr className="border-t border-border/50 bg-primary/5">
+                      <td className="py-1.5 px-3 text-xs font-medium">IL</td>
+                      <td className="py-1 px-2 text-center">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={managerTargets.fi_target}
+                          onChange={(e) => setManagerTargets(prev => ({ ...prev, fi_target: parseInt(e.target.value) || 0 }))}
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
+                        />
+                      </td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.fiActual ?? 0}</td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
+                        plan ? getProgress(plan.fiActual || 0, managerTargets.fi_target).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.fiActual || 0, managerTargets.fi_target).percent : 0}%
+                      </td>
+                    </tr>
+                    {/* DB - Manager specific */}
+                    <tr className="border-t border-border/50 bg-primary/5">
+                      <td className="py-1.5 px-3 text-xs font-medium">DB</td>
+                      <td className="py-1 px-2 text-center">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={managerTargets.db_target}
+                          onChange={(e) => setManagerTargets(prev => ({ ...prev, db_target: parseInt(e.target.value) || 0 }))}
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
+                        />
+                      </td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.dbActual ?? 0}</td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
+                        plan ? getProgress(plan.dbActual || 0, managerTargets.db_target).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.dbActual || 0, managerTargets.db_target).percent : 0}%
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Save Button for Manager Targets */}
+            <div className="mt-3 flex justify-end">
+              <Button 
+                size="sm"
+                className="h-6 px-4 text-xs"
+                onClick={handleSubmit}
+                disabled={createPlan.isPending || updatePlan.isPending}
+              >
+                Save IL/DB
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Team Incentive Toppers Card */}
+        <Card className="glass-card">
+          <CardHeader className="compact-header pb-1">
+            <CardTitle className="text-sm font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-yellow-500" />
+                Team Incentive - {format(selectedDate, 'MMM yyyy')}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-0">
+            {isLoadingToppers ? (
+              <Skeleton className="h-40" />
+            ) : teamToppers && teamToppers.length > 0 ? (
+              <div className="border rounded overflow-hidden">
+                <Table className="compact-table">
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="py-2 px-3 text-xs w-8">#</TableHead>
+                      <TableHead className="py-2 px-3 text-xs">Agent</TableHead>
+                      <TableHead className="py-2 px-3 text-xs text-center">Enrollments</TableHead>
+                      <TableHead className="py-2 px-3 text-xs text-right">Incentive</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teamToppers.map((member, idx) => (
+                      <TableRow key={member.user_id} className={cn(
+                        "hover:bg-muted/30",
+                        idx === 0 && member.incentive_earned > 0 && "bg-yellow-500/10",
+                        idx === 1 && member.incentive_earned > 0 && "bg-slate-400/10",
+                        idx === 2 && member.incentive_earned > 0 && "bg-amber-600/10",
+                      )}>
+                        <TableCell className="py-1.5 px-3 text-sm font-medium">
+                          {idx === 0 && member.incentive_earned > 0 ? (
+                            <Trophy className="h-4 w-4 text-yellow-500" />
+                          ) : idx === 1 && member.incentive_earned > 0 ? (
+                            <Trophy className="h-4 w-4 text-slate-400" />
+                          ) : idx === 2 && member.incentive_earned > 0 ? (
+                            <Trophy className="h-4 w-4 text-amber-600" />
+                          ) : (
+                            <span className="text-muted-foreground">{idx + 1}</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-1.5 px-3 text-sm font-medium">{member.full_name}</TableCell>
+                        <TableCell className="py-1.5 px-3 text-sm text-center">{member.total_enrollments}</TableCell>
+                        <TableCell className={cn(
+                          "py-1.5 px-3 text-sm text-right font-semibold",
+                          member.incentive_earned > 0 ? "text-success" : "text-muted-foreground"
+                        )}>
+                          ₹{member.incentive_earned.toLocaleString('en-IN')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No team members found</p>
+              </div>
+            )}
+
+            {/* Total Team Incentive */}
+            {teamToppers && teamToppers.length > 0 && (
+              <div className="mt-3 p-3 bg-primary/5 border border-primary/10 rounded flex items-center justify-between">
+                <span className="text-sm font-medium">Total Team Incentive</span>
+                <span className="text-lg font-bold text-success">
+                  ₹{teamToppers.reduce((sum, m) => sum + m.incentive_earned, 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Regular Agent View (existing code)
   return (
     <div className="p-4 space-y-3">
       {/* Compact Header */}
