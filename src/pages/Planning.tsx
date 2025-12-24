@@ -328,30 +328,40 @@ export default function Planning() {
                         {teamAggregates ? getProgress(teamAggregates.enroll_actual, teamAggregates.enroll_target).percent : 0}%
                       </td>
                     </tr>
-                    {/* IL (FI) - Manager specific - Target only */}
+                    {/* IL (FI) - Manager specific */}
                     <tr className="border-t border-border/50 bg-primary/5">
                       <td className="py-1.5 px-3 text-xs font-medium">IL</td>
-                      <td className="py-1 px-2 text-center" colSpan={3}>
+                      <td className="py-1 px-2 text-center">
                         <Input
                           type="number"
                           min="0"
                           value={managerTargets.fi_target}
                           onChange={(e) => setManagerTargets(prev => ({ ...prev, fi_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-20 text-xs text-center mx-auto px-1"
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.fiActual ?? 0}</td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
+                        plan ? getProgress(plan.fiActual || 0, managerTargets.fi_target).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.fiActual || 0, managerTargets.fi_target).percent : 0}%
+                      </td>
                     </tr>
-                    {/* DB - Manager specific - Target only */}
+                    {/* DB - Manager specific */}
                     <tr className="border-t border-border/50 bg-primary/5">
                       <td className="py-1.5 px-3 text-xs font-medium">DB</td>
-                      <td className="py-1 px-2 text-center" colSpan={3}>
+                      <td className="py-1 px-2 text-center">
                         <Input
                           type="number"
                           min="0"
                           value={managerTargets.db_target}
                           onChange={(e) => setManagerTargets(prev => ({ ...prev, db_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-20 text-xs text-center mx-auto px-1"
+                          className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
+                      </td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.dbActual ?? 0}</td>
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
+                        plan ? getProgress(plan.dbActual || 0, managerTargets.db_target).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.dbActual || 0, managerTargets.db_target).percent : 0}%
                       </td>
                     </tr>
                   </tbody>
