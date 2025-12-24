@@ -47,8 +47,6 @@ export default function Planning() {
   const [shownMilestones, setShownMilestones] = useState<Set<number>>(new Set());
   const prevEnrollments = useRef<number>(0);
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
-  const [enrollActualInput, setEnrollActualInput] = useState<number>(0);
-  const [isEditingEnrollActual, setIsEditingEnrollActual] = useState(false);
 
   // Get enrolled contacts for current plan
   const enrolledContacts = useLiveQuery(
@@ -69,15 +67,6 @@ export default function Planning() {
     [plan?.id],
     []
   );
-
-  // Sync enrollActualInput with plan
-  useEffect(() => {
-    if (plan) {
-      setEnrollActualInput(plan.enrollActual);
-      // Only enter edit mode if no enrollments recorded yet
-      setIsEditingEnrollActual(plan.enrollActual === 0);
-    }
-  }, [plan?.enrollActual]);
 
   useEffect(() => {
     if (plan) {
@@ -499,53 +488,21 @@ export default function Planning() {
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center">
-                        {isEditingEnrollActual || (plan?.enrollActual === 0 && enrolledContacts.length === 0) ? (
-                          // Input mode - entering enroll count
-                          <div className="flex items-center justify-center gap-1">
-                            <Input
-                              type="number"
-                              min="0"
-                              value={enrollActualInput}
-                              onChange={(e) => setEnrollActualInput(parseInt(e.target.value) || 0)}
-                              className="h-5 w-12 text-xs text-center px-1"
-                            />
-                            {enrollActualInput > 0 && plan && (
-                              <Button
-                                type="button"
-                                variant="default"
-                                size="sm"
-                                className="h-5 px-2 text-xs"
-                                onClick={async () => {
-                                  // Update the plan with the new enroll actual
-                                  await updatePlan.mutateAsync({
-                                    id: plan.id,
-                                    enroll_actual: enrollActualInput,
-                                  });
-                                  // Open dialog to select applications
-                                  setEnrollmentDialogOpen(true);
-                                  setIsEditingEnrollActual(false);
-                                }}
-                              >
-                                Add
-                              </Button>
-                            )}
-                          </div>
-                        ) : (
-                          // Display mode - showing filled value
-                          <div className="flex items-center justify-center gap-1">
-                            <span className="text-xs font-medium">{plan?.enrollActual ?? 0}</span>
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-xs font-medium">{plan?.enrollActual ?? 0}</span>
+                          {plan && plan.enrollActual > 0 && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               className="h-5 w-5 p-0"
-                              onClick={() => setIsEditingEnrollActual(true)}
-                              title="Edit enrollment count"
+                              onClick={() => setEnrollmentDialogOpen(true)}
+                              title="View/Edit enrolled applications"
                             >
                               <FileText className="h-3 w-3 text-primary" />
                             </Button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </td>
                       <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.enrollActual, plan.enrollTarget).color : 'text-muted-foreground')}>
                         {plan ? getProgress(plan.enrollActual, plan.enrollTarget).percent : 0}%
