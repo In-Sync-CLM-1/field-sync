@@ -215,38 +215,214 @@ export default function TerritoryMap() {
     fetchCustomers();
   }, [currentOrganization]);
 
-  // Update markers on map
+  // Update markers and clusters on map
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !mapLoaded) return;
 
-    // Clear existing markers
+    // Clear existing DOM markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
     const bounds = new mapboxgl.LngLatBounds();
     let hasMarkers = false;
 
-    // Add customer markers (blue squares)
+    // Remove existing cluster layers and sources
+    const layersToRemove = ['clusters', 'cluster-count', 'unclustered-visits', 'customer-markers'];
+    const sourcesToRemove = ['visits-cluster', 'customers-source'];
+
+    try {
+      layersToRemove.forEach(layer => {
+        if (map.current?.getLayer(layer)) {
+          map.current.removeLayer(layer);
+        }
+      });
+      sourcesToRemove.forEach(source => {
+        if (map.current?.getSource(source)) {
+          map.current.removeSource(source);
+        }
+      });
+    } catch (e) {
+      // Map not ready
+    }
+
+    // Create visit GeoJSON features
+    const visitFeatures: GeoJSON.Feature<GeoJSON.Point>[] = visits
+      .filter(v => v.check_in_latitude && v.check_in_longitude)
+      .map(visit => ({
+        type: 'Feature',
+        properties: {
+          id: visit.id,
+          type: 'visit',
+          userName: visit.user_name || 'Unknown User',
+          checkInTime: visit.check_in_time,
+          checkOutTime: visit.check_out_time,
+          notes: visit.notes,
+          completed: !!visit.check_out_time
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [visit.check_in_longitude, visit.check_in_latitude]
+        }
+      }));
+
+    // Add clustered visits source
+    if (visitFeatures.length > 0) {
+      map.current.addSource('visits-cluster', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: visitFeatures
+        },
+        cluster: true,
+        clusterMaxZoom: 14,
+        clusterRadius: 50
+      });
+
+      // Cluster circles
+      map.current.addLayer({
+        id: 'clusters',
+        type: 'circle',
+        source: 'visits-cluster',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': [
+            'step',
+            ['get', 'point_count'],
+            '#10b981', // green for small clusters
+            10,
+            '#f59e0b', // orange for medium
+            30,
+            '#ef4444'  // red for large
+          ],
+          'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            20,
+            10,
+            25,
+            30,
+            30
+          ],
+          'circle-stroke-width': 3,
+          'circle-stroke-color': '#ffffff'
+        }
+      });
+
+      // Cluster count labels
+      map.current.addLayer({
+        id: 'cluster-count',
+        type: 'symbol',
+        source: 'visits-cluster',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 12
+        },
+        paint: {
+          'text-color': '#ffffff'
+        }
+      });
+
+      // Unclustered visit points
+      map.current.addLayer({
+        id: 'unclustered-visits',
+        type: 'circle',
+        source: 'visits-cluster',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': [
+            'case',
+            ['get', 'completed'],
+            '#10b981',
+            '#f59e0b'
+          ],
+          'circle-radius': 10,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff'
+        }
+      });
+
+      // Click on cluster to zoom
+      map.current.on('click', 'clusters', (e) => {
+        const features = map.current!.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+        const clusterId = features[0].properties?.cluster_id;
+        const source = map.current!.getSource('visits-cluster') as mapboxgl.GeoJSONSource;
+        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err) return;
+          map.current!.easeTo({
+            center: (features[0].geometry as GeoJSON.Point).coordinates as [number, number],
+            zoom: zoom
+          });
+        });
+      });
+
+      // Click on unclustered visit to show popup
+      map.current.on('click', 'unclustered-visits', (e) => {
+        const feature = e.features?.[0];
+        if (!feature) return;
+        const coords = (feature.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+        const props = feature.properties;
+        
+        new mapboxgl.Popup({ offset: 15 })
+          .setLngLat(coords)
+          .setHTML(`
+            <div style="padding: 8px; min-width: 200px;">
+              <div style="font-size: 10px; color: ${props?.completed ? '#10b981' : '#f59e0b'}; font-weight: 600; margin-bottom: 4px;">VISIT</div>
+              <h3 style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${props?.userName}</h3>
+              <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">
+                <strong>Check-in:</strong> ${format(new Date(props?.checkInTime), 'PPp')}
+              </div>
+              ${props?.checkOutTime ? `
+                <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">
+                  <strong>Check-out:</strong> ${format(new Date(props?.checkOutTime), 'PPp')}
+                </div>
+              ` : '<div style="font-size: 14px; color: #f59e0b; margin-bottom: 4px;">Still in progress</div>'}
+              ${props?.notes ? `<div style="font-size: 14px; color: #6b7280; margin-top: 8px;"><strong>Notes:</strong> ${props?.notes}</div>` : ''}
+            </div>
+          `)
+          .addTo(map.current!);
+      });
+
+      // Cursor changes
+      map.current.on('mouseenter', 'clusters', () => {
+        map.current!.getCanvas().style.cursor = 'pointer';
+      });
+      map.current.on('mouseleave', 'clusters', () => {
+        map.current!.getCanvas().style.cursor = '';
+      });
+      map.current.on('mouseenter', 'unclustered-visits', () => {
+        map.current!.getCanvas().style.cursor = 'pointer';
+      });
+      map.current.on('mouseleave', 'unclustered-visits', () => {
+        map.current!.getCanvas().style.cursor = '';
+      });
+
+      visitFeatures.forEach(f => {
+        bounds.extend(f.geometry.coordinates as [number, number]);
+        hasMarkers = true;
+      });
+    }
+
+    // Add customer markers as DOM elements (not clustered, they're usually fewer)
     if (showCustomers) {
       customers.forEach((customer) => {
         if (!customer.latitude || !customer.longitude) return;
 
         const el = document.createElement('div');
         el.className = 'customer-marker';
-        el.style.width = '24px';
-        el.style.height = '24px';
+        el.style.width = '20px';
+        el.style.height = '20px';
         el.style.borderRadius = '4px';
         el.style.backgroundColor = '#3b82f6';
         el.style.border = '2px solid white';
         el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
         el.style.cursor = 'pointer';
 
-        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+        const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
           <div style="padding: 8px; min-width: 180px;">
             <div style="font-size: 10px; color: #3b82f6; font-weight: 600; margin-bottom: 4px;">CUSTOMER</div>
-            <h3 style="font-weight: 600; margin-bottom: 4px; color: #1f2937;">
-              ${customer.name}
-            </h3>
+            <h3 style="font-weight: 600; margin-bottom: 4px; color: #1f2937;">${customer.name}</h3>
             ${customer.company_name ? `<div style="font-size: 13px; color: #6b7280; margin-bottom: 4px;">${customer.company_name}</div>` : ''}
             ${customer.address ? `<div style="font-size: 12px; color: #9ca3af;">${customer.address}</div>` : ''}
             ${customer.phone ? `<div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">📞 ${customer.phone}</div>` : ''}
@@ -264,57 +440,11 @@ export default function TerritoryMap() {
       });
     }
 
-    // Add visit markers (circles)
-    visits.forEach((visit) => {
-      if (!visit.check_in_latitude || !visit.check_in_longitude) return;
-
-      const el = document.createElement('div');
-      el.className = 'visit-marker';
-      el.style.width = '28px';
-      el.style.height = '28px';
-      el.style.borderRadius = '50%';
-      el.style.backgroundColor = visit.check_out_time ? '#10b981' : '#f59e0b';
-      el.style.border = '3px solid white';
-      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-      el.style.cursor = 'pointer';
-
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div style="padding: 8px; min-width: 200px;">
-          <div style="font-size: 10px; color: ${visit.check_out_time ? '#10b981' : '#f59e0b'}; font-weight: 600; margin-bottom: 4px;">VISIT</div>
-          <h3 style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">
-            ${visit.user_name || 'Unknown User'}
-          </h3>
-          <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">
-            <strong>Check-in:</strong> ${format(new Date(visit.check_in_time), 'PPp')}
-          </div>
-          ${visit.check_out_time ? `
-            <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">
-              <strong>Check-out:</strong> ${format(new Date(visit.check_out_time), 'PPp')}
-            </div>
-          ` : '<div style="font-size: 14px; color: #f59e0b; margin-bottom: 4px;">Still in progress</div>'}
-          ${visit.notes ? `
-            <div style="font-size: 14px; color: #6b7280; margin-top: 8px;">
-              <strong>Notes:</strong> ${visit.notes}
-            </div>
-          ` : ''}
-        </div>
-      `);
-
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([visit.check_in_longitude, visit.check_in_latitude])
-        .setPopup(popup)
-        .addTo(map.current!);
-
-      markers.current.push(marker);
-      bounds.extend([visit.check_in_longitude, visit.check_in_latitude]);
-      hasMarkers = true;
-    });
-
-    // Fit map to markers
-    if (hasMarkers) {
+    // Fit map to all markers
+    if (hasMarkers && !bounds.isEmpty()) {
       map.current.fitBounds(bounds, { padding: 50, maxZoom: 15 });
     }
-  }, [visits, customers, showCustomers]);
+  }, [visits, customers, showCustomers, mapLoaded]);
 
   // Draw routes connecting visits chronologically
   useEffect(() => {
