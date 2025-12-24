@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, MapPin, Users } from 'lucide-react';
+import { CalendarIcon, MapPin, Users, Route } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -56,6 +56,8 @@ export default function TerritoryMap() {
   const [loading, setLoading] = useState(true);
   const [isManager, setIsManager] = useState(false);
   const [showCustomers, setShowCustomers] = useState(true);
+  const [showRoutes, setShowRoutes] = useState(true);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Check if user is a manager
   useEffect(() => {
@@ -114,6 +116,10 @@ export default function TerritoryMap() {
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    map.current.on('load', () => {
+      setMapLoaded(true);
+    });
 
     return () => {
       map.current?.remove();
@@ -310,6 +316,88 @@ export default function TerritoryMap() {
     }
   }, [visits, customers, showCustomers]);
 
+  // Draw routes connecting visits chronologically
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    const sourceId = 'visit-routes';
+    const layerId = 'visit-routes-layer';
+
+    // Remove existing layer and source
+    if (map.current.getLayer(layerId)) {
+      map.current.removeLayer(layerId);
+    }
+    if (map.current.getSource(sourceId)) {
+      map.current.removeSource(sourceId);
+    }
+
+    if (!showRoutes || visits.length < 2) return;
+
+    // Sort visits by check_in_time and group by user
+    const visitsByUser = new Map<string, Visit[]>();
+    visits.forEach(visit => {
+      if (!visit.check_in_latitude || !visit.check_in_longitude) return;
+      const userVisits = visitsByUser.get(visit.user_id) || [];
+      userVisits.push(visit);
+      visitsByUser.set(visit.user_id, userVisits);
+    });
+
+    // Create line features for each user's route
+    const features: GeoJSON.Feature<GeoJSON.LineString>[] = [];
+    const colors = ['#ef4444', '#3b82f6', '#22c55e', '#a855f7', '#f97316', '#06b6d4'];
+    let colorIndex = 0;
+
+    visitsByUser.forEach((userVisits, userId) => {
+      if (userVisits.length < 2) return;
+
+      // Sort by check_in_time
+      const sorted = [...userVisits].sort((a, b) => 
+        new Date(a.check_in_time).getTime() - new Date(b.check_in_time).getTime()
+      );
+
+      const coordinates = sorted.map(v => [v.check_in_longitude, v.check_in_latitude]);
+
+      features.push({
+        type: 'Feature',
+        properties: { 
+          userId,
+          color: colors[colorIndex % colors.length]
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates
+        }
+      });
+      colorIndex++;
+    });
+
+    if (features.length === 0) return;
+
+    map.current.addSource(sourceId, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features
+      }
+    });
+
+    map.current.addLayer({
+      id: layerId,
+      type: 'line',
+      source: sourceId,
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': ['get', 'color'],
+        'line-width': 3,
+        'line-opacity': 0.7,
+        'line-dasharray': [2, 1]
+      }
+    });
+  }, [visits, showRoutes, mapLoaded]);
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <div className="p-3 border-b bg-background">
@@ -395,6 +483,20 @@ export default function TerritoryMap() {
             <Label htmlFor="show-customers" className="text-[10px] text-muted-foreground cursor-pointer">
               <Users className="h-3 w-3 inline mr-0.5" />
               {customers.length}
+            </Label>
+          </div>
+
+          {/* Toggle routes */}
+          <div className="flex items-center gap-1.5">
+            <Switch
+              id="show-routes"
+              checked={showRoutes}
+              onCheckedChange={setShowRoutes}
+              className="scale-75"
+            />
+            <Label htmlFor="show-routes" className="text-[10px] text-muted-foreground cursor-pointer">
+              <Route className="h-3 w-3 inline mr-0.5" />
+              Routes
             </Label>
           </div>
 
