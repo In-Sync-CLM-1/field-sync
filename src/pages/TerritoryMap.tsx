@@ -233,7 +233,7 @@ export default function TerritoryMap() {
   }, [visits]);
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       <div className="p-3 border-b bg-background">
         <h1 className="text-xl font-bold mb-2 flex items-center gap-2">
           <MapPin className="h-5 w-5" />
