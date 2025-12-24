@@ -4,7 +4,7 @@ import { useContacts } from '@/hooks/useContacts';
 import { usePagination } from '@/hooks/usePagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/store/authStore';
@@ -63,20 +63,20 @@ export default function Contacts() {
   } = usePagination({ items: contacts, itemsPerPage: 10 });
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Contacts</h1>
-          <div className="flex items-center gap-2 mt-1">
+          <h1 className="text-xl font-bold tracking-tight">Contacts</h1>
+          <div className="flex items-center gap-2">
             {currentOrganization && (
-              <Badge variant="outline" className="gap-1">
+              <Badge variant="outline" className="gap-1 text-xs">
                 <Building2 className="h-3 w-3" />
                 {currentOrganization.name}
               </Badge>
             )}
-            <p className="text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {contacts.length} contacts
-            </p>
+            </span>
           </div>
         </div>
         <Button 
@@ -85,33 +85,33 @@ export default function Contacts() {
           variant="outline"
           size="sm"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Syncing...' : 'Sync'}
+          <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+          {syncing ? 'Syncing' : 'Sync'}
         </Button>
       </div>
 
       {/* Search and Filter */}
       <Card>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="p-3 space-y-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name, email, phone, or city..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-8 h-8 text-sm"
             />
           </div>
 
           <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as 'all' | 'active' | 'inactive')}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">
+            <TabsList className="grid w-full grid-cols-3 h-8">
+              <TabsTrigger value="all" className="text-xs">
                 All ({statusCounts.all})
               </TabsTrigger>
-              <TabsTrigger value="active">
+              <TabsTrigger value="active" className="text-xs">
                 Active ({statusCounts.active})
               </TabsTrigger>
-              <TabsTrigger value="inactive">
+              <TabsTrigger value="inactive" className="text-xs">
                 Inactive ({statusCounts.inactive})
               </TabsTrigger>
             </TabsList>
@@ -120,86 +120,74 @@ export default function Contacts() {
       </Card>
 
       {/* Contact List */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {totalItems > 0 && (
-          <p className="text-sm text-muted-foreground">
-            Showing {startIndex}-{endIndex} of {totalItems} contacts
+          <p className="text-xs text-muted-foreground">
+            {startIndex}-{endIndex} of {totalItems}
           </p>
         )}
 
         {contacts.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <User className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium mb-2">No contacts found</p>
-              <p className="text-sm text-muted-foreground mb-4">
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <User className="h-10 w-10 text-muted-foreground mb-3" />
+              <p className="text-sm font-medium mb-1">No contacts found</p>
+              <p className="text-xs text-muted-foreground mb-3">
                 {searchQuery 
-                  ? 'Try a different search term' 
+                  ? 'Try a different search' 
                   : !currentOrganization 
-                    ? 'Please select an organization first'
-                    : 'Sync from CRM or add your first contact'}
+                    ? 'Select an organization'
+                    : 'Sync or add contacts'}
               </p>
               {currentOrganization && (
                 <div className="flex gap-2">
-                  <Button onClick={syncFromDatabase} disabled={syncing} variant="outline">
-                    <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                    {syncing ? 'Syncing...' : 'Sync'}
+                  <Button onClick={syncFromDatabase} disabled={syncing} variant="outline" size="sm">
+                    <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+                    Sync
                   </Button>
-                  <Button onClick={() => navigate('/contacts/new')}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Contact
+                  <Button size="sm" onClick={() => navigate('/contacts/new')}>
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add
                   </Button>
                 </div>
               )}
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {paginatedItems.map((contact) => (
             <Card
               key={contact.id}
               className="cursor-pointer hover:bg-accent/50 transition-colors"
               onClick={() => navigate(`/contacts/${contact.id}`)}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{contact.name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2">
-                      {contact.city && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {contact.city}
-                        </span>
-                      )}
-                      {contact.territory && (
-                        <Badge variant="outline" className="text-xs">
-                          {contact.territory}
-                        </Badge>
-                      )}
-                    </CardDescription>
-                  </div>
+              <CardContent className="p-3">
+                <div className="flex items-start justify-between mb-1">
+                  <CardTitle className="text-sm font-medium">{contact.name}</CardTitle>
+                  {contact.territory && (
+                    <Badge variant="outline" className="text-[10px] h-5">
+                      {contact.territory}
+                    </Badge>
+                  )}
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                  {contact.city && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {contact.city}
+                    </span>
+                  )}
                   {contact.phone && (
                     <span className="flex items-center gap-1">
                       <Phone className="h-3 w-3" />
                       {contact.phone}
                     </span>
                   )}
-                  {contact.email && (
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      {contact.email}
-                    </span>
-                  )}
                 </div>
                 {contact.tags && contact.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {contact.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {contact.tags.slice(0, 3).map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-[10px] h-4 px-1.5">
                         {tag}
                       </Badge>
                     ))}

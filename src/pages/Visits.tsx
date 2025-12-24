@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useVisits } from '@/hooks/useVisits';
 import { usePagination } from '@/hooks/usePagination';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, MapPin, Clock } from 'lucide-react';
+import { Plus, Clock } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -79,52 +79,52 @@ export default function Visits() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Visits</h1>
-          <p className="text-muted-foreground">Manage field visits and track locations</p>
+          <h1 className="text-xl font-bold tracking-tight">Visits</h1>
+          <p className="text-sm text-muted-foreground">Manage field visits</p>
         </div>
-        <Button onClick={() => navigate('/visits/new')}>
-          <Plus className="w-4 h-4 mr-2" />
+        <Button size="sm" onClick={() => navigate('/visits/new')}>
+          <Plus className="w-4 h-4 mr-1" />
           New Visit
         </Button>
       </div>
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-2 mb-3">
         <Input
-          placeholder="Search by customer or notes..."
+          placeholder="Search..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
+          className="max-w-xs h-8 text-sm"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+          <SelectTrigger className="w-[140px] h-8 text-sm">
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="in_progress">In Progress</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {totalItems > 0 && (
-          <p className="text-sm text-muted-foreground">
-            Showing {startIndex}-{endIndex} of {totalItems} visits
+          <p className="text-xs text-muted-foreground">
+            {startIndex}-{endIndex} of {totalItems}
           </p>
         )}
 
-        <div className="grid gap-4">
+        <div className="grid gap-2">
           {visits.length === 0 ? (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground mb-4">No visits found</p>
-                <Button onClick={() => navigate('/visits/new')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Visit
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <p className="text-muted-foreground mb-3 text-sm">No visits found</p>
+                <Button size="sm" onClick={() => navigate('/visits/new')}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Create First Visit
                 </Button>
               </CardContent>
             </Card>
@@ -135,31 +135,22 @@ export default function Visits() {
                 className="cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => navigate(`/visits/${visit.id}`)}
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {visit.customer?.name || 'Unknown Customer'}
-                      </CardTitle>
-                      {visit.notes && (
-                        <p className="text-sm text-muted-foreground mt-1">{visit.notes}</p>
-                      )}
-                    </div>
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between mb-1">
+                    <CardTitle className="text-sm font-medium">
+                      {visit.customer?.name || 'Unknown Customer'}
+                    </CardTitle>
                     {getStatusBadge(visit)}
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span>{format(new Date(visit.check_in_time), 'PPp')}</span>
-                    <span className="mx-2">•</span>
-                    <span>{formatDuration(visit.check_in_time, visit.check_out_time)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span className="font-mono text-xs">
-                      {visit.check_in_latitude.toFixed(6)}, {visit.check_in_longitude.toFixed(6)}
+                  {visit.notes && (
+                    <p className="text-xs text-muted-foreground mb-1 line-clamp-1">{visit.notes}</p>
+                  )}
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {format(new Date(visit.check_in_time), 'PP')}
                     </span>
+                    <span>{formatDuration(visit.check_in_time, visit.check_out_time)}</span>
                   </div>
                 </CardContent>
               </Card>
