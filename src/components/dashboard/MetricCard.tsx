@@ -13,27 +13,25 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, change, icon: Icon, trend, subtitle }: MetricCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {change && (
-          <p className={cn(
-            "text-xs mt-1",
-            trend === 'up' ? 'text-green-600' :
-            trend === 'down' ? 'text-red-600' :
-            'text-muted-foreground'
-          )}>
-            {change}
-          </p>
-        )}
-        {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-        )}
-      </CardContent>
+    <Card className="p-3">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-medium text-muted-foreground">{title}</span>
+        {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+      </div>
+      <div className="text-xl font-bold">{value}</div>
+      {change && (
+        <p className={cn(
+          "text-[10px]",
+          trend === 'up' ? 'text-green-600' :
+          trend === 'down' ? 'text-red-600' :
+          'text-muted-foreground'
+        )}>
+          {change}
+        </p>
+      )}
+      {subtitle && (
+        <p className="text-[10px] text-muted-foreground">{subtitle}</p>
+      )}
     </Card>
   );
 }
