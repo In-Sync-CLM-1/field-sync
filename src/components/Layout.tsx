@@ -41,7 +41,7 @@ export default function Layout() {
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Users, label: 'Contacts', path: '/contacts' },
+    { icon: Users, label: 'Leads', path: '/leads' },
     { icon: MapPin, label: 'Visits', path: '/visits' },
     { icon: Map, label: 'Map', path: '/visits/map' },
   ];
