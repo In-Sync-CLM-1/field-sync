@@ -1,29 +1,51 @@
 import Dexie, { Table } from 'dexie';
 
 // Database schema interfaces
-export interface Contact {
+export interface Lead {
   id: string;
   organizationId?: string;
+  
+  // Core Lead Fields
+  branch?: string;
+  leadId?: string;  // Custom lead identifier (e.g., LD-001)
+  customerId?: string;  // Custom customer identifier (e.g., CUST-001)
+  status?: string;
+  assignedUserId?: string;
+  entityName?: string;
   name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
+  
+  // Loan Details
+  loanAmount?: number;
+  loanPurpose?: string;
+  
+  // Location
+  villageCity?: string;
+  district?: string;
+  state?: string;
   latitude?: number;
   longitude?: number;
-  lastVerifiedLocationAt?: string;
-  status?: string;
-  territory?: string;
-  tags?: string[];
-  applicationId?: string; // Application ID for enrollment tracking
+  
+  // Contact & Follow-up
+  customerResponse?: string;
+  mobileNo?: string;
+  followUpDate?: string;
+  leadSource?: string;
+  
+  // Audit Fields
+  createdBy?: string;
+  createdAt?: Date;
+  approvedBy?: string;
+  approvedAt?: Date;
+  
+  // Sync
   syncStatus: 'synced' | 'pending' | 'failed';
   lastSyncedAt?: Date;
   updatedAt: Date;
-  crmId?: string;
 }
 
 // Keep Customer as alias for backward compatibility
-export type Customer = Contact;
+export type Customer = Lead;
+export type Contact = Lead;
 
 export interface Visit {
   id: string;
@@ -122,7 +144,7 @@ export interface PlanEnrollment {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'visit' | 'photo' | 'form' | 'communication' | 'customer' | 'daily_plan' | 'plan_enrollment';
+  type: 'visit' | 'photo' | 'form' | 'communication' | 'customer' | 'lead' | 'daily_plan' | 'plan_enrollment';
   entityId: string;
   action: 'create' | 'update' | 'delete';
   data: any;
@@ -148,11 +170,11 @@ export interface Communication {
 }
 
 // Database version - ONLY increment this when schema actually changes
-// Current: 14 (added planEnrollments table and applicationId to customers)
-export const DB_VERSION = 14;
+// Current: 15 (renamed customers to leads with new schema)
+export const DB_VERSION = 15;
 
 class FieldVisitDatabase extends Dexie {
-  customers!: Table<Customer, string>;
+  leads!: Table<Lead, string>;
   visits!: Table<Visit, string>;
   photos!: Table<Photo, string>;
   forms!: Table<FormSchema, string>;
@@ -168,7 +190,7 @@ class FieldVisitDatabase extends Dexie {
     // Define schema - Dexie handles all version upgrades automatically
     // STABLE VERSION: Do not change unless schema actually needs modification
     this.version(DB_VERSION).stores({
-      customers: 'id, organizationId, name, city, territory, status, applicationId, syncStatus, updatedAt',
+      leads: 'id, organizationId, name, villageCity, district, state, status, leadId, customerId, syncStatus, updatedAt',
       visits: 'id, customerId, userId, checkInTime, status, syncStatus, createdAt',
       photos: 'id, visitId, timestamp, syncStatus',
       forms: 'id, name, isActive, version, createdAt',

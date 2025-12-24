@@ -16,8 +16,8 @@ import TeamDashboard from "./pages/TeamDashboard";
 import AnalyticsHub from "./pages/AnalyticsHub";
 import TerritoryMap from "./pages/TerritoryMap";
 import PerformanceBoard from "./pages/PerformanceBoard";
-import Contacts from "./pages/Contacts";
-import ContactDetail from "./pages/ContactDetail";
+import Leads from "./pages/Leads";
+import LeadDetail from "./pages/LeadDetail";
 import Visits from "./pages/Visits";
 import VisitDetail from "./pages/VisitDetail";
 import NewVisit from "./pages/NewVisit";
@@ -62,8 +62,8 @@ const App = () => (
                     <PerformanceBoard />
                   </AdminRoute>
                 } />
-                <Route path="contacts" element={<Contacts />} />
-                <Route path="contacts/:id" element={<ContactDetail />} />
+                <Route path="leads" element={<Leads />} />
+                <Route path="leads/:id" element={<LeadDetail />} />
                 <Route path="visits" element={<Visits />} />
                 <Route path="visits/map" element={<Visits />} />
                 <Route path="visits/new" element={<NewVisit />} />

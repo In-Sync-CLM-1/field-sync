@@ -270,6 +270,119 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          assigned_user_id: string | null
+          branch: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_response: string | null
+          district: string | null
+          entity_name: string | null
+          follow_up_date: string | null
+          id: string
+          latitude: number | null
+          lead_id: string | null
+          lead_source: string | null
+          loan_amount: number | null
+          loan_purpose: string | null
+          longitude: number | null
+          mobile_no: string | null
+          name: string
+          organization_id: string
+          state: string | null
+          status: string
+          updated_at: string
+          village_city: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_user_id?: string | null
+          branch?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_response?: string | null
+          district?: string | null
+          entity_name?: string | null
+          follow_up_date?: string | null
+          id?: string
+          latitude?: number | null
+          lead_id?: string | null
+          lead_source?: string | null
+          loan_amount?: number | null
+          loan_purpose?: string | null
+          longitude?: number | null
+          mobile_no?: string | null
+          name: string
+          organization_id: string
+          state?: string | null
+          status?: string
+          updated_at?: string
+          village_city?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_user_id?: string | null
+          branch?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_response?: string | null
+          district?: string | null
+          entity_name?: string | null
+          follow_up_date?: string | null
+          id?: string
+          latitude?: number | null
+          lead_id?: string | null
+          lead_source?: string | null
+          loan_amount?: number | null
+          loan_purpose?: string | null
+          longitude?: number | null
+          mobile_no?: string | null
+          name?: string
+          organization_id?: string
+          state?: string | null
+          status?: string
+          updated_at?: string
+          village_city?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_incentive_targets: {
         Row: {
           created_at: string
