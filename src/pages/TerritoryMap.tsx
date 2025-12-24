@@ -215,7 +215,76 @@ export default function TerritoryMap() {
     fetchCustomers();
   }, [currentOrganization]);
 
-  // Update markers and clusters on map
+  // Set up map event handlers once when map is loaded
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    const mapInstance = map.current;
+
+    // Click on cluster to zoom
+    const handleClusterClick = (e: mapboxgl.MapMouseEvent) => {
+      const features = mapInstance.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+      if (!features.length) return;
+      const clusterId = features[0].properties?.cluster_id;
+      const source = mapInstance.getSource('visits-cluster') as mapboxgl.GeoJSONSource;
+      if (!source) return;
+      source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return;
+        mapInstance.easeTo({
+          center: (features[0].geometry as GeoJSON.Point).coordinates as [number, number],
+          zoom: zoom ?? 14
+        });
+      });
+    };
+
+    // Click on unclustered visit to show popup
+    const handleVisitClick = (e: mapboxgl.MapMouseEvent) => {
+      const feature = e.features?.[0];
+      if (!feature) return;
+      const coords = (feature.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
+      const props = feature.properties;
+      
+      new mapboxgl.Popup({ offset: 15 })
+        .setLngLat(coords)
+        .setHTML(`
+          <div style="padding: 8px; min-width: 200px;">
+            <div style="font-size: 10px; color: ${props?.completed ? '#10b981' : '#f59e0b'}; font-weight: 600; margin-bottom: 4px;">VISIT</div>
+            <h3 style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${props?.userName}</h3>
+            <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">
+              <strong>Check-in:</strong> ${props?.checkInTime ? format(new Date(props.checkInTime), 'PPp') : 'N/A'}
+            </div>
+            ${props?.checkOutTime ? `
+              <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">
+                <strong>Check-out:</strong> ${format(new Date(props.checkOutTime), 'PPp')}
+              </div>
+            ` : '<div style="font-size: 14px; color: #f59e0b; margin-bottom: 4px;">Still in progress</div>'}
+            ${props?.notes ? `<div style="font-size: 14px; color: #6b7280; margin-top: 8px;"><strong>Notes:</strong> ${props.notes}</div>` : ''}
+          </div>
+        `)
+        .addTo(mapInstance);
+    };
+
+    const setCursorPointer = () => { mapInstance.getCanvas().style.cursor = 'pointer'; };
+    const setCursorDefault = () => { mapInstance.getCanvas().style.cursor = ''; };
+
+    mapInstance.on('click', 'clusters', handleClusterClick);
+    mapInstance.on('click', 'unclustered-visits', handleVisitClick);
+    mapInstance.on('mouseenter', 'clusters', setCursorPointer);
+    mapInstance.on('mouseleave', 'clusters', setCursorDefault);
+    mapInstance.on('mouseenter', 'unclustered-visits', setCursorPointer);
+    mapInstance.on('mouseleave', 'unclustered-visits', setCursorDefault);
+
+    return () => {
+      mapInstance.off('click', 'clusters', handleClusterClick);
+      mapInstance.off('click', 'unclustered-visits', handleVisitClick);
+      mapInstance.off('mouseenter', 'clusters', setCursorPointer);
+      mapInstance.off('mouseleave', 'clusters', setCursorDefault);
+      mapInstance.off('mouseenter', 'unclustered-visits', setCursorPointer);
+      mapInstance.off('mouseleave', 'unclustered-visits', setCursorDefault);
+    };
+  }, [mapLoaded]);
+
+  // Update markers and clusters on map (data only)
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
@@ -227,8 +296,8 @@ export default function TerritoryMap() {
     let hasMarkers = false;
 
     // Remove existing cluster layers and sources
-    const layersToRemove = ['clusters', 'cluster-count', 'unclustered-visits', 'customer-markers'];
-    const sourcesToRemove = ['visits-cluster', 'customers-source'];
+    const layersToRemove = ['clusters', 'cluster-count', 'unclustered-visits'];
+    const sourcesToRemove = ['visits-cluster'];
 
     try {
       layersToRemove.forEach(layer => {
@@ -243,6 +312,7 @@ export default function TerritoryMap() {
       });
     } catch (e) {
       // Map not ready
+      return;
     }
 
     // Create visit GeoJSON features
@@ -288,11 +358,11 @@ export default function TerritoryMap() {
           'circle-color': [
             'step',
             ['get', 'point_count'],
-            '#10b981', // green for small clusters
+            '#10b981',
             10,
-            '#f59e0b', // orange for medium
+            '#f59e0b',
             30,
-            '#ef4444'  // red for large
+            '#ef4444'
           ],
           'circle-radius': [
             'step',
@@ -343,68 +413,13 @@ export default function TerritoryMap() {
         }
       });
 
-      // Click on cluster to zoom
-      map.current.on('click', 'clusters', (e) => {
-        const features = map.current!.queryRenderedFeatures(e.point, { layers: ['clusters'] });
-        const clusterId = features[0].properties?.cluster_id;
-        const source = map.current!.getSource('visits-cluster') as mapboxgl.GeoJSONSource;
-        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err) return;
-          map.current!.easeTo({
-            center: (features[0].geometry as GeoJSON.Point).coordinates as [number, number],
-            zoom: zoom
-          });
-        });
-      });
-
-      // Click on unclustered visit to show popup
-      map.current.on('click', 'unclustered-visits', (e) => {
-        const feature = e.features?.[0];
-        if (!feature) return;
-        const coords = (feature.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
-        const props = feature.properties;
-        
-        new mapboxgl.Popup({ offset: 15 })
-          .setLngLat(coords)
-          .setHTML(`
-            <div style="padding: 8px; min-width: 200px;">
-              <div style="font-size: 10px; color: ${props?.completed ? '#10b981' : '#f59e0b'}; font-weight: 600; margin-bottom: 4px;">VISIT</div>
-              <h3 style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${props?.userName}</h3>
-              <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">
-                <strong>Check-in:</strong> ${format(new Date(props?.checkInTime), 'PPp')}
-              </div>
-              ${props?.checkOutTime ? `
-                <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">
-                  <strong>Check-out:</strong> ${format(new Date(props?.checkOutTime), 'PPp')}
-                </div>
-              ` : '<div style="font-size: 14px; color: #f59e0b; margin-bottom: 4px;">Still in progress</div>'}
-              ${props?.notes ? `<div style="font-size: 14px; color: #6b7280; margin-top: 8px;"><strong>Notes:</strong> ${props?.notes}</div>` : ''}
-            </div>
-          `)
-          .addTo(map.current!);
-      });
-
-      // Cursor changes
-      map.current.on('mouseenter', 'clusters', () => {
-        map.current!.getCanvas().style.cursor = 'pointer';
-      });
-      map.current.on('mouseleave', 'clusters', () => {
-        map.current!.getCanvas().style.cursor = '';
-      });
-      map.current.on('mouseenter', 'unclustered-visits', () => {
-        map.current!.getCanvas().style.cursor = 'pointer';
-      });
-      map.current.on('mouseleave', 'unclustered-visits', () => {
-        map.current!.getCanvas().style.cursor = '';
-      });
-
       visitFeatures.forEach(f => {
         bounds.extend(f.geometry.coordinates as [number, number]);
         hasMarkers = true;
       });
     }
 
-    // Add customer markers as DOM elements (not clustered, they're usually fewer)
+    // Add customer markers as DOM elements
     if (showCustomers) {
       customers.forEach((customer) => {
         if (!customer.latitude || !customer.longitude) return;
