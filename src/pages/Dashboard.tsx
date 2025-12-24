@@ -95,10 +95,10 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Quick Actions - horizontal scroll on mobile */}
+      {/* Quick Actions - grid layout */}
       <div>
         <h2 className="text-sm font-medium text-muted-foreground mb-2">Quick Actions</h2>
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
@@ -106,7 +106,7 @@ export default function Dashboard() {
                 key={action.label}
                 variant={action.variant}
                 size="sm"
-                className="flex-shrink-0 gap-2"
+                className="gap-2"
                 onClick={action.action}
               >
                 <Icon className="h-4 w-4" />
