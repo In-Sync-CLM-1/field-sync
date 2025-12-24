@@ -248,12 +248,12 @@ export default function Planning() {
                   min="0"
                   value={monthlyTargetInput}
                   onChange={(e) => setMonthlyTargetInput(parseInt(e.target.value) || 0)}
-                  className="h-7 w-20 text-sm px-2"
+                  className="h-5 w-20 text-xs px-2"
                   placeholder="0"
                 />
                 <Button 
                   size="sm" 
-                  className="h-7 px-3 text-xs"
+                  className="h-5 px-3 text-xs"
                   onClick={handleMonthlyTargetSave}
                   disabled={upsertTarget.isPending}
                 >
