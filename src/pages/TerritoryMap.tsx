@@ -4,10 +4,12 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, MapPin } from 'lucide-react';
+import { CalendarIcon, MapPin, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -24,6 +26,16 @@ interface Visit {
   user_name?: string;
 }
 
+interface Customer {
+  id: string;
+  name: string;
+  company_name: string | null;
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  phone: string | null;
+}
+
 interface TeamMember {
   id: string;
   full_name: string;
@@ -36,12 +48,14 @@ export default function TerritoryMap() {
   
   const { user, currentOrganization } = useAuthStore();
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
   const [dateTo, setDateTo] = useState<Date | undefined>(new Date());
   const [loading, setLoading] = useState(true);
   const [isManager, setIsManager] = useState(false);
+  const [showCustomers, setShowCustomers] = useState(true);
 
   // Check if user is a manager
   useEffect(() => {
@@ -172,24 +186,86 @@ export default function TerritoryMap() {
     fetchVisits();
   }, [user, currentOrganization, selectedUser, dateFrom, dateTo, isManager]);
 
+  // Fetch customers with locations
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      if (!currentOrganization) return;
+
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, name, company_name, latitude, longitude, address, phone')
+        .eq('organization_id', currentOrganization.id)
+        .not('latitude', 'is', null)
+        .not('longitude', 'is', null);
+
+      if (error) {
+        console.error('Error fetching customers:', error);
+        return;
+      }
+
+      setCustomers(data || []);
+    };
+
+    fetchCustomers();
+  }, [currentOrganization]);
+
   // Update markers on map
   useEffect(() => {
-    if (!map.current || !visits.length) return;
+    if (!map.current) return;
 
     // Clear existing markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // Add new markers
     const bounds = new mapboxgl.LngLatBounds();
+    let hasMarkers = false;
 
+    // Add customer markers (blue squares)
+    if (showCustomers) {
+      customers.forEach((customer) => {
+        if (!customer.latitude || !customer.longitude) return;
+
+        const el = document.createElement('div');
+        el.className = 'customer-marker';
+        el.style.width = '24px';
+        el.style.height = '24px';
+        el.style.borderRadius = '4px';
+        el.style.backgroundColor = '#3b82f6';
+        el.style.border = '2px solid white';
+        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+        el.style.cursor = 'pointer';
+
+        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
+          <div style="padding: 8px; min-width: 180px;">
+            <div style="font-size: 10px; color: #3b82f6; font-weight: 600; margin-bottom: 4px;">CUSTOMER</div>
+            <h3 style="font-weight: 600; margin-bottom: 4px; color: #1f2937;">
+              ${customer.name}
+            </h3>
+            ${customer.company_name ? `<div style="font-size: 13px; color: #6b7280; margin-bottom: 4px;">${customer.company_name}</div>` : ''}
+            ${customer.address ? `<div style="font-size: 12px; color: #9ca3af;">${customer.address}</div>` : ''}
+            ${customer.phone ? `<div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">📞 ${customer.phone}</div>` : ''}
+          </div>
+        `);
+
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([Number(customer.longitude), Number(customer.latitude)])
+          .setPopup(popup)
+          .addTo(map.current!);
+
+        markers.current.push(marker);
+        bounds.extend([Number(customer.longitude), Number(customer.latitude)]);
+        hasMarkers = true;
+      });
+    }
+
+    // Add visit markers (circles)
     visits.forEach((visit) => {
       if (!visit.check_in_latitude || !visit.check_in_longitude) return;
 
       const el = document.createElement('div');
       el.className = 'visit-marker';
-      el.style.width = '30px';
-      el.style.height = '30px';
+      el.style.width = '28px';
+      el.style.height = '28px';
       el.style.borderRadius = '50%';
       el.style.backgroundColor = visit.check_out_time ? '#10b981' : '#f59e0b';
       el.style.border = '3px solid white';
@@ -198,6 +274,7 @@ export default function TerritoryMap() {
 
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <div style="padding: 8px; min-width: 200px;">
+          <div style="font-size: 10px; color: ${visit.check_out_time ? '#10b981' : '#f59e0b'}; font-weight: 600; margin-bottom: 4px;">VISIT</div>
           <h3 style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">
             ${visit.user_name || 'Unknown User'}
           </h3>
@@ -224,13 +301,14 @@ export default function TerritoryMap() {
 
       markers.current.push(marker);
       bounds.extend([visit.check_in_longitude, visit.check_in_latitude]);
+      hasMarkers = true;
     });
 
     // Fit map to markers
-    if (visits.length > 0) {
+    if (hasMarkers) {
       map.current.fitBounds(bounds, { padding: 50, maxZoom: 15 });
     }
-  }, [visits]);
+  }, [visits, customers, showCustomers]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -305,6 +383,20 @@ export default function TerritoryMap() {
               </SelectContent>
             </Select>
           )}
+
+          {/* Toggle customers */}
+          <div className="flex items-center gap-1.5 ml-1">
+            <Switch
+              id="show-customers"
+              checked={showCustomers}
+              onCheckedChange={setShowCustomers}
+              className="scale-75"
+            />
+            <Label htmlFor="show-customers" className="text-[10px] text-muted-foreground cursor-pointer">
+              <Users className="h-3 w-3 inline mr-0.5" />
+              {customers.length}
+            </Label>
+          </div>
 
           {/* Visit Count */}
           <div className="flex items-center px-1.5 py-0.5 bg-muted rounded text-[10px]">
