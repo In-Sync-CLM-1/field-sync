@@ -96,10 +96,10 @@ export default function Visits() {
           placeholder="Search..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-xs h-8 text-sm"
+          className="max-w-xs h-5 text-sm"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px] h-8 text-sm">
+          <SelectTrigger className="w-[140px] h-5 text-sm">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
