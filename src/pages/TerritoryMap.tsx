@@ -238,25 +238,26 @@ export default function TerritoryMap() {
 
   return (
     <div className="h-screen flex flex-col">
-      <div className="p-4 border-b bg-background">
-        <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          <MapPin className="h-6 w-6" />
+      <div className="p-3 border-b bg-background">
+        <h1 className="text-xl font-bold mb-2 flex items-center gap-2">
+          <MapPin className="h-5 w-5" />
           Visit Map
         </h1>
         
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {/* Date From Filter */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
+                size="sm"
                 className={cn(
-                  "justify-start text-left font-normal",
+                  "justify-start text-left font-normal h-8 text-xs",
                   !dateFrom && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFrom ? format(dateFrom, 'PPP') : 'From date'}
+                <CalendarIcon className="mr-1 h-3 w-3" />
+                {dateFrom ? format(dateFrom, 'MMM d') : 'From'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -274,13 +275,14 @@ export default function TerritoryMap() {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
+                size="sm"
                 className={cn(
-                  "justify-start text-left font-normal",
+                  "justify-start text-left font-normal h-8 text-xs",
                   !dateTo && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateTo ? format(dateTo, 'PPP') : 'To date'}
+                <CalendarIcon className="mr-1 h-3 w-3" />
+                {dateTo ? format(dateTo, 'MMM d') : 'To'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -296,11 +298,11 @@ export default function TerritoryMap() {
           {/* User Filter (only for managers) */}
           {isManager && (
             <Select value={selectedUser} onValueChange={setSelectedUser}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[140px] h-8 text-xs">
                 <SelectValue placeholder="Select user" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Team Members</SelectItem>
+                <SelectItem value="all">All Team</SelectItem>
                 {teamMembers.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
                     {member.full_name}
@@ -311,10 +313,8 @@ export default function TerritoryMap() {
           )}
 
           {/* Visit Count */}
-          <div className="flex items-center px-3 py-2 bg-muted rounded-md">
-            <span className="text-sm font-medium">
-              {loading ? 'Loading...' : `${visits.length} visits`}
-            </span>
+          <div className="flex items-center px-2 py-1 bg-muted rounded text-xs">
+            {loading ? 'Loading...' : `${visits.length} visits`}
           </div>
         </div>
       </div>
