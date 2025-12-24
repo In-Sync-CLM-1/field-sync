@@ -129,27 +129,21 @@ export default function TerritoryMap() {
     });
     map.current.addControl(geolocateControl, 'top-right');
 
+    // Trigger geolocate after map is fully loaded
+    geolocateControl.on('geolocate', (e: GeolocationPosition) => {
+      map.current?.flyTo({
+        center: [e.coords.longitude, e.coords.latitude],
+        zoom: 12, // ~20km radius visible
+        duration: 1500
+      });
+    });
+
     map.current.on('load', () => {
       setMapLoaded(true);
-      
-      // Get user's location and zoom to 20km radius (zoom ~12)
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { longitude, latitude } = position.coords;
-            map.current?.flyTo({
-              center: [longitude, latitude],
-              zoom: 12, // ~20km radius visible
-              duration: 1500
-            });
-          },
-          () => {
-            // Geolocation denied or failed - keep default view
-            console.log('Geolocation not available, using default view');
-          },
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-      }
+      // Trigger geolocation automatically after a short delay
+      setTimeout(() => {
+        geolocateControl.trigger();
+      }, 100);
     });
 
     return () => {
