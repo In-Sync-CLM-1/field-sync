@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, Download, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useContacts } from '@/hooks/useContacts';
+import { useLeads } from '@/hooks/useLeads';
 import { useAuthStore } from '@/store/authStore';
 import {
   Dialog,
@@ -13,30 +13,36 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-interface CSVContact {
+interface CSVLead {
+  branch?: string;
+  leadId?: string;
+  customerId?: string;
+  status?: string;
+  assignTo?: string;
+  entityName?: string;
   name: string;
-  applicationId?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
+  loanAmount?: number;
+  loanPurpose?: string;
+  villageCity?: string;
+  district?: string;
   state?: string;
-  postalCode?: string;
-  country?: string;
+  customerResponse?: string;
+  mobileNo?: string;
+  followUpDate?: string;
+  leadSource?: string;
   latitude?: number;
   longitude?: number;
-  status?: string;
 }
 
-const CSV_TEMPLATE = `name,applicationId,email,phone,address,city,state,postalCode,country,latitude,longitude,status
-John Doe,APP-001,john@example.com,+91-9876543210,123 Main St,Mumbai,Maharashtra,400001,India,19.0760,72.8777,active
-Jane Smith,APP-002,jane@example.com,+91-9876543211,456 Oak Ave,Delhi,Delhi,110001,India,28.6139,77.2090,active`;
+const CSV_TEMPLATE = `branch,leadId,customerId,status,entityName,name,loanAmount,loanPurpose,villageCity,district,state,customerResponse,mobileNo,followUpDate,leadSource,latitude,longitude
+MUM-001,LD-001,CUST-001,new,ABC Corp,John Doe,500000,Business Expansion,Andheri,Mumbai,Maharashtra,Interested,+91-9876543210,2025-01-15,Web Form,19.0760,72.8777
+DEL-002,LD-002,CUST-002,approved,XYZ Ltd,Jane Smith,250000,Working Capital,Connaught Place,New Delhi,Delhi,Approved,+91-9876543211,2025-01-20,Referral,28.6139,77.2090`;
 
-export function ContactsUpload() {
+export function LeadsUpload() {
   const [open, setOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { bulkAddContacts } = useContacts();
+  const { bulkAddLeads } = useLeads();
   const { currentOrganization } = useAuthStore();
 
   const downloadTemplate = () => {
@@ -44,7 +50,7 @@ export function ContactsUpload() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'contacts_template.csv';
+    a.download = 'leads_template.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -52,38 +58,43 @@ export function ContactsUpload() {
     toast.success('Template downloaded');
   };
 
-  const parseCSV = (text: string): CSVContact[] => {
+  const parseCSV = (text: string): CSVLead[] => {
     const lines = text.trim().split('\n');
     if (lines.length < 2) return [];
 
     const headers = lines[0].split(',').map(h => h.trim());
-    const contacts: CSVContact[] = [];
+    const leads: CSVLead[] = [];
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim());
       if (values.length < 1 || !values[0]) continue;
 
-      const contact: CSVContact = {
+      const lead: CSVLead = {
+        branch: values[headers.indexOf('branch')] || undefined,
+        leadId: values[headers.indexOf('leadId')] || undefined,
+        customerId: values[headers.indexOf('customerId')] || undefined,
+        status: values[headers.indexOf('status')] || 'new',
+        entityName: values[headers.indexOf('entityName')] || undefined,
         name: values[headers.indexOf('name')] || '',
-        applicationId: values[headers.indexOf('applicationId')] || undefined,
-        email: values[headers.indexOf('email')] || undefined,
-        phone: values[headers.indexOf('phone')] || undefined,
-        address: values[headers.indexOf('address')] || undefined,
-        city: values[headers.indexOf('city')] || undefined,
+        loanAmount: values[headers.indexOf('loanAmount')] ? parseFloat(values[headers.indexOf('loanAmount')]) : undefined,
+        loanPurpose: values[headers.indexOf('loanPurpose')] || undefined,
+        villageCity: values[headers.indexOf('villageCity')] || undefined,
+        district: values[headers.indexOf('district')] || undefined,
         state: values[headers.indexOf('state')] || undefined,
-        postalCode: values[headers.indexOf('postalCode')] || undefined,
-        country: values[headers.indexOf('country')] || undefined,
+        customerResponse: values[headers.indexOf('customerResponse')] || undefined,
+        mobileNo: values[headers.indexOf('mobileNo')] || undefined,
+        followUpDate: values[headers.indexOf('followUpDate')] || undefined,
+        leadSource: values[headers.indexOf('leadSource')] || undefined,
         latitude: values[headers.indexOf('latitude')] ? parseFloat(values[headers.indexOf('latitude')]) : undefined,
         longitude: values[headers.indexOf('longitude')] ? parseFloat(values[headers.indexOf('longitude')]) : undefined,
-        status: values[headers.indexOf('status')] || 'active',
       };
 
-      if (contact.name) {
-        contacts.push(contact);
+      if (lead.name) {
+        leads.push(lead);
       }
     }
 
-    return contacts;
+    return leads;
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,40 +109,45 @@ export function ContactsUpload() {
     setImporting(true);
     try {
       const text = await file.text();
-      const contacts = parseCSV(text);
+      const leads = parseCSV(text);
 
-      if (contacts.length === 0) {
-        toast.error('No valid contacts found in CSV');
+      if (leads.length === 0) {
+        toast.error('No valid leads found in CSV');
         return;
       }
 
-      const validContacts = contacts.filter(c => c.name && c.name.trim() !== '');
-      if (validContacts.length === 0) {
-        toast.error('All contacts must have a name');
+      const validLeads = leads.filter(l => l.name && l.name.trim() !== '');
+      if (validLeads.length === 0) {
+        toast.error('All leads must have a name');
         return;
       }
 
-      await bulkAddContacts(validContacts.map(c => ({
-        name: c.name,
-        applicationId: c.applicationId,
-        email: c.email,
-        phone: c.phone,
-        address: c.address,
-        city: c.city,
-        state: c.state,
-        postalCode: c.postalCode,
-        country: c.country,
-        latitude: c.latitude,
-        longitude: c.longitude,
-        status: c.status || 'active',
+      await bulkAddLeads(validLeads.map(l => ({
+        name: l.name,
+        branch: l.branch,
+        leadId: l.leadId,
+        customerId: l.customerId,
+        status: l.status || 'new',
+        entityName: l.entityName,
+        loanAmount: l.loanAmount,
+        loanPurpose: l.loanPurpose,
+        villageCity: l.villageCity,
+        district: l.district,
+        state: l.state,
+        customerResponse: l.customerResponse,
+        mobileNo: l.mobileNo,
+        followUpDate: l.followUpDate,
+        leadSource: l.leadSource,
+        latitude: l.latitude,
+        longitude: l.longitude,
         organizationId: currentOrganization.id,
       })));
 
-      toast.success(`Imported ${validContacts.length} contacts`);
+      toast.success(`Imported ${validLeads.length} leads`);
       setOpen(false);
     } catch (error) {
       console.error('Error importing CSV:', error);
-      toast.error('Failed to import contacts');
+      toast.error('Failed to import leads');
     } finally {
       setImporting(false);
       if (fileInputRef.current) {
@@ -150,9 +166,9 @@ export function ContactsUpload() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Upload Contacts</DialogTitle>
+          <DialogTitle>Upload Leads</DialogTitle>
           <DialogDescription>
-            Import contacts from a CSV file
+            Import leads from a CSV file
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -206,7 +222,7 @@ export function ContactsUpload() {
             <p className="font-medium">Required columns:</p>
             <p>• name (required)</p>
             <p className="font-medium mt-2">Optional columns:</p>
-            <p>• applicationId, email, phone, address, city, state, postalCode, country, latitude, longitude, status</p>
+            <p>• branch, leadId, customerId, status, entityName, loanAmount, loanPurpose, villageCity, district, state, customerResponse, mobileNo, followUpDate, leadSource, latitude, longitude</p>
           </div>
         </div>
       </DialogContent>

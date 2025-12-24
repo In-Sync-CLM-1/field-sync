@@ -17,7 +17,7 @@ export async function processSyncQueue() {
     await syncPendingDailyPlans();
 
     // Sync other entity types as needed
-    await syncPendingCustomers();
+    await syncPendingLeads();
     await syncPendingVisits();
     await syncPendingCommunications();
 
@@ -27,46 +27,53 @@ export async function processSyncQueue() {
   }
 }
 
-// Sync pending customers
-async function syncPendingCustomers() {
+// Sync pending leads
+async function syncPendingLeads() {
   const pendingItems = await db.syncQueue
     .where('type')
-    .equals('customer')
+    .anyOf(['customer', 'lead'])
     .toArray();
 
   for (const item of pendingItems) {
     if (item.retryCount >= item.maxRetries) {
-      console.log('[SyncProcessor] Max retries reached for customer:', item.entityId);
+      console.log('[SyncProcessor] Max retries reached for lead:', item.entityId);
       continue;
     }
 
     try {
-      const customer = await db.customers.get(item.entityId);
-      if (!customer) {
+      const lead = await db.leads.get(item.entityId);
+      if (!lead) {
         await db.syncQueue.delete(item.id);
         continue;
       }
 
       if (item.action === 'create' || item.action === 'update') {
         const { error } = await supabase
-          .from('customers')
+          .from('leads')
           .upsert({
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            address: customer.address,
-            city: customer.city,
-            latitude: customer.latitude,
-            longitude: customer.longitude,
-            status: customer.status,
-            territory: customer.territory,
-            tags: customer.tags,
-            organization_id: customer.organizationId,
+            id: lead.id,
+            name: lead.name,
+            branch: lead.branch,
+            lead_id: lead.leadId,
+            customer_id: lead.customerId,
+            status: lead.status,
+            entity_name: lead.entityName,
+            loan_amount: lead.loanAmount,
+            loan_purpose: lead.loanPurpose,
+            village_city: lead.villageCity,
+            district: lead.district,
+            state: lead.state,
+            latitude: lead.latitude,
+            longitude: lead.longitude,
+            customer_response: lead.customerResponse,
+            mobile_no: lead.mobileNo,
+            follow_up_date: lead.followUpDate,
+            lead_source: lead.leadSource,
+            organization_id: lead.organizationId,
           });
 
         if (!error) {
-          await db.customers.update(customer.id, {
+          await db.leads.update(lead.id, {
             syncStatus: 'synced',
             lastSyncedAt: new Date(),
           });
@@ -80,7 +87,7 @@ async function syncPendingCustomers() {
         }
       }
     } catch (err: any) {
-      console.error('[SyncProcessor] Customer sync failed:', err);
+      console.error('[SyncProcessor] Lead sync failed:', err);
       await db.syncQueue.update(item.id, {
         retryCount: item.retryCount + 1,
         lastAttemptAt: new Date(),
