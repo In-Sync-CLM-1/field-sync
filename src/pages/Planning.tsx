@@ -483,7 +483,13 @@ export default function Planning() {
                           type="number"
                           min="0"
                           value={formData.enroll_target}
-                          onChange={(e) => setFormData(prev => ({ ...prev, enroll_target: parseInt(e.target.value) || 0 }))}
+                          onChange={(e) => {
+                            const newTarget = parseInt(e.target.value) || 0;
+                            setFormData(prev => ({ ...prev, enroll_target: newTarget }));
+                            if (newTarget > 0) {
+                              setEnrollmentDialogOpen(true);
+                            }
+                          }}
                           className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
@@ -512,11 +518,11 @@ export default function Planning() {
                 </table>
               </div>
 
-              {/* Show enrolled applications */}
+              {/* Show planned enrollments */}
               {enrolledContacts.length > 0 && (
                 <div className="mt-2 p-2 bg-primary/5 border border-primary/20 rounded">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-muted-foreground">Enrolled Applications</span>
+                    <span className="text-xs font-medium text-muted-foreground">Planned Enrollments</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -566,7 +572,7 @@ export default function Planning() {
           open={enrollmentDialogOpen}
           onOpenChange={setEnrollmentDialogOpen}
           dailyPlanId={plan.id}
-          enrollCount={plan.enrollActual}
+          enrollCount={formData.enroll_target}
           onSave={() => {}}
         />
       )}
