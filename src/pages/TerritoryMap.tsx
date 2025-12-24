@@ -244,19 +244,18 @@ export default function TerritoryMap() {
           Visit Map
         </h1>
         
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 items-center">
           {/* Date From Filter */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                size="sm"
                 className={cn(
-                  "justify-start text-left font-normal h-8 text-xs",
+                  "justify-start text-left font-normal",
                   !dateFrom && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-1 h-3 w-3" />
+                <CalendarIcon className="mr-1" />
                 {dateFrom ? format(dateFrom, 'MMM d') : 'From'}
               </Button>
             </PopoverTrigger>
@@ -275,13 +274,12 @@ export default function TerritoryMap() {
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                size="sm"
                 className={cn(
-                  "justify-start text-left font-normal h-8 text-xs",
+                  "justify-start text-left font-normal",
                   !dateTo && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-1 h-3 w-3" />
+                <CalendarIcon className="mr-1" />
                 {dateTo ? format(dateTo, 'MMM d') : 'To'}
               </Button>
             </PopoverTrigger>
@@ -298,11 +296,11 @@ export default function TerritoryMap() {
           {/* User Filter (only for managers) */}
           {isManager && (
             <Select value={selectedUser} onValueChange={setSelectedUser}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder="Select user" />
+              <SelectTrigger className="w-[100px] h-5 text-xs">
+                <SelectValue placeholder="User" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Team</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {teamMembers.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
                     {member.full_name}
@@ -313,8 +311,8 @@ export default function TerritoryMap() {
           )}
 
           {/* Visit Count */}
-          <div className="flex items-center px-2 py-1 bg-muted rounded text-xs">
-            {loading ? 'Loading...' : `${visits.length} visits`}
+          <div className="flex items-center px-1.5 py-0.5 bg-muted rounded text-[10px]">
+            {loading ? '...' : `${visits.length} visits`}
           </div>
         </div>
       </div>
