@@ -112,22 +112,22 @@ export default function Leads() {
               placeholder="Search by name, lead ID, customer ID, location..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-[20px] text-xs"
+              className="pl-8 h-5 text-xs"
             />
           </div>
 
           <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value)}>
-            <TabsList className="grid w-full grid-cols-4 h-[24px]">
-              <TabsTrigger value="all" className="text-[10px] h-[20px]">
+            <TabsList className="grid w-full grid-cols-4 h-5">
+              <TabsTrigger value="all" className="text-[10px] h-5">
                 All ({statusCounts.all})
               </TabsTrigger>
-              <TabsTrigger value="new" className="text-[10px] h-[20px]">
+              <TabsTrigger value="new" className="text-[10px] h-5">
                 New ({statusCounts.new})
               </TabsTrigger>
-              <TabsTrigger value="approved" className="text-[10px] h-[20px]">
+              <TabsTrigger value="approved" className="text-[10px] h-5">
                 Approved ({statusCounts.approved})
               </TabsTrigger>
-              <TabsTrigger value="rejected" className="text-[10px] h-[20px]">
+              <TabsTrigger value="rejected" className="text-[10px] h-5">
                 Rejected ({statusCounts.rejected})
               </TabsTrigger>
             </TabsList>
