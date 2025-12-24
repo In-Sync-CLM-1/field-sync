@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Users, TrendingUp } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
@@ -74,16 +74,16 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Welcome back!</h1>
-        <p className="text-muted-foreground">
-          {user?.email}
-        </p>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Welcome back!</h1>
+          <p className="text-sm text-muted-foreground">{user?.email}</p>
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Grid - 2 columns on mobile */}
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <MetricCard
             key={stat.label}
@@ -95,49 +95,37 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>
-            Common tasks to get you started
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
+      {/* Quick Actions - horizontal scroll on mobile */}
+      <div>
+        <h2 className="text-sm font-medium text-muted-foreground mb-2">Quick Actions</h2>
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
               <Button
                 key={action.label}
                 variant={action.variant}
-                className="h-auto flex-col items-start gap-2 p-4"
+                size="sm"
+                className="flex-shrink-0 gap-2"
                 onClick={action.action}
               >
-                <Icon className="h-6 w-6" />
-                <div className="text-left">
-                  <div className="font-semibold">{action.label}</div>
-                  <div className="text-xs font-normal opacity-70">
-                    {action.description}
-                  </div>
-                </div>
+                <Icon className="h-4 w-4" />
+                {action.label}
               </Button>
             );
           })}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity - more compact */}
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Visits</CardTitle>
-          <CardDescription>
-            Your latest field visits
-          </CardDescription>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Recent Visits</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <p>View all your visits in the Visits section</p>
-            <Button variant="outline" className="mt-4" onClick={() => navigate('/visits')}>
+          <div className="text-center py-4 text-muted-foreground">
+            <p className="text-sm">View all your visits in the Visits section</p>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => navigate('/visits')}>
               Go to Visits
             </Button>
           </div>
