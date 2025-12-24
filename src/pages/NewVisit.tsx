@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useCustomers } from '@/hooks/useCustomers';
+import { useLeads } from '@/hooks/useLeads';
 import { useVisits } from '@/hooks/useVisits';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,18 +15,18 @@ import { toast } from 'sonner';
 export default function NewVisit() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const preselectedCustomerId = searchParams.get('customerId');
+  const preselectedLeadId = searchParams.get('leadId');
 
-  const { customers, isLoading: loadingCustomers } = useCustomers();
+  const { leads, syncing: loadingLeads } = useLeads();
   const { createVisit, isCreating } = useVisits();
 
-  const [customerId, setCustomerId] = useState(preselectedCustomerId || '');
+  const [leadId, setLeadId] = useState(preselectedLeadId || '');
   const [notes, setNotes] = useState('');
   const [open, setOpen] = useState(false);
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
 
-  const selectedCustomer = customers.find(c => c.id === customerId);
+  const selectedLead = leads.find(l => l.id === leadId);
 
   useEffect(() => {
     // Get location on mount
@@ -62,8 +62,8 @@ export default function NewVisit() {
   };
 
   const handleStartVisit = () => {
-    if (!customerId) {
-      toast.error('Please select a customer');
+    if (!leadId) {
+      toast.error('Please select a lead');
       return;
     }
 
@@ -75,7 +75,7 @@ export default function NewVisit() {
 
     createVisit(
       {
-        customer_id: customerId,
+        customer_id: leadId,
         check_in_latitude: location.latitude,
         check_in_longitude: location.longitude,
         notes: notes || undefined,
@@ -92,7 +92,7 @@ export default function NewVisit() {
     <div className="container py-6 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight mb-2">New Visit</h1>
-        <p className="text-muted-foreground">Select customer and check in</p>
+        <p className="text-muted-foreground">Select lead and check in</p>
       </div>
 
       <Card>
@@ -101,7 +101,7 @@ export default function NewVisit() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>Customer *</Label>
+            <Label>Lead *</Label>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -109,36 +109,36 @@ export default function NewVisit() {
                   role="combobox"
                   aria-expanded={open}
                   className="w-full justify-between"
-                  disabled={loadingCustomers}
+                  disabled={loadingLeads}
                 >
-                  {selectedCustomer ? selectedCustomer.name : "Select customer..."}
+                  {selectedLead ? selectedLead.name : "Select lead..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0">
                 <Command>
-                  <CommandInput placeholder="Search customers..." />
-                  <CommandEmpty>No customer found.</CommandEmpty>
+                  <CommandInput placeholder="Search leads..." />
+                  <CommandEmpty>No lead found.</CommandEmpty>
                   <CommandGroup>
-                    {customers.map((customer) => (
+                    {leads.map((lead) => (
                       <CommandItem
-                        key={customer.id}
-                        value={customer.name}
+                        key={lead.id}
+                        value={lead.name}
                         onSelect={() => {
-                          setCustomerId(customer.id);
+                          setLeadId(lead.id);
                           setOpen(false);
                         }}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            customerId === customer.id ? "opacity-100" : "opacity-0"
+                            leadId === lead.id ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        {customer.name}
-                        {customer.city && (
+                        {lead.name}
+                        {lead.villageCity && (
                           <span className="ml-2 text-sm text-muted-foreground">
-                            {customer.city}
+                            {lead.villageCity}
                           </span>
                         )}
                       </CommandItem>
@@ -188,7 +188,7 @@ export default function NewVisit() {
       <div className="flex gap-3 mt-6">
         <Button
           onClick={handleStartVisit}
-          disabled={!customerId || !location || isCreating || gettingLocation}
+          disabled={!leadId || !location || isCreating || gettingLocation}
           className="flex-1"
           size="lg"
         >
