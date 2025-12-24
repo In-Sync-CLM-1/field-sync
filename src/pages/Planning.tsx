@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,9 @@ import {
   useMonthlyEnrollments, 
   calculateIncentive 
 } from '@/hooks/useMonthlyIncentive';
+import { EnrollmentDialog } from '@/components/EnrollmentDialog';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/lib/db';
 import confetti from 'canvas-confetti';
 
 export default function Planning() {
@@ -43,6 +46,27 @@ export default function Planning() {
   const [monthlyTargetInput, setMonthlyTargetInput] = useState<number>(0);
   const [shownMilestones, setShownMilestones] = useState<Set<number>>(new Set());
   const prevEnrollments = useRef<number>(0);
+  const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
+
+  // Get enrolled contacts for current plan
+  const enrolledContacts = useLiveQuery(
+    async () => {
+      if (!plan?.id) return [];
+      const enrollments = await db.planEnrollments
+        .where('dailyPlanId')
+        .equals(plan.id)
+        .toArray();
+      
+      const contacts = [];
+      for (const enrollment of enrollments) {
+        const contact = await db.customers.get(enrollment.customerId);
+        if (contact) contacts.push(contact);
+      }
+      return contacts;
+    },
+    [plan?.id],
+    []
+  );
 
   useEffect(() => {
     if (plan) {
@@ -463,8 +487,22 @@ export default function Planning() {
                           className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.enrollActual ?? 0}
+                      <td className="py-1.5 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-xs font-medium">{plan?.enrollActual ?? 0}</span>
+                          {plan && plan.enrollActual > 0 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 w-5 p-0"
+                              onClick={() => setEnrollmentDialogOpen(true)}
+                              title="View/Edit enrolled applications"
+                            >
+                              <FileText className="h-3 w-3 text-primary" />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                       <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.enrollActual, plan.enrollTarget).color : 'text-muted-foreground')}>
                         {plan ? getProgress(plan.enrollActual, plan.enrollTarget).percent : 0}%
@@ -473,6 +511,31 @@ export default function Planning() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Show enrolled applications */}
+              {enrolledContacts.length > 0 && (
+                <div className="mt-2 p-2 bg-primary/5 border border-primary/20 rounded">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-muted-foreground">Enrolled Applications</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 text-xs px-2"
+                      onClick={() => setEnrollmentDialogOpen(true)}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {enrolledContacts.map(contact => (
+                      <Badge key={contact.id} variant="secondary" className="text-xs">
+                        {contact.applicationId}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {plan?.originalValues && (
                 <div className="mt-2 p-1.5 bg-warning-bg border border-warning/20 rounded text-xs flex items-center gap-1.5">
@@ -495,6 +558,17 @@ export default function Planning() {
             </form>
           </CardContent>
         </Card>
+      )}
+
+      {/* Enrollment Dialog */}
+      {plan && (
+        <EnrollmentDialog
+          open={enrollmentDialogOpen}
+          onOpenChange={setEnrollmentDialogOpen}
+          dailyPlanId={plan.id}
+          enrollCount={plan.enrollActual}
+          onSave={() => {}}
+        />
       )}
     </div>
   );
