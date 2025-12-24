@@ -105,14 +105,14 @@ export default function Contacts() {
           </div>
 
           <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as 'all' | 'active' | 'inactive')}>
-            <TabsList className="grid w-full grid-cols-3 h-8">
-              <TabsTrigger value="all" className="text-xs">
+            <TabsList className="grid w-full grid-cols-3 h-5">
+              <TabsTrigger value="all" className="text-[10px] h-4">
                 All ({statusCounts.all})
               </TabsTrigger>
-              <TabsTrigger value="active" className="text-xs">
+              <TabsTrigger value="active" className="text-[10px] h-4">
                 Active ({statusCounts.active})
               </TabsTrigger>
-              <TabsTrigger value="inactive" className="text-xs">
+              <TabsTrigger value="inactive" className="text-[10px] h-4">
                 Inactive ({statusCounts.inactive})
               </TabsTrigger>
             </TabsList>
