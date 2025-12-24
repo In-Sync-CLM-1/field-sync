@@ -100,7 +100,7 @@ export default function TerritoryMap() {
     fetchTeamMembers();
   }, [isManager, user, currentOrganization]);
 
-  // Initialize map
+  // Initialize map with user location
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
@@ -108,17 +108,48 @@ export default function TerritoryMap() {
 
     mapboxgl.accessToken = mapboxToken;
 
+    // Default center (will be updated with user location)
+    let initialCenter: [number, number] = [78.9629, 20.5937]; // India center as fallback
+    let initialZoom = 4;
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [0, 0],
-      zoom: 2,
+      center: initialCenter,
+      zoom: initialZoom,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    
+    // Add geolocate control
+    const geolocateControl = new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: false,
+      showUserLocation: true
+    });
+    map.current.addControl(geolocateControl, 'top-right');
 
     map.current.on('load', () => {
       setMapLoaded(true);
+      
+      // Get user's location and zoom to 20km radius (zoom ~12)
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { longitude, latitude } = position.coords;
+            map.current?.flyTo({
+              center: [longitude, latitude],
+              zoom: 12, // ~20km radius visible
+              duration: 1500
+            });
+          },
+          () => {
+            // Geolocation denied or failed - keep default view
+            console.log('Geolocation not available, using default view');
+          },
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      }
     });
 
     return () => {
