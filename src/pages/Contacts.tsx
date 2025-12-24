@@ -100,19 +100,19 @@ export default function Contacts() {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-5 text-xs"
+              className="pl-8 h-[20px] text-xs"
             />
           </div>
 
           <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value as 'all' | 'active' | 'inactive')}>
-            <TabsList className="grid w-full grid-cols-3 h-5">
-              <TabsTrigger value="all" className="text-[10px] h-4">
+            <TabsList className="grid w-full grid-cols-3 h-[24px]">
+              <TabsTrigger value="all" className="text-[10px] h-[20px]">
                 All ({statusCounts.all})
               </TabsTrigger>
-              <TabsTrigger value="active" className="text-[10px] h-4">
+              <TabsTrigger value="active" className="text-[10px] h-[20px]">
                 Active ({statusCounts.active})
               </TabsTrigger>
-              <TabsTrigger value="inactive" className="text-[10px] h-4">
+              <TabsTrigger value="inactive" className="text-[10px] h-[20px]">
                 Inactive ({statusCounts.inactive})
               </TabsTrigger>
             </TabsList>
