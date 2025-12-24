@@ -88,11 +88,7 @@ export default function TerritoryMap() {
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    const mapboxToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
-    if (!mapboxToken) {
-      toast.error('Mapbox token not configured');
-      return;
-    }
+    const mapboxToken = 'MAPBOX_TOKEN_REMOVED';
 
     mapboxgl.accessToken = mapboxToken;
 
