@@ -151,6 +151,39 @@ export const useContacts = () => {
     return await db.customers.get(id);
   };
 
+  const bulkAddContacts = async (contacts: Omit<Customer, 'id' | 'syncStatus' | 'updatedAt'>[]) => {
+    try {
+      const newContacts: Customer[] = contacts.map(contact => ({
+        ...contact,
+        id: crypto.randomUUID(),
+        syncStatus: 'pending' as const,
+        updatedAt: new Date(),
+      }));
+
+      await db.customers.bulkAdd(newContacts);
+
+      // Add to sync queue
+      const syncItems = newContacts.map(contact => ({
+        id: crypto.randomUUID(),
+        type: 'customer' as const,
+        entityId: contact.id,
+        action: 'create' as const,
+        data: contact,
+        priority: 2,
+        retryCount: 0,
+        maxRetries: 3,
+        createdAt: new Date(),
+      }));
+
+      await db.syncQueue.bulkAdd(syncItems);
+
+      return newContacts;
+    } catch (error) {
+      console.error('Error bulk adding contacts:', error);
+      throw error;
+    }
+  };
+
   return {
     contacts,
     syncing,
@@ -162,5 +195,6 @@ export const useContacts = () => {
     addContact,
     updateContact,
     getContact,
+    bulkAddContacts,
   };
 };

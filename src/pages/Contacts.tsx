@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContacts } from '@/hooks/useContacts';
 import { usePagination } from '@/hooks/usePagination';
@@ -8,13 +7,12 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/store/authStore';
+import { ContactsUpload } from '@/components/ContactsUpload';
 import { 
   Search, 
   MapPin, 
   Phone, 
-  Mail,
   User,
-  Plus,
   RefreshCw,
   Building2,
 } from 'lucide-react';
@@ -79,15 +77,18 @@ export default function Contacts() {
             </span>
           </div>
         </div>
-        <Button 
-          onClick={syncFromDatabase} 
-          disabled={syncing || !currentOrganization}
-          variant="outline"
-          size="sm"
-        >
-          <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-          {syncing ? 'Syncing' : 'Sync'}
-        </Button>
+        <div className="flex gap-2">
+          <ContactsUpload />
+          <Button 
+            onClick={syncFromDatabase} 
+            disabled={syncing || !currentOrganization}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing' : 'Sync'}
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filter */}
@@ -145,10 +146,7 @@ export default function Contacts() {
                     <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
                     Sync
                   </Button>
-                  <Button size="sm" onClick={() => navigate('/contacts/new')}>
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add
-                  </Button>
+                  <ContactsUpload />
                 </div>
               )}
             </CardContent>
@@ -253,14 +251,6 @@ export default function Contacts() {
         )}
       </div>
 
-      {/* Floating Add Button */}
-      <Button
-        size="icon"
-        className="fixed bottom-20 right-6 h-14 w-14 rounded-full shadow-lg"
-        onClick={() => navigate('/contacts/new')}
-      >
-        <Plus className="h-6 w-6" />
-      </Button>
 
     </div>
   );
