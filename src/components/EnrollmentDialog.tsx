@@ -159,9 +159,9 @@ export function EnrollmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Select Enrolled Applications</DialogTitle>
+          <DialogTitle>Plan Enrollments</DialogTitle>
           <DialogDescription>
-            Choose {enrollCount} application{enrollCount !== 1 ? 's' : ''} that were enrolled today.
+            Select {enrollCount} application{enrollCount !== 1 ? 's' : ''} you plan to enroll today.
           </DialogDescription>
         </DialogHeader>
         
