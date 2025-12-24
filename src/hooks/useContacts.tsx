@@ -68,6 +68,7 @@ export const useContacts = () => {
           status: c.status,
           territory: c.territory,
           organizationId: c.organization_id,
+          applicationId: c.application_id, // Include application ID
           syncStatus: 'synced',
           updatedAt: new Date(c.updated_at),
         }));

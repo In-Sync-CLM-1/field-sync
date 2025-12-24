@@ -15,6 +15,7 @@ export interface Contact {
   status?: string;
   territory?: string;
   tags?: string[];
+  applicationId?: string; // Application ID for enrollment tracking
   syncStatus: 'synced' | 'pending' | 'failed';
   lastSyncedAt?: Date;
   updatedAt: Date;
@@ -107,9 +108,21 @@ export interface DailyPlanLocal {
   updatedAt: Date;
 }
 
+export interface PlanEnrollment {
+  id: string;
+  dailyPlanId: string;
+  customerId: string;
+  organizationId: string;
+  enrolledAt: Date;
+  notes?: string;
+  syncStatus: 'synced' | 'pending' | 'failed';
+  lastSyncedAt?: Date;
+  createdAt: Date;
+}
+
 export interface SyncQueueItem {
   id: string;
-  type: 'visit' | 'photo' | 'form' | 'communication' | 'customer' | 'daily_plan';
+  type: 'visit' | 'photo' | 'form' | 'communication' | 'customer' | 'daily_plan' | 'plan_enrollment';
   entityId: string;
   action: 'create' | 'update' | 'delete';
   data: any;
@@ -135,8 +148,8 @@ export interface Communication {
 }
 
 // Database version - ONLY increment this when schema actually changes
-// Current: 13 (added dailyPlans table for offline-first planning)
-export const DB_VERSION = 13;
+// Current: 14 (added planEnrollments table and applicationId to customers)
+export const DB_VERSION = 14;
 
 class FieldVisitDatabase extends Dexie {
   customers!: Table<Customer, string>;
@@ -147,6 +160,7 @@ class FieldVisitDatabase extends Dexie {
   syncQueue!: Table<SyncQueueItem, string>;
   communications!: Table<Communication, string>;
   dailyPlans!: Table<DailyPlanLocal, string>;
+  planEnrollments!: Table<PlanEnrollment, string>;
 
   constructor() {
     super('FieldVisitDB');
@@ -154,14 +168,15 @@ class FieldVisitDatabase extends Dexie {
     // Define schema - Dexie handles all version upgrades automatically
     // STABLE VERSION: Do not change unless schema actually needs modification
     this.version(DB_VERSION).stores({
-      customers: 'id, organizationId, name, city, territory, status, syncStatus, updatedAt',
+      customers: 'id, organizationId, name, city, territory, status, applicationId, syncStatus, updatedAt',
       visits: 'id, customerId, userId, checkInTime, status, syncStatus, createdAt',
       photos: 'id, visitId, timestamp, syncStatus',
       forms: 'id, name, isActive, version, createdAt',
       formResponses: 'id, visitId, formId, userId, syncStatus, createdAt',
       syncQueue: 'id, type, priority, createdAt, retryCount',
       communications: 'id, customerId, visitId, userId, type, initiatedAt, syncStatus',
-      dailyPlans: 'id, odataId, userId, organizationId, planDate, syncStatus, updatedAt'
+      dailyPlans: 'id, odataId, userId, organizationId, planDate, syncStatus, updatedAt',
+      planEnrollments: 'id, dailyPlanId, customerId, organizationId, syncStatus, createdAt'
     });
   }
 }

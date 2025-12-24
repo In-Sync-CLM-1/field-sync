@@ -17,6 +17,7 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          application_id: string | null
           assigned_user_id: string | null
           city: string | null
           company_name: string | null
@@ -42,6 +43,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          application_id?: string | null
           assigned_user_id?: string | null
           city?: string | null
           company_name?: string | null
@@ -67,6 +69,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          application_id?: string | null
           assigned_user_id?: string | null
           city?: string | null
           company_name?: string | null
@@ -368,6 +371,58 @@ export type Database = {
           usage_limits?: Json | null
         }
         Relationships: []
+      }
+      plan_enrollments: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          daily_plan_id: string
+          enrolled_at: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          daily_plan_id: string
+          enrolled_at?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          daily_plan_id?: string
+          enrolled_at?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_enrollments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_enrollments_daily_plan_id_fkey"
+            columns: ["daily_plan_id"]
+            isOneToOne: false
+            referencedRelation: "daily_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_enrollments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
