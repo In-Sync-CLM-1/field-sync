@@ -48,7 +48,7 @@ export default function Planning() {
   const prevEnrollments = useRef<number>(0);
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
 
-  // Get enrolled contacts for current plan
+  // Get enrolled leads for current plan
   const enrolledContacts = useLiveQuery(
     async () => {
       if (!plan?.id) return [];
@@ -57,12 +57,12 @@ export default function Planning() {
         .equals(plan.id)
         .toArray();
       
-      const contacts = [];
+      const leads = [];
       for (const enrollment of enrollments) {
-        const contact = await db.customers.get(enrollment.customerId);
-        if (contact) contacts.push(contact);
+        const lead = await db.leads.get(enrollment.customerId);
+        if (lead) leads.push(lead);
       }
-      return contacts;
+      return leads;
     },
     [plan?.id],
     []

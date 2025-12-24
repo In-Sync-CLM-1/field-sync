@@ -3,13 +3,13 @@ import { Check, X, Search } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { db, Contact } from '@/lib/db';
+import { db, Lead } from '@/lib/db';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
 
 interface ApplicationIdSearchProps {
-  selectedContacts: Contact[];
-  onSelect: (contacts: Contact[]) => void;
+  selectedContacts: Lead[];
+  onSelect: (contacts: Lead[]) => void;
   maxSelections: number;
   excludeIds?: string[];
 }
@@ -21,12 +21,12 @@ export function ApplicationIdSearch({
   excludeIds = []
 }: ApplicationIdSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Contact[]>([]);
+  const [searchResults, setSearchResults] = useState<Lead[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { currentOrganization } = useAuthStore();
 
-  // Search contacts by application ID or name
-  const searchContacts = useCallback(async (query: string) => {
+  // Search leads by lead ID, customer ID, or name
+  const searchLeads = useCallback(async (query: string) => {
     if (!currentOrganization?.id || query.length < 2) {
       setSearchResults([]);
       return;
@@ -34,22 +34,23 @@ export function ApplicationIdSearch({
 
     setIsSearching(true);
     try {
-      const results = await db.customers
+      const results = await db.leads
         .where('organizationId')
         .equals(currentOrganization.id)
-        .filter(contact => {
-          // Exclude already selected or excluded contacts
-          if (selectedContacts.some(s => s.id === contact.id) || excludeIds.includes(contact.id)) {
+        .filter(lead => {
+          // Exclude already selected or excluded leads
+          if (selectedContacts.some(s => s.id === lead.id) || excludeIds.includes(lead.id)) {
             return false;
           }
           
-          // Must have application ID
-          if (!contact.applicationId) return false;
+          // Must have lead ID or customer ID
+          if (!lead.leadId && !lead.customerId) return false;
           
           const lowerQuery = query.toLowerCase();
           return (
-            contact.applicationId.toLowerCase().includes(lowerQuery) ||
-            contact.name.toLowerCase().includes(lowerQuery)
+            lead.leadId?.toLowerCase().includes(lowerQuery) ||
+            lead.customerId?.toLowerCase().includes(lowerQuery) ||
+            lead.name.toLowerCase().includes(lowerQuery)
           );
         })
         .limit(10)
@@ -57,7 +58,7 @@ export function ApplicationIdSearch({
       
       setSearchResults(results);
     } catch (error) {
-      console.error('Error searching contacts:', error);
+      console.error('Error searching leads:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -66,44 +67,44 @@ export function ApplicationIdSearch({
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      searchContacts(searchQuery);
+      searchLeads(searchQuery);
     }, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery, searchContacts]);
+  }, [searchQuery, searchLeads]);
 
-  const handleSelect = (contact: Contact) => {
+  const handleSelect = (lead: Lead) => {
     if (selectedContacts.length < maxSelections) {
-      onSelect([...selectedContacts, contact]);
+      onSelect([...selectedContacts, lead]);
       setSearchQuery('');
       setSearchResults([]);
     }
   };
 
-  const handleRemove = (contactId: string) => {
-    onSelect(selectedContacts.filter(c => c.id !== contactId));
+  const handleRemove = (leadId: string) => {
+    onSelect(selectedContacts.filter(c => c.id !== leadId));
   };
 
   const canSelectMore = selectedContacts.length < maxSelections;
 
   return (
     <div className="space-y-3">
-      {/* Selected Contacts */}
+      {/* Selected Leads */}
       {selectedContacts.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedContacts.map(contact => (
+          {selectedContacts.map(lead => (
             <Badge 
-              key={contact.id} 
+              key={lead.id} 
               variant="secondary" 
               className="flex items-center gap-1.5 px-2 py-1"
             >
-              <span className="font-mono text-xs">{contact.applicationId}</span>
+              <span className="font-mono text-xs">{lead.leadId || lead.customerId}</span>
               <span className="text-muted-foreground">-</span>
-              <span className="text-xs truncate max-w-[100px]">{contact.name}</span>
+              <span className="text-xs truncate max-w-[100px]">{lead.name}</span>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0 ml-1 hover:bg-destructive/20"
-                onClick={() => handleRemove(contact.id)}
+                onClick={() => handleRemove(lead.id)}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -129,7 +130,7 @@ export function ApplicationIdSearch({
       {canSelectMore && (
         <Command className="border rounded-lg">
           <CommandInput
-            placeholder="Search by Application ID or Name..."
+            placeholder="Search by Lead ID, Customer ID or Name..."
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
@@ -140,26 +141,26 @@ export function ApplicationIdSearch({
               </div>
             )}
             {!isSearching && searchQuery.length >= 2 && searchResults.length === 0 && (
-              <CommandEmpty>No contacts found with application ID</CommandEmpty>
+              <CommandEmpty>No leads found with ID</CommandEmpty>
             )}
             {!isSearching && searchResults.length > 0 && (
-              <CommandGroup heading="Contacts">
-                {searchResults.map(contact => (
+              <CommandGroup heading="Leads">
+                {searchResults.map(lead => (
                   <CommandItem
-                    key={contact.id}
-                    value={contact.applicationId || contact.id}
-                    onSelect={() => handleSelect(contact)}
+                    key={lead.id}
+                    value={lead.leadId || lead.customerId || lead.id}
+                    onSelect={() => handleSelect(lead)}
                     className="flex items-center justify-between cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-sm font-medium text-primary">
-                        {contact.applicationId}
+                        {lead.leadId || lead.customerId}
                       </span>
                       <span className="text-muted-foreground">-</span>
-                      <span className="text-sm">{contact.name}</span>
+                      <span className="text-sm">{lead.name}</span>
                     </div>
-                    {contact.city && (
-                      <span className="text-xs text-muted-foreground">{contact.city}</span>
+                    {lead.villageCity && (
+                      <span className="text-xs text-muted-foreground">{lead.villageCity}</span>
                     )}
                   </CommandItem>
                 ))}

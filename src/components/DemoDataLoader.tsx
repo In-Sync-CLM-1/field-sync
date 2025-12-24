@@ -35,7 +35,7 @@ export function DemoDataLoader() {
 
       // Populate IndexedDB with demo data
       if (data.demoData) {
-        await db.customers.bulkAdd(data.demoData.contacts);
+        await db.leads.bulkAdd(data.demoData.leads || data.demoData.contacts);
         await db.visits.bulkAdd(data.demoData.visits);
         await db.photos.bulkAdd(data.demoData.photos.map((p: any) => ({
           ...p,
@@ -44,7 +44,7 @@ export function DemoDataLoader() {
         await db.communications.bulkAdd(data.demoData.communications);
 
         toast.success(
-          `Demo data loaded! Created ${data.results.users} users, ${data.results.contacts} contacts, ${data.results.visits} visits`,
+          `Demo data loaded! Created ${data.results.users} users, ${data.results.leads || data.results.contacts} leads, ${data.results.visits} visits`,
           { duration: 5000 }
         );
         
@@ -69,7 +69,7 @@ export function DemoDataLoader() {
       toast.info('Clearing demo data...');
 
       // Clear IndexedDB
-      await db.customers.clear();
+      await db.leads.clear();
       await db.visits.clear();
       await db.photos.clear();
       await db.communications.clear();
@@ -117,7 +117,7 @@ export function DemoDataLoader() {
             )}
           </Button>
           <p className="text-xs text-muted-foreground">
-            Creates 20 users, 100 contacts, 300 visits with photos and forms. Password: Demo@123
+            Creates 20 users, 100 leads, 300 visits with photos and forms. Password: Demo@123
           </p>
         </div>
 
@@ -146,7 +146,7 @@ export function DemoDataLoader() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will clear all contacts, visits, photos, and communications from your local database.
+                This will clear all leads, visits, photos, and communications from your local database.
                 This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ApplicationIdSearch } from './ApplicationIdSearch';
-import { Contact, db, PlanEnrollment } from '@/lib/db';
+import { Lead, db, PlanEnrollment } from '@/lib/db';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,7 +23,7 @@ export function EnrollmentDialog({
   enrollCount,
   onSave
 }: EnrollmentDialogProps) {
-  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<Lead[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const { currentOrganization } = useAuthStore();
 
@@ -40,23 +40,23 @@ export function EnrollmentDialog({
     []
   );
 
-  // Load existing contacts when dialog opens
+  // Load existing leads when dialog opens
   useEffect(() => {
-    const loadExistingContacts = async () => {
+    const loadExistingLeads = async () => {
       if (existingEnrollments.length > 0) {
-        const contacts: Contact[] = [];
+        const leads: Lead[] = [];
         for (const enrollment of existingEnrollments) {
-          const contact = await db.customers.get(enrollment.customerId);
-          if (contact) contacts.push(contact);
+          const lead = await db.leads.get(enrollment.customerId);
+          if (lead) leads.push(lead);
         }
-        setSelectedContacts(contacts);
+        setSelectedContacts(leads);
       } else {
         setSelectedContacts([]);
       }
     };
     
     if (open) {
-      loadExistingContacts();
+      loadExistingLeads();
     }
   }, [open, existingEnrollments]);
 
@@ -64,7 +64,7 @@ export function EnrollmentDialog({
     if (!currentOrganization?.id || !dailyPlanId) return;
     
     if (selectedContacts.length !== enrollCount) {
-      toast.error(`Please select exactly ${enrollCount} application(s)`);
+      toast.error(`Please select exactly ${enrollCount} lead(s)`);
       return;
     }
 
@@ -76,10 +76,10 @@ export function EnrollmentDialog({
       await db.planEnrollments.where('dailyPlanId').equals(dailyPlanId).delete();
       
       // Create new enrollments
-      const enrollments: PlanEnrollment[] = selectedContacts.map(contact => ({
+      const enrollments: PlanEnrollment[] = selectedContacts.map(lead => ({
         id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         dailyPlanId,
-        customerId: contact.id,
+        customerId: lead.id,
         organizationId: currentOrganization.id,
         enrolledAt: now,
         syncStatus: 'pending' as const,
@@ -161,7 +161,7 @@ export function EnrollmentDialog({
         <DialogHeader>
           <DialogTitle>Plan Enrollments</DialogTitle>
           <DialogDescription>
-            Select {enrollCount} application{enrollCount !== 1 ? 's' : ''} you plan to enroll today.
+            Select {enrollCount} lead{enrollCount !== 1 ? 's' : ''} you plan to enroll today.
           </DialogDescription>
         </DialogHeader>
         
