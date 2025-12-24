@@ -239,21 +239,21 @@ export default function Planning() {
         </CardHeader>
         <CardContent className="p-3 pt-0 space-y-3">
           {/* Target Input Row */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">My Target (Enrollments)</label>
-              <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <label className="text-xs text-muted-foreground mb-1 block truncate">Target</label>
+              <div className="flex items-center gap-2">
                 <Input
                   type="number"
                   min="0"
                   value={monthlyTargetInput}
                   onChange={(e) => setMonthlyTargetInput(parseInt(e.target.value) || 0)}
-                  className="h-5 w-14 text-xs px-1.5 py-0"
+                  className="h-7 w-20 text-sm px-2"
                   placeholder="0"
                 />
                 <Button 
                   size="sm" 
-                  className="h-5 px-2 text-xs"
+                  className="h-7 px-3 text-xs"
                   onClick={handleMonthlyTargetSave}
                   disabled={upsertTarget.isPending}
                 >
@@ -261,9 +261,9 @@ export default function Planning() {
                 </Button>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <div className="text-xs text-muted-foreground">Achieved</div>
-              <div className="text-lg font-bold">{monthlyData.totalEnrollments}</div>
+              <div className="text-xl font-bold">{monthlyData.totalEnrollments}</div>
             </div>
           </div>
 
