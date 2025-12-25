@@ -19,6 +19,7 @@ import PerformanceBoard from "./pages/PerformanceBoard";
 import Leads from "./pages/Leads";
 import LeadDetail from "./pages/LeadDetail";
 import Visits from "./pages/Visits";
+import VisitsMap from "./pages/VisitsMap";
 import VisitDetail from "./pages/VisitDetail";
 import NewVisit from "./pages/NewVisit";
 import Users from "./pages/Users";
@@ -65,7 +66,7 @@ const App = () => (
                 <Route path="leads" element={<Leads />} />
                 <Route path="leads/:id" element={<LeadDetail />} />
                 <Route path="visits" element={<Visits />} />
-                <Route path="visits/map" element={<Visits />} />
+                <Route path="visits/map" element={<VisitsMap />} />
                 <Route path="visits/new" element={<NewVisit />} />
                 <Route path="visits/new-checkin" element={<VisitDetail />} />
                 <Route path="visits/:id" element={<VisitDetail />} />
