@@ -59,6 +59,8 @@ export default function Planning() {
     leads_target: 0,
     logins_target: 0,
     enroll_target: 0,
+    leads_market: '',
+    logins_market: '',
   });
 
   // Manager's own IL/DB targets
@@ -98,6 +100,8 @@ export default function Planning() {
         leads_target: plan.leadsTarget,
         logins_target: plan.loginsTarget,
         enroll_target: plan.enrollTarget,
+        leads_market: plan.leadsMarket || '',
+        logins_market: plan.loginsMarket || '',
       });
       setManagerTargets({
         fi_target: plan.fiTarget || 0,
@@ -165,6 +169,8 @@ export default function Planning() {
         leads_target: formData.leads_target,
         logins_target: formData.logins_target,
         enroll_target: formData.enroll_target,
+        leads_market: formData.leads_market,
+        logins_market: formData.logins_market,
         fi_target: managerTargets.fi_target,
         db_target: managerTargets.db_target,
       });
@@ -776,7 +782,33 @@ export default function Planning() {
                 </table>
               </div>
 
-              {/* Show planned enrollments */}
+              {/* Market Selection */}
+              <div className="mt-3 space-y-2">
+                <h4 className="text-xs font-medium text-muted-foreground">Markets to Visit</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground mb-0.5 block">For Leads</label>
+                    <Input
+                      type="text"
+                      value={formData.leads_market}
+                      onChange={(e) => setFormData(prev => ({ ...prev, leads_market: e.target.value }))}
+                      placeholder="e.g., Main Market, Sector 5"
+                      className="h-6 text-xs px-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground mb-0.5 block">For Logins</label>
+                    <Input
+                      type="text"
+                      value={formData.logins_market}
+                      onChange={(e) => setFormData(prev => ({ ...prev, logins_market: e.target.value }))}
+                      placeholder="e.g., Industrial Area, Block B"
+                      className="h-6 text-xs px-2"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {enrolledContacts.length > 0 && (
                 <div className="mt-2 p-2 bg-primary/5 border border-primary/20 rounded">
                   <div className="flex items-center justify-between mb-1">

@@ -33,6 +33,8 @@ const toLocalPlan = (plan: any): DailyPlanLocal => ({
   dbTarget: plan.db_target,
   fiActual: plan.fi_actual,
   dbActual: plan.db_actual,
+  leadsMarket: plan.leads_market,
+  loginsMarket: plan.logins_market,
   status: plan.status,
   correctedBy: plan.corrected_by,
   originalValues: plan.original_values,
@@ -57,6 +59,8 @@ const toSupabasePlan = (plan: DailyPlanLocal) => ({
   db_target: plan.dbTarget || 0,
   fi_actual: plan.fiActual || 0,
   db_actual: plan.dbActual || 0,
+  leads_market: plan.leadsMarket || null,
+  logins_market: plan.loginsMarket || null,
   status: plan.status,
 });
 
@@ -306,6 +310,8 @@ export function useCreatePlanOffline() {
       enroll_target: number;
       fi_target?: number;
       db_target?: number;
+      leads_market?: string;
+      logins_market?: string;
     }) => {
       if (!user || !currentOrganization) throw new Error('Not authenticated');
 
@@ -327,6 +333,8 @@ export function useCreatePlanOffline() {
         dbTarget: input.db_target || 0,
         fiActual: 0,
         dbActual: 0,
+        leadsMarket: input.leads_market || null,
+        loginsMarket: input.logins_market || null,
         status: 'submitted',
         correctedBy: null,
         originalValues: null,
@@ -405,6 +413,8 @@ export function useUpdatePlanOffline() {
       enroll_actual?: number;
       fi_actual?: number;
       db_actual?: number;
+      leads_market?: string;
+      logins_market?: string;
       status?: string;
     }) => {
       const { id, ...updates } = input;
@@ -425,6 +435,8 @@ export function useUpdatePlanOffline() {
         ...(updates.enroll_actual !== undefined && { enrollActual: updates.enroll_actual }),
         ...(updates.fi_actual !== undefined && { fiActual: updates.fi_actual }),
         ...(updates.db_actual !== undefined && { dbActual: updates.db_actual }),
+        ...(updates.leads_market !== undefined && { leadsMarket: updates.leads_market }),
+        ...(updates.logins_market !== undefined && { loginsMarket: updates.logins_market }),
         ...(updates.status !== undefined && { status: updates.status }),
         syncStatus: 'pending',
         updatedAt: now,
@@ -462,6 +474,8 @@ export function useUpdatePlanOffline() {
               ...(updates.enroll_actual !== undefined && { enroll_actual: updates.enroll_actual }),
               ...(updates.fi_actual !== undefined && { fi_actual: updates.fi_actual }),
               ...(updates.db_actual !== undefined && { db_actual: updates.db_actual }),
+              ...(updates.leads_market !== undefined && { leads_market: updates.leads_market }),
+              ...(updates.logins_market !== undefined && { logins_market: updates.logins_market }),
               ...(updates.status !== undefined && { status: updates.status }),
             })
             .eq('id', existingPlan.odataId);

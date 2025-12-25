@@ -115,8 +115,10 @@ export type Database = {
           fi_target: number | null
           id: string
           leads_actual: number
+          leads_market: string | null
           leads_target: number
           logins_actual: number
+          logins_market: string | null
           logins_target: number
           organization_id: string
           original_values: Json | null
@@ -136,8 +138,10 @@ export type Database = {
           fi_target?: number | null
           id?: string
           leads_actual?: number
+          leads_market?: string | null
           leads_target?: number
           logins_actual?: number
+          logins_market?: string | null
           logins_target?: number
           organization_id: string
           original_values?: Json | null
@@ -157,8 +161,10 @@ export type Database = {
           fi_target?: number | null
           id?: string
           leads_actual?: number
+          leads_market?: string | null
           leads_target?: number
           logins_actual?: number
+          logins_market?: string | null
           logins_target?: number
           organization_id?: string
           original_values?: Json | null
