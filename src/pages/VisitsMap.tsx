@@ -5,7 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { useVisits } from '@/hooks/useVisits';
 import { format } from 'date-fns';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
+const MAPBOX_TOKEN = 'MAPBOX_TOKEN_REMOVED';
 
 export default function VisitsMap() {
   const navigate = useNavigate();
