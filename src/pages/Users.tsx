@@ -203,34 +203,20 @@ export default function Forms() {
     setIsCreating(true);
 
     try {
-      // Create user in Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            full_name: values.fullName,
-          },
+      // Call edge function to create user (doesn't log out current admin)
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: values.email,
+          password: values.password,
+          fullName: values.fullName,
+          phone: values.phone,
+          role: values.role,
+          organizationId: currentOrganization?.id,
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
-
-      // Update profile with phone
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ phone: values.phone })
-        .eq('id', authData.user.id);
-
-      if (profileError) throw profileError;
-
-      // Add role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: authData.user.id, role: values.role });
-
-      if (roleError) throw roleError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: 'User Created',
