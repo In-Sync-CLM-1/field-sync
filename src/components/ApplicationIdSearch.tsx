@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Check, X, Search } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { db, Lead } from '@/lib/db';
+import { Lead } from '@/lib/db';
 import { useAuthStore } from '@/store/authStore';
-import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ApplicationIdSearchProps {
   selectedContacts: Lead[];
@@ -25,7 +25,7 @@ export function ApplicationIdSearch({
   const [isSearching, setIsSearching] = useState(false);
   const { currentOrganization } = useAuthStore();
 
-  // Search leads by lead ID, customer ID, or name
+  // Predictive search from Supabase
   const searchLeads = useCallback(async (query: string) => {
     if (!currentOrganization?.id || query.length < 2) {
       setSearchResults([]);
@@ -34,24 +34,50 @@ export function ApplicationIdSearch({
 
     setIsSearching(true);
     try {
-      const results = await db.leads
-        .where('organizationId')
-        .equals(currentOrganization.id)
-        .filter(lead => {
-          // Exclude already selected or excluded leads
-          if (selectedContacts.some(s => s.id === lead.id) || excludeIds.includes(lead.id)) {
-            return false;
-          }
-          
-          const lowerQuery = query.toLowerCase();
-          return (
-            lead.leadId?.toLowerCase().includes(lowerQuery) ||
-            lead.customerId?.toLowerCase().includes(lowerQuery) ||
-            lead.name.toLowerCase().includes(lowerQuery)
-          );
-        })
-        .limit(10)
-        .toArray();
+      // Get IDs to exclude
+      const excludeList = [...excludeIds, ...selectedContacts.map(s => s.id)];
+      
+      // Search in Supabase with ilike for predictive matching
+      let queryBuilder = supabase
+        .from('leads')
+        .select('*')
+        .eq('organization_id', currentOrganization.id)
+        .or(`name.ilike.%${query}%,lead_id.ilike.%${query}%,customer_id.ilike.%${query}%`)
+        .limit(10);
+      
+      if (excludeList.length > 0) {
+        queryBuilder = queryBuilder.not('id', 'in', `(${excludeList.join(',')})`);
+      }
+
+      const { data, error } = await queryBuilder;
+
+      if (error) throw error;
+
+      // Map to local Lead format
+      const results: Lead[] = (data || []).map(l => ({
+        id: l.id,
+        organizationId: l.organization_id,
+        branch: l.branch || undefined,
+        leadId: l.lead_id || undefined,
+        customerId: l.customer_id || undefined,
+        status: l.status || undefined,
+        assignedUserId: l.assigned_user_id || undefined,
+        entityName: l.entity_name || undefined,
+        name: l.name,
+        loanAmount: l.loan_amount ? Number(l.loan_amount) : undefined,
+        loanPurpose: l.loan_purpose || undefined,
+        villageCity: l.village_city || undefined,
+        district: l.district || undefined,
+        state: l.state || undefined,
+        latitude: l.latitude ? Number(l.latitude) : undefined,
+        longitude: l.longitude ? Number(l.longitude) : undefined,
+        customerResponse: l.customer_response || undefined,
+        mobileNo: l.mobile_no || undefined,
+        followUpDate: l.follow_up_date || undefined,
+        leadSource: l.lead_source || undefined,
+        syncStatus: 'synced' as const,
+        updatedAt: new Date(l.updated_at),
+      }));
       
       setSearchResults(results);
     } catch (error) {
