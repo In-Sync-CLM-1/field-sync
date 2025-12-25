@@ -15,9 +15,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarHeader,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import inSyncLogo from '@/assets/in-sync-logo.png';
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -68,9 +70,11 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" className="md:w-60">
+      <SidebarHeader className="border-b px-4 py-3">
+        <img src={inSyncLogo} alt="In-Sync" className="h-8 w-auto" />
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          
           <SidebarGroupContent>
             <SidebarMenu>
               {dashboards.map((item) => {
