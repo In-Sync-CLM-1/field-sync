@@ -6,14 +6,14 @@ export type AppRole =
   | 'platform_admin'
   | 'super_admin'
   | 'admin'
-  | 'sales_manager'
-  | 'sales_agent'
-  | 'support_manager'
-  | 'support_agent'
-  | 'analyst'
-  | 'field_agent';
+  | 'branch_manager'
+  | 'sales_officer';
 
 export const CRM_ROLE_MAPPING: Record<string, AppRole> = {
+  // Platform Admin - Platform-wide access (hidden)
+  'Platform Admin': 'platform_admin',
+  'PlatformAdmin': 'platform_admin',
+  
   // Super Admin - Highest level administrative access
   'Super Admin': 'super_admin',
   'SuperAdmin': 'super_admin',
@@ -24,45 +24,33 @@ export const CRM_ROLE_MAPPING: Record<string, AppRole> = {
   'Administrator': 'admin',
   'System Admin': 'admin',
   
-  // Sales Manager - Sales team management role
-  'Sales Manager': 'sales_manager',
-  'Regional Sales Manager': 'sales_manager',
-  'Sales Team Lead': 'sales_manager',
+  // Branch Manager - Branch-level management
+  'Branch Manager': 'branch_manager',
+  'BranchManager': 'branch_manager',
+  'Manager': 'branch_manager',
+  'Regional Manager': 'branch_manager',
+  'Team Lead': 'branch_manager',
+  'Sales Manager': 'branch_manager',
+  'Support Manager': 'branch_manager',
   
-  // Sales Agent - Sales team member role
-  'Sales Agent': 'sales_agent',
-  'Sales Rep': 'sales_agent',
-  'Sales Representative': 'sales_agent',
-  'Sales Executive': 'sales_agent',
-  
-  // Support Manager - Support team management role
-  'Support Manager': 'support_manager',
-  'Customer Support Manager': 'support_manager',
-  'Support Team Lead': 'support_manager',
-  
-  // Support Agent - Support team member role
-  'Support Agent': 'support_agent',
-  'Customer Support Agent': 'support_agent',
-  'Support Rep': 'support_agent',
-  'Support Representative': 'support_agent',
-  
-  // Analyst - Analytics and reporting role
-  'Analyst': 'analyst',
-  'Data Analyst': 'analyst',
-  'Business Analyst': 'analyst',
-  'Analytics Manager': 'analyst',
-  
-  // Field Agent - Default role
-  'Field Agent': 'field_agent',
-  'Agent': 'field_agent',
-  'Field Worker': 'field_agent',
+  // Sales Officer - Field-level operations
+  'Sales Officer': 'sales_officer',
+  'SalesOfficer': 'sales_officer',
+  'Field Agent': 'sales_officer',
+  'Agent': 'sales_officer',
+  'Sales Agent': 'sales_officer',
+  'Sales Rep': 'sales_officer',
+  'Sales Representative': 'sales_officer',
+  'Sales Executive': 'sales_officer',
+  'Support Agent': 'sales_officer',
+  'Field Worker': 'sales_officer',
 };
 
 /**
  * Get application role from CRM role
  */
 export function getAppRole(crmRole: string): AppRole {
-  return CRM_ROLE_MAPPING[crmRole] || 'field_agent';
+  return CRM_ROLE_MAPPING[crmRole] || 'sales_officer';
 }
 
 /**
@@ -81,10 +69,6 @@ export const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
   platform_admin: 'Platform administrator - highest level system access (hidden)',
   super_admin: 'Highest level administrative access - full system control',
   admin: 'Administrative access - can manage users and settings',
-  sales_manager: 'Sales team management role - oversees sales operations',
-  sales_agent: 'Sales team member role - handles sales activities',
-  support_manager: 'Support team management role - oversees support operations',
-  support_agent: 'Support team member role - handles customer support',
-  analyst: 'Analytics and reporting role - data analysis and insights',
-  field_agent: 'Field operations role - on-ground activities',
+  branch_manager: 'Branch-level management - oversees team operations',
+  sales_officer: 'Sales operations role - handles field activities',
 };

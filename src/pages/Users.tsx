@@ -39,7 +39,7 @@ const createUserSchema = z.object({
   phone: z.string().min(10, 'Phone must be at least 10 characters').max(20),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
-  role: z.enum(['field_agent', 'sales_agent', 'admin', 'super_admin']),
+  role: z.enum(['sales_officer', 'branch_manager', 'admin', 'super_admin']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -56,6 +56,30 @@ const resetPasswordSchema = z.object({
 });
 
 type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
+
+// Role display names for UI
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+  sales_officer: 'Sales Officer',
+  branch_manager: 'Branch Manager',
+  admin: 'Admin',
+  super_admin: 'Super Admin',
+  platform_admin: 'Platform Admin',
+};
+
+// Get badge variant based on role
+const getRoleBadgeVariant = (role: string) => {
+  switch (role) {
+    case 'super_admin':
+    case 'platform_admin':
+      return 'destructive';
+    case 'admin':
+      return 'default';
+    case 'branch_manager':
+      return 'secondary';
+    default:
+      return 'outline';
+  }
+};
 
 export default function Forms() {
   const { user } = useAuth();
@@ -76,7 +100,7 @@ export default function Forms() {
       phone: '',
       password: '',
       confirmPassword: '',
-      role: 'field_agent',
+      role: 'sales_officer',
     },
   });
 
@@ -210,7 +234,7 @@ export default function Forms() {
 
       toast({
         title: 'User Created',
-        description: `${values.fullName} has been successfully created with ${values.role} role.`,
+        description: `${values.fullName} has been successfully created with ${ROLE_DISPLAY_NAMES[values.role]} role.`,
       });
 
       form.reset();
@@ -383,8 +407,8 @@ export default function Forms() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="field_agent">Field Agent</SelectItem>
-                          <SelectItem value="sales_agent">Sales Agent</SelectItem>
+                          <SelectItem value="sales_officer">Sales Officer</SelectItem>
+                          <SelectItem value="branch_manager">Branch Manager</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="super_admin">Super Admin</SelectItem>
                         </SelectContent>
@@ -533,17 +557,9 @@ export default function Forms() {
                             {user.user_roles.map((ur, idx) => (
                               <Badge
                                 key={idx}
-                                variant={
-                                  ur.role === 'super_admin'
-                                    ? 'destructive'
-                                    : ur.role === 'admin'
-                                    ? 'default'
-                                    : ur.role === 'sales_agent'
-                                    ? 'secondary'
-                                    : 'outline'
-                                }
+                                variant={getRoleBadgeVariant(ur.role)}
                               >
-                                {ur.role}
+                                {ROLE_DISPLAY_NAMES[ur.role] || ur.role}
                               </Badge>
                             ))}
                           </div>
@@ -580,33 +596,25 @@ export default function Forms() {
                           {user.user_roles.map((ur, idx) => (
                             <Badge
                               key={idx}
-                              variant={
-                                ur.role === 'super_admin'
-                                  ? 'destructive'
-                                  : ur.role === 'admin'
-                                  ? 'default'
-                                  : ur.role === 'sales_agent'
-                                  ? 'secondary'
-                                  : 'outline'
-                              }
+                              variant={getRoleBadgeVariant(ur.role)}
                             >
-                            {ur.role}
-                          </Badge>
-                        ))}
+                              {ROLE_DISPLAY_NAMES[ur.role] || ur.role}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleResetPasswordClick(user)}
-                      className="w-full"
-                    >
-                      <KeyRound className="h-4 w-4 mr-2" />
-                      Reset Password
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleResetPasswordClick(user)}
+                        className="w-full"
+                      >
+                        <KeyRound className="h-4 w-4 mr-2" />
+                        Reset Password
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
               {/* Pagination */}

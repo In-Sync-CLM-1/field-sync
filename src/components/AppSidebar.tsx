@@ -22,7 +22,7 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string>('field_agent');
+  const [userRole, setUserRole] = useState<string>('sales_officer');
 
   useEffect(() => {
     async function checkRole() {
@@ -34,15 +34,15 @@ export function AppSidebar() {
         .eq('user_id', user.id);
       
       const userRoles = roles?.map(r => r.role) || [];
-      const primaryRole = userRoles.includes('super_admin') 
-        ? 'super_admin' 
-        : userRoles.includes('platform_admin')
-        ? 'platform_admin'
+      const primaryRole = userRoles.includes('platform_admin') 
+        ? 'platform_admin' 
+        : userRoles.includes('super_admin')
+        ? 'super_admin'
         : userRoles.includes('admin')
         ? 'admin'
-        : userRoles.includes('manager')
-        ? 'manager'
-        : 'field_agent';
+        : userRoles.includes('branch_manager')
+        ? 'branch_manager'
+        : 'sales_officer';
       
       setUserRole(primaryRole);
     }
@@ -53,10 +53,10 @@ export function AppSidebar() {
   const dashboards = [
     { icon: Home, label: 'My Dashboard', path: '/', roles: ['all'] },
     { icon: ClipboardList, label: 'Planning', path: '/planning', roles: ['all'] },
-    { icon: ClipboardList, label: 'Team Planning', path: '/planning/team', roles: ['sales_manager', 'manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: ClipboardList, label: 'Team Planning', path: '/planning/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: ClipboardList, label: 'Planning Overview', path: '/planning/overview', roles: ['admin', 'super_admin', 'platform_admin'] },
-    { icon: LayoutDashboard, label: 'Team', path: '/team', roles: ['manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: LayoutDashboard, label: 'Team', path: '/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: Globe, label: 'Territory', path: '/territory', roles: ['all'] },
     { icon: Award, label: 'Performance', path: '/performance', roles: ['admin', 'super_admin', 'platform_admin'] },
     { icon: Users, label: 'Users', path: '/users', roles: ['admin', 'super_admin', 'platform_admin'] },
