@@ -86,9 +86,8 @@ export default function Layout() {
           {/* Header */}
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-12 items-center justify-between px-3 md:px-4">
-              <div className="flex items-center space-x-1.5">
+              <div className="flex items-center">
                 <SidebarTrigger className="-ml-2" />
-                <img src={inSyncLogo} alt="In-Sync" className="h-6 w-auto" />
               </div>
 
               <div className="flex items-center gap-2">
