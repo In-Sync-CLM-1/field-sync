@@ -70,10 +70,6 @@ export function AppSidebar() {
     <Sidebar collapsible="offcanvas" className="md:w-60">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center justify-between">
-            {!collapsed && <span>Dashboards</span>}
-            {!collapsed && <ChevronRight className="h-4 w-4" />}
-          </SidebarGroupLabel>
           
           <SidebarGroupContent>
             <SidebarMenu>
