@@ -121,6 +121,8 @@ export interface DailyPlanLocal {
   dbTarget: number | null;
   fiActual: number | null;
   dbActual: number | null;
+  leadsMarket?: string | null;
+  loginsMarket?: string | null;
   status: string;
   correctedBy: string | null;
   originalValues: Record<string, unknown> | null;
