@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { useAuthStore } from '@/store/authStore';
 import { LeadsUpload } from '@/components/LeadsUpload';
 import { 
@@ -42,12 +42,6 @@ export default function Leads() {
     syncFromDatabase 
   } = useLeads();
 
-  const statusCounts = {
-    all: leads.length,
-    new: leads.filter(l => l.status === 'new').length,
-    approved: leads.filter(l => l.status === 'approved').length,
-    rejected: leads.filter(l => l.status === 'rejected').length,
-  };
 
   const {
     currentPage,
@@ -116,22 +110,6 @@ export default function Leads() {
             />
           </div>
 
-          <Tabs value={filterStatus} onValueChange={(value) => setFilterStatus(value)}>
-            <TabsList className="grid w-full grid-cols-4 h-5">
-              <TabsTrigger value="all" className="text-[10px] h-5">
-                All ({statusCounts.all})
-              </TabsTrigger>
-              <TabsTrigger value="new" className="text-[10px] h-5">
-                New ({statusCounts.new})
-              </TabsTrigger>
-              <TabsTrigger value="approved" className="text-[10px] h-5">
-                Approved ({statusCounts.approved})
-              </TabsTrigger>
-              <TabsTrigger value="rejected" className="text-[10px] h-5">
-                Rejected ({statusCounts.rejected})
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
         </CardContent>
       </Card>
 
