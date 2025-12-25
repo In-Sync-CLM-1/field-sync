@@ -79,11 +79,11 @@ export function AppSidebar() {
                 
                 return (
                   <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild isActive={isActive}>
+                    <SidebarMenuButton asChild isActive={isActive} className="h-8 py-1">
                       <NavLink 
                         to={item.path} 
                         end
-                        className="flex items-center gap-3 hover:bg-accent"
+                        className="flex items-center gap-2 hover:bg-accent text-sm"
                         activeClassName="bg-primary/10 text-primary font-medium"
                       >
                         <Icon className="h-4 w-4 flex-shrink-0" />
