@@ -14,14 +14,38 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { Home, Users, MapPin, Map, LogOut, User, Activity } from 'lucide-react';
+import { Home, Users, MapPin, Map, LogOut, User, Activity, RefreshCw } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import inSyncLogo from '@/assets/in-sync-logo.png';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/lib/db';
+import { swManager } from '@/lib/serviceWorker';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const pendingCount = useLiveQuery(
+    async () => {
+      const count = await db.syncQueue.count();
+      return count;
+    },
+    [],
+    0
+  );
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await swManager.requestSync();
+    } catch (error) {
+      console.error('Manual sync failed:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
     async function checkRole() {
@@ -68,7 +92,17 @@ export default function Layout() {
               </div>
 
               <div className="flex items-center gap-2">
-                
+                {navigator.onLine && pendingCount > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSync}
+                    disabled={isSyncing}
+                  >
+                    <RefreshCw className={`h-3 w-3 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
+                    {isSyncing ? 'Syncing...' : 'Sync Now'}
+                  </Button>
+                )}
                 <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">

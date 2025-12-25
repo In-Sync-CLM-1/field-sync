@@ -43,26 +43,9 @@ export function OfflineBanner() {
     }
   };
 
-  // Don't show if online and no pending items
-  if (isOnline && pendingCount === 0) {
+  // Don't show anything when online (sync button is now in header)
+  if (isOnline) {
     return null;
-  }
-
-  // Show only button when online with pending items
-  if (isOnline && pendingCount > 0) {
-    return (
-      <div className="flex justify-end px-4 py-2 border-b">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSync}
-          disabled={isSyncing}
-        >
-          <RefreshCw className={`h-3 w-3 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
-          {isSyncing ? 'Syncing...' : 'Sync Now'}
-        </Button>
-      </div>
-    );
   }
 
   // Show full alert banner when offline
