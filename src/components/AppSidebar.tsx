@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users, ClipboardList } from 'lucide-react';
+import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users, ClipboardList, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,8 +14,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -99,6 +101,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      
+      <SidebarFooter className="p-2">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-destructive/10"
+          onClick={async () => {
+            await supabase.auth.signOut();
+          }}
+        >
+          <LogOut className="h-4 w-4 flex-shrink-0" />
+          {!collapsed && <span>Logout</span>}
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 }
