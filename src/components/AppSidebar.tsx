@@ -36,6 +36,8 @@ export function AppSidebar() {
       const userRoles = roles?.map(r => r.role) || [];
       const primaryRole = userRoles.includes('super_admin') 
         ? 'super_admin' 
+        : userRoles.includes('platform_admin')
+        ? 'platform_admin'
         : userRoles.includes('admin')
         ? 'admin'
         : userRoles.includes('manager')
@@ -51,13 +53,13 @@ export function AppSidebar() {
   const dashboards = [
     { icon: Home, label: 'My Dashboard', path: '/', roles: ['all'] },
     { icon: ClipboardList, label: 'Planning', path: '/planning', roles: ['all'] },
-    { icon: ClipboardList, label: 'Team Planning', path: '/planning/team', roles: ['sales_manager', 'manager', 'admin', 'super_admin'] },
-    { icon: ClipboardList, label: 'Planning Overview', path: '/planning/overview', roles: ['admin', 'super_admin'] },
-    { icon: LayoutDashboard, label: 'Team', path: '/team', roles: ['manager', 'admin', 'super_admin'] },
-    { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['manager', 'admin', 'super_admin'] },
+    { icon: ClipboardList, label: 'Team Planning', path: '/planning/team', roles: ['sales_manager', 'manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: ClipboardList, label: 'Planning Overview', path: '/planning/overview', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: LayoutDashboard, label: 'Team', path: '/team', roles: ['manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: Globe, label: 'Territory', path: '/territory', roles: ['all'] },
-    { icon: Award, label: 'Performance', path: '/performance', roles: ['admin', 'super_admin'] },
-    { icon: Users, label: 'Users', path: '/users', roles: ['admin', 'super_admin'] },
+    { icon: Award, label: 'Performance', path: '/performance', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: Users, label: 'Users', path: '/users', roles: ['admin', 'super_admin', 'platform_admin'] },
   ].filter(d => d.roles.includes('all') || d.roles.includes(userRole));
 
   const currentPath = location.pathname;
