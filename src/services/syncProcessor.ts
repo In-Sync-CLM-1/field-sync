@@ -34,6 +34,11 @@ async function syncPendingLeads() {
     .anyOf(['customer', 'lead'])
     .toArray();
 
+  if (pendingItems.length === 0) return;
+
+  // Get current user for created_by field
+  const { data: { user } } = await supabase.auth.getUser();
+
   for (const item of pendingItems) {
     if (item.retryCount >= item.maxRetries) {
       console.log('[SyncProcessor] Max retries reached for lead:', item.entityId);
@@ -53,23 +58,25 @@ async function syncPendingLeads() {
           .upsert({
             id: lead.id,
             name: lead.name,
-            branch: lead.branch,
-            lead_id: lead.leadId,
-            customer_id: lead.customerId,
-            status: lead.status,
-            entity_name: lead.entityName,
-            loan_amount: lead.loanAmount,
-            loan_purpose: lead.loanPurpose,
-            village_city: lead.villageCity,
-            district: lead.district,
-            state: lead.state,
-            latitude: lead.latitude,
-            longitude: lead.longitude,
-            customer_response: lead.customerResponse,
-            mobile_no: lead.mobileNo,
-            follow_up_date: lead.followUpDate,
-            lead_source: lead.leadSource,
+            branch: lead.branch || null,
+            lead_id: lead.leadId || null,
+            customer_id: lead.customerId || null,
+            status: lead.status || 'new',
+            entity_name: lead.entityName || null,
+            loan_amount: lead.loanAmount || null,
+            loan_purpose: lead.loanPurpose || null,
+            village_city: lead.villageCity || null,
+            district: lead.district || null,
+            state: lead.state || null,
+            latitude: lead.latitude || null,
+            longitude: lead.longitude || null,
+            customer_response: lead.customerResponse || null,
+            mobile_no: lead.mobileNo || null,
+            follow_up_date: lead.followUpDate || null,
+            lead_source: lead.leadSource || null,
             organization_id: lead.organizationId,
+            created_by: lead.createdBy || user?.id || null,
+            assigned_user_id: lead.assignedUserId || user?.id || null,
           });
 
         if (!error) {
@@ -78,7 +85,9 @@ async function syncPendingLeads() {
             lastSyncedAt: new Date(),
           });
           await db.syncQueue.delete(item.id);
+          console.log('[SyncProcessor] Lead synced successfully:', lead.id);
         } else {
+          console.error('[SyncProcessor] Lead sync error:', error.message);
           await db.syncQueue.update(item.id, {
             retryCount: item.retryCount + 1,
             lastAttemptAt: new Date(),
