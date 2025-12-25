@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLeads } from '@/hooks/useLeads';
 import { useVisits } from '@/hooks/useVisits';
@@ -11,6 +11,33 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Check, ChevronsUpDown, MapPin, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+// Haversine formula to calculate distance between two coordinates in km
+const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number => {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+const formatDistance = (km: number): string => {
+  if (km < 1) {
+    return `${Math.round(km * 1000)} m`;
+  }
+  return `${km.toFixed(1)} km`;
+};
 
 export default function NewVisit() {
   const navigate = useNavigate();
@@ -28,6 +55,30 @@ export default function NewVisit() {
 
   const selectedLead = leads.find(l => l.id === leadId);
   const leadHasLocation = selectedLead?.latitude && selectedLead?.longitude;
+
+  // Calculate distances for all leads with locations
+  const leadsWithDistance = useMemo(() => {
+    return leads.map(lead => {
+      let distance: number | null = null;
+      if (location && lead.latitude && lead.longitude) {
+        distance = calculateDistance(
+          location.latitude,
+          location.longitude,
+          lead.latitude,
+          lead.longitude
+        );
+      }
+      return { ...lead, distance };
+    }).sort((a, b) => {
+      // Sort by distance (leads with distance first, then by distance value)
+      if (a.distance !== null && b.distance !== null) {
+        return a.distance - b.distance;
+      }
+      if (a.distance !== null) return -1;
+      if (b.distance !== null) return 1;
+      return 0;
+    });
+  }, [leads, location]);
 
   useEffect(() => {
     // Get location on mount
@@ -122,7 +173,7 @@ export default function NewVisit() {
                   <CommandInput placeholder="Search leads..." />
                   <CommandEmpty>No lead found.</CommandEmpty>
                   <CommandGroup>
-                    {leads.map((lead) => (
+                    {leadsWithDistance.map((lead) => (
                       <CommandItem
                         key={lead.id}
                         value={lead.name}
@@ -137,9 +188,16 @@ export default function NewVisit() {
                             leadId === lead.id ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        {lead.name}
+                        <span className="flex-1">{lead.name}</span>
                         {lead.latitude && lead.longitude ? (
-                          <MapPin className="ml-2 h-3 w-3 text-green-500" />
+                          <>
+                            <MapPin className="ml-2 h-3 w-3 text-green-500" />
+                            {lead.distance !== null && (
+                              <span className="ml-1 text-xs text-muted-foreground">
+                                {formatDistance(lead.distance)}
+                              </span>
+                            )}
+                          </>
                         ) : (
                           <MapPin className="ml-2 h-3 w-3 text-amber-500" />
                         )}
