@@ -118,6 +118,7 @@ export default function TerritoryMap() {
       style: 'mapbox://styles/mapbox/streets-v12',
       center: initialCenter,
       zoom: initialZoom,
+      attributionControl: false,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
