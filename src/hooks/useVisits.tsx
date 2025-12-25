@@ -32,6 +32,7 @@ export interface VisitInput {
   check_in_latitude: number;
   check_in_longitude: number;
   notes?: string;
+  updateLeadLocation?: boolean;
 }
 
 export const useVisits = () => {
@@ -68,7 +69,10 @@ export const useVisits = () => {
       const { data, error } = await supabase
         .from('visits')
         .insert({
-          ...input,
+          customer_id: input.customer_id,
+          check_in_latitude: input.check_in_latitude,
+          check_in_longitude: input.check_in_longitude,
+          notes: input.notes,
           organization_id: currentOrganization.id,
           user_id: user.id,
         })
@@ -76,6 +80,21 @@ export const useVisits = () => {
         .single();
 
       if (error) throw error;
+
+      // Update lead location if flag is set
+      if (input.updateLeadLocation) {
+        await supabase
+          .from('leads')
+          .update({
+            latitude: input.check_in_latitude,
+            longitude: input.check_in_longitude,
+          })
+          .eq('id', input.customer_id);
+        
+        // Invalidate leads query to reflect the updated location
+        queryClient.invalidateQueries({ queryKey: ['leads'] });
+      }
+
       return data;
     },
     onSuccess: () => {

@@ -27,6 +27,7 @@ export default function NewVisit() {
   const [gettingLocation, setGettingLocation] = useState(false);
 
   const selectedLead = leads.find(l => l.id === leadId);
+  const leadHasLocation = selectedLead?.latitude && selectedLead?.longitude;
 
   useEffect(() => {
     // Get location on mount
@@ -79,6 +80,7 @@ export default function NewVisit() {
         check_in_latitude: location.latitude,
         check_in_longitude: location.longitude,
         notes: notes || undefined,
+        updateLeadLocation: !leadHasLocation,
       },
       {
         onSuccess: (visit) => {
@@ -136,6 +138,11 @@ export default function NewVisit() {
                           )}
                         />
                         {lead.name}
+                        {lead.latitude && lead.longitude ? (
+                          <MapPin className="ml-2 h-3 w-3 text-green-500" />
+                        ) : (
+                          <MapPin className="ml-2 h-3 w-3 text-amber-500" />
+                        )}
                         {lead.villageCity && (
                           <span className="ml-2 text-sm text-muted-foreground">
                             {lead.villageCity}
@@ -148,6 +155,14 @@ export default function NewVisit() {
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* Lead location status info */}
+          {selectedLead && !leadHasLocation && (
+            <div className="flex items-center gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              <MapPin className="h-4 w-4 flex-shrink-0" />
+              <span>This lead doesn't have a location. Your current location will be saved to the lead record.</span>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="notes">Notes</Label>
