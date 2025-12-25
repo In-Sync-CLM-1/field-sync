@@ -43,9 +43,6 @@ export function ApplicationIdSearch({
             return false;
           }
           
-          // Must have lead ID or customer ID
-          if (!lead.leadId && !lead.customerId) return false;
-          
           const lowerQuery = query.toLowerCase();
           return (
             lead.leadId?.toLowerCase().includes(lowerQuery) ||
