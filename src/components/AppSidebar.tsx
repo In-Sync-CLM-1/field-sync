@@ -70,10 +70,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="offcanvas" className="md:w-60">
-      <SidebarHeader className="border-b px-4 py-3">
+      <SidebarHeader className="border-b px-4 py-3 flex flex-col items-center">
         <img src={inSyncLogo} alt="In-Sync" className="h-10 w-auto object-contain" />
         {user?.email && (
-          <p className="text-xs text-muted-foreground mt-1 truncate">{user.email}</p>
+          <p className="text-xs text-muted-foreground mt-1 truncate text-center">{user.email}</p>
         )}
       </SidebarHeader>
       <SidebarContent>
