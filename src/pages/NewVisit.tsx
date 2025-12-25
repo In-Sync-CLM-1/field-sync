@@ -44,7 +44,7 @@ export default function NewVisit() {
   const [searchParams] = useSearchParams();
   const preselectedLeadId = searchParams.get('leadId');
 
-  const { leads, syncing: loadingLeads } = useLeads();
+  const { leads, syncing: loadingLeads, syncFromDatabase } = useLeads();
   const { createVisit, isCreating } = useVisits();
 
   const [leadId, setLeadId] = useState(preselectedLeadId || '');
@@ -81,8 +81,9 @@ export default function NewVisit() {
   }, [leads, location]);
 
   useEffect(() => {
-    // Get location on mount
+    // Get location and sync leads on mount
     getCurrentLocation();
+    syncFromDatabase();
   }, []);
 
   const getCurrentLocation = () => {
