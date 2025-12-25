@@ -29,7 +29,7 @@ export default function Visits() {
   const filteredVisits = visits.filter((visit) => {
     const matchesSearch =
       !searchQuery ||
-      visit.customer?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      visit.lead?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       visit.notes?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const status = visit.check_out_time ? 'completed' : 'in_progress';
@@ -137,7 +137,7 @@ export default function Visits() {
                 <CardContent className="p-3">
                   <div className="flex items-start justify-between mb-1">
                     <CardTitle className="text-sm font-medium">
-                      {visit.customer?.name || 'Unknown Customer'}
+                      {visit.lead?.name || 'Unknown Lead'}
                     </CardTitle>
                     {getStatusBadge(visit)}
                   </div>

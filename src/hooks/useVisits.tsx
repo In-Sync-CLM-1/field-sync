@@ -17,13 +17,13 @@ export interface Visit {
   notes?: string;
   created_at: string;
   updated_at: string;
-  customer?: {
+  lead?: {
     id: string;
     name: string;
-    address?: string;
-    city?: string;
-    phone?: string;
-    email?: string;
+    village_city?: string;
+    district?: string;
+    mobile_no?: string;
+    entity_name?: string;
   };
 }
 
@@ -47,7 +47,7 @@ export const useVisits = () => {
         .from('visits')
         .select(`
           *,
-          customer:customers!visits_customer_id_fkey (
+          lead:leads!visits_customer_id_fkey (
             id,
             name
           )
@@ -170,13 +170,13 @@ export const useVisit = (id?: string) => {
         .from('visits')
         .select(`
           *,
-          customer:customers!visits_customer_id_fkey (
+          lead:leads!visits_customer_id_fkey (
             id,
             name,
-            address,
-            city,
-            phone,
-            email
+            village_city,
+            district,
+            mobile_no,
+            entity_name
           )
         `)
         .eq('id', id)
