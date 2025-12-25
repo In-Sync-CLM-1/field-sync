@@ -518,7 +518,7 @@ export type Database = {
             foreignKeyName: "plan_enrollments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
           {
@@ -774,7 +774,7 @@ export type Database = {
             foreignKeyName: "visits_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
           {

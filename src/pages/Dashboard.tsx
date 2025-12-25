@@ -28,9 +28,9 @@ export default function Dashboard() {
     },
     {
       icon: Users,
-      label: 'Customers',
-      description: 'Manage customers',
-      action: () => navigate('/contacts'),
+      label: 'Leads',
+      description: 'Manage leads',
+      action: () => navigate('/leads'),
       variant: 'outline' as const,
     },
     {
@@ -66,8 +66,8 @@ export default function Dashboard() {
       icon: Calendar
     },
     { 
-      label: 'Total Customers', 
-      value: myStats?.totalCustomers.toString() || '0', 
+      label: 'Total Leads', 
+      value: myStats?.totalLeads.toString() || '0', 
       change: '',
       icon: Users
     },

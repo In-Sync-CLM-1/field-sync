@@ -135,17 +135,17 @@ export default function VisitDetail() {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">
-            {visit.customer?.name || 'Unknown Customer'}
+            {visit.lead?.name || 'Unknown Lead'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Customer Details */}
-          {visit.customer && (
+          {/* Lead Details */}
+          {visit.lead && (
             <div className="space-y-2 pb-4 border-b">
-              {visit.customer.address && (
+              {(visit.lead.village_city || visit.lead.district) && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4" />
-                  <span>{visit.customer.address}</span>
+                  <span>{[visit.lead.village_city, visit.lead.district].filter(Boolean).join(', ')}</span>
                 </div>
               )}
             </div>

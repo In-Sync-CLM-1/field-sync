@@ -48,9 +48,9 @@ export function useMyStats() {
         .eq('user_id', user.id)
         .is('check_out_time', null);
 
-      // Get customers count
-      const { count: totalCustomers } = await supabase
-        .from('customers')
+      // Get leads count
+      const { count: totalLeads } = await supabase
+        .from('leads')
         .select('*', { count: 'exact', head: true })
         .eq('organization_id', currentOrganization.id);
 
@@ -59,7 +59,7 @@ export function useMyStats() {
         visitsThisWeek: visitsThisWeek || 0,
         visitsLastWeek: visitsLastWeek || 0,
         activeVisits: activeVisits || 0,
-        totalCustomers: totalCustomers || 0,
+        totalLeads: totalLeads || 0,
         pendingSync: 0,
         formsCompleted: 0,
         photosCaptured: 0,
