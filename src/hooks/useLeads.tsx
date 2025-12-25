@@ -164,33 +164,85 @@ export const useLeads = () => {
     return await db.leads.get(id);
   };
 
-  const bulkAddLeads = async (leads: Omit<Lead, 'id' | 'syncStatus' | 'updatedAt'>[]) => {
+  const bulkAddLeads = async (leads: Omit<Lead, 'id' | 'syncStatus' | 'updatedAt'>[], createdBy?: string) => {
     try {
+      // Get current user ID for created_by field
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = createdBy || user?.id;
+
       const newLeads: Lead[] = leads.map(lead => ({
         ...lead,
         id: crypto.randomUUID(),
         syncStatus: 'pending' as const,
         updatedAt: new Date(),
+        createdBy: userId,
       }));
 
-      await db.leads.bulkAdd(newLeads);
+      // First, try to upload directly to Supabase
+      if (navigator.onLine) {
+        const supabaseLeads = newLeads.map(lead => ({
+          id: lead.id,
+          name: lead.name,
+          branch: lead.branch || null,
+          lead_id: lead.leadId || null,
+          customer_id: lead.customerId || null,
+          status: lead.status || 'new',
+          entity_name: lead.entityName || null,
+          loan_amount: lead.loanAmount || null,
+          loan_purpose: lead.loanPurpose || null,
+          village_city: lead.villageCity || null,
+          district: lead.district || null,
+          state: lead.state || null,
+          latitude: lead.latitude || null,
+          longitude: lead.longitude || null,
+          customer_response: lead.customerResponse || null,
+          mobile_no: lead.mobileNo || null,
+          follow_up_date: lead.followUpDate || null,
+          lead_source: lead.leadSource || null,
+          organization_id: lead.organizationId,
+          created_by: userId || null,
+          assigned_user_id: lead.assignedUserId || userId || null,
+        }));
 
-      // Add to sync queue
-      const syncItems = newLeads.map(lead => ({
-        id: crypto.randomUUID(),
-        type: 'lead' as const,
-        entityId: lead.id,
-        action: 'create' as const,
-        data: lead,
-        priority: 2,
-        retryCount: 0,
-        maxRetries: 3,
-        createdAt: new Date(),
-      }));
+        const { error: supabaseError } = await supabase
+          .from('leads')
+          .insert(supabaseLeads);
 
-      await db.syncQueue.bulkAdd(syncItems);
+        if (supabaseError) {
+          console.error('Supabase insert error:', supabaseError);
+          toast.error(`Database error: ${supabaseError.message}`);
+          throw supabaseError;
+        }
 
-      return newLeads;
+        // Mark as synced in IndexedDB
+        const syncedLeads = newLeads.map(lead => ({
+          ...lead,
+          syncStatus: 'synced' as const,
+        }));
+        await db.leads.bulkAdd(syncedLeads);
+        
+        return syncedLeads;
+      } else {
+        // Offline: save to IndexedDB and sync queue
+        await db.leads.bulkAdd(newLeads);
+
+        const syncItems = newLeads.map(lead => ({
+          id: crypto.randomUUID(),
+          type: 'lead' as const,
+          entityId: lead.id,
+          action: 'create' as const,
+          data: lead,
+          priority: 2,
+          retryCount: 0,
+          maxRetries: 3,
+          createdAt: new Date(),
+        }));
+
+        await db.syncQueue.bulkAdd(syncItems);
+        toast.info('Leads saved offline. Will sync when online.');
+        
+        return newLeads;
+      }
     } catch (error) {
       console.error('Error bulk adding leads:', error);
       throw error;
