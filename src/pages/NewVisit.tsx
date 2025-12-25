@@ -93,6 +93,8 @@ export default function NewVisit() {
     }
 
     setGettingLocation(true);
+    
+    // First try with high accuracy
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setLocation({
@@ -100,15 +102,50 @@ export default function NewVisit() {
           longitude: position.coords.longitude,
         });
         setGettingLocation(false);
+        toast.success('Location acquired');
       },
       (error) => {
-        console.error('Error getting location:', error);
-        toast.error('Failed to get location. Please enable location services.');
-        setGettingLocation(false);
+        console.error('High accuracy location failed, trying low accuracy:', error.code, error.message);
+        
+        // Fallback to low accuracy with longer timeout
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+            setGettingLocation(false);
+            toast.success('Location acquired');
+          },
+          (fallbackError) => {
+            console.error('Location error:', fallbackError.code, fallbackError.message);
+            let errorMessage = 'Failed to get location. ';
+            switch (fallbackError.code) {
+              case 1:
+                errorMessage += 'Please allow location access in your browser settings.';
+                break;
+              case 2:
+                errorMessage += 'Location unavailable. Check your device GPS.';
+                break;
+              case 3:
+                errorMessage += 'Request timed out. Please try again.';
+                break;
+              default:
+                errorMessage += 'Please enable location services.';
+            }
+            toast.error(errorMessage);
+            setGettingLocation(false);
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 30000,
+            maximumAge: 60000,
+          }
+        );
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0,
       }
     );
