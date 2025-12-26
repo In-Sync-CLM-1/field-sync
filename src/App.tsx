@@ -68,7 +68,7 @@ const App = () => (
                 <Route path="leads" element={<Leads />} />
                 <Route path="leads/:id" element={<LeadDetail />} />
                 <Route path="visits" element={<Visits />} />
-                
+                <Route path="visits/map" element={<TerritoryMap />} />
                 <Route path="visits/new" element={<NewVisit />} />
                 <Route path="visits/new-checkin" element={<VisitDetail />} />
                 <Route path="visits/:id" element={<VisitDetail />} />
