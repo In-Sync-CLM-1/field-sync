@@ -55,14 +55,14 @@ export default function TerritoryMap() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
   const [dateTo, setDateTo] = useState<Date | undefined>(new Date());
   const [loading, setLoading] = useState(true);
-  const [isManager, setIsManager] = useState(false);
+  const [userRole, setUserRole] = useState<'sales_officer' | 'branch_manager' | 'admin'>('sales_officer');
   const [showLeads, setShowLeads] = useState(true);
   const [showRoutes, setShowRoutes] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Check if user is a manager
+  // Check user role for hierarchy-based visibility
   useEffect(() => {
-    const checkManagerStatus = async () => {
+    const checkUserRole = async () => {
       if (!user) return;
 
       const { data: roles } = await supabase
@@ -70,25 +70,37 @@ export default function TerritoryMap() {
         .select('role')
         .eq('user_id', user.id);
 
-      const hasManagerRole = roles?.some(r => 
-        r.role === 'manager' || r.role === 'sales_manager' || r.role === 'support_manager'
-      );
-      setIsManager(hasManagerRole || false);
+      const userRoles = roles?.map(r => r.role) || [];
+      
+      // Determine effective role for map visibility
+      if (userRoles.includes('platform_admin') || userRoles.includes('super_admin') || userRoles.includes('admin')) {
+        setUserRole('admin');
+      } else if (userRoles.includes('branch_manager') || userRoles.includes('manager') || userRoles.includes('sales_manager')) {
+        setUserRole('branch_manager');
+      } else {
+        setUserRole('sales_officer');
+      }
     };
 
-    checkManagerStatus();
+    checkUserRole();
   }, [user]);
 
-  // Fetch team members if user is a manager
+  // Fetch team members based on role
   useEffect(() => {
     const fetchTeamMembers = async () => {
-      if (!isManager || !user || !currentOrganization) return;
+      if (userRole === 'sales_officer' || !user || !currentOrganization) return;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('id, full_name')
-        .eq('organization_id', currentOrganization.id)
-        .eq('reporting_manager_id', user.id);
+        .eq('organization_id', currentOrganization.id);
+
+      // Branch managers see their direct reports, admins see everyone
+      if (userRole === 'branch_manager') {
+        query = query.eq('reporting_manager_id', user.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching team members:', error);
@@ -99,7 +111,7 @@ export default function TerritoryMap() {
     };
 
     fetchTeamMembers();
-  }, [isManager, user, currentOrganization]);
+  }, [userRole, user, currentOrganization]);
 
   // Initialize map with user location
   useEffect(() => {
@@ -176,13 +188,19 @@ export default function TerritoryMap() {
         query = query.lte('check_in_time', endOfDay.toISOString());
       }
 
-      // Filter by user if not "all"
+      // Filter by user based on role hierarchy
       if (selectedUser !== 'all') {
         query = query.eq('user_id', selectedUser);
-      } else if (!isManager) {
-        // If not a manager, only show own visits
+      } else if (userRole === 'sales_officer') {
+        // Sales officers only see their own visits
         query = query.eq('user_id', user.id);
+      } else if (userRole === 'branch_manager') {
+        // Branch managers see their team + their own visits
+        const teamIds = teamMembers.map(m => m.id);
+        teamIds.push(user.id);
+        query = query.in('user_id', teamIds);
       }
+      // Admins see all visits in the organization (no additional filter needed)
 
       const { data: visitsData, error } = await query;
 
@@ -217,7 +235,7 @@ export default function TerritoryMap() {
     };
 
     fetchVisits();
-  }, [user, currentOrganization, selectedUser, dateFrom, dateTo, isManager]);
+  }, [user, currentOrganization, selectedUser, dateFrom, dateTo, userRole, teamMembers]);
 
   // Fetch leads with locations
   useEffect(() => {
@@ -633,14 +651,16 @@ export default function TerritoryMap() {
             </PopoverContent>
           </Popover>
 
-          {/* User Filter (only for managers) */}
-          {isManager && (
+          {/* User Filter (for managers and admins) */}
+          {userRole !== 'sales_officer' && (
             <Select value={selectedUser} onValueChange={setSelectedUser}>
               <SelectTrigger className="w-[100px] h-5 text-xs">
                 <SelectValue placeholder="User" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">
+                  {userRole === 'admin' ? 'All Users' : 'My Team'}
+                </SelectItem>
                 {teamMembers.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
                     {member.full_name}
