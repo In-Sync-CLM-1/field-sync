@@ -51,7 +51,8 @@ export default function Dashboard() {
       label: 'Visits Today', 
       value: myStats?.visitsToday.toString() || '0', 
       change: `${weekChange}% vs last week`,
-      icon: MapPin
+      icon: MapPin,
+      trend: 'up' as const
     },
     { 
       label: 'This Week', 
@@ -75,31 +76,35 @@ export default function Dashboard() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back!</h1>
+          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-neon-pink bg-clip-text text-transparent">
+            Welcome back!
+          </h1>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
       </div>
 
       {/* Stats Grid - 2 columns on mobile */}
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <MetricCard
-            key={stat.label}
-            title={stat.label}
-            value={stat.value}
-            change={stat.change}
-            icon={stat.icon}
-          />
+        {stats.map((stat, index) => (
+          <div key={stat.label} style={{ animationDelay: `${index * 100}ms` }} className="animate-slide-up opacity-0">
+            <MetricCard
+              title={stat.label}
+              value={stat.value}
+              change={stat.change}
+              icon={stat.icon}
+              trend={stat.trend}
+            />
+          </div>
         ))}
       </div>
 
       {/* Quick Actions - grid layout */}
-      <div>
+      <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
         <h2 className="text-sm font-medium text-muted-foreground mb-2">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-          {quickActions.map((action) => {
+          {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
               <Button
@@ -108,6 +113,7 @@ export default function Dashboard() {
                 size="sm"
                 className="gap-2"
                 onClick={action.action}
+                style={{ animationDelay: `${400 + index * 50}ms` }}
               >
                 <Icon className="h-4 w-4" />
                 {action.label}
@@ -118,14 +124,14 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Activity - more compact */}
-      <Card>
+      <Card className="animate-fade-in" style={{ animationDelay: '500ms' }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Recent Visits</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-4 text-muted-foreground">
             <p className="text-sm">View all your visits in the Visits section</p>
-            <Button variant="outline" size="sm" className="mt-2" onClick={() => navigate('/visits')}>
+            <Button variant="gradient" size="sm" className="mt-2" onClick={() => navigate('/visits')}>
               Go to Visits
             </Button>
           </div>
