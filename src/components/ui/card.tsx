@@ -6,13 +6,13 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
   <div 
     ref={ref} 
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-0.5 group",
+      "rounded-lg border bg-card text-card-foreground shadow-sm relative overflow-hidden transition-all duration-200 hover:shadow-md hover:border-primary/30 group",
       className
     )} 
     {...props} 
   >
-    {/* Gaming accent bar on top */}
-    <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-neon-pink to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    {/* Accent bar on top */}
+    <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
     {props.children}
   </div>
 ));

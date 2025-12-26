@@ -85,8 +85,8 @@ export default function Layout() {
         <div className="flex flex-1 flex-col min-w-0">
           {/* Header with gradient accent line */}
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative">
-            {/* Gaming gradient accent bar */}
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-neon-pink to-accent" />
+            {/* Accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary" />
             
             <div className="flex h-12 items-center justify-between px-3 md:px-4">
               <div className="flex items-center">
@@ -110,7 +110,7 @@ export default function Layout() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 hover:ring-2 hover:ring-primary/30 transition-all">
                   <Avatar className="h-8 w-8 border-2 border-transparent hover:border-primary/50 transition-colors">
-                    <AvatarFallback className="text-xs bg-gradient-to-br from-primary to-neon-pink text-primary-foreground font-semibold">{getInitials(user?.email)}</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-primary text-primary-foreground font-semibold">{getInitials(user?.email)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

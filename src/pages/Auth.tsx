@@ -186,22 +186,21 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-neon-pink/20" />
+      {/* Background */}
+      <div className="absolute inset-0 bg-muted/30" />
       
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-20 w-64 h-64 bg-primary/30 rounded-full blur-3xl animate-orb-float" />
-      <div className="absolute bottom-20 right-20 w-48 h-48 bg-neon-pink/30 rounded-full blur-3xl animate-orb-float" style={{ animationDelay: '-4s' }} />
-      <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-accent/30 rounded-full blur-2xl animate-orb-float" style={{ animationDelay: '-2s' }} />
+      {/* Subtle floating orbs */}
+      <div className="absolute top-20 left-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-orb-float" />
+      <div className="absolute bottom-20 right-20 w-48 h-48 bg-accent/10 rounded-full blur-3xl animate-orb-float" style={{ animationDelay: '-4s' }} />
 
-      <Card className="w-full max-w-md relative z-10 animate-scale-in border-primary/20 shadow-xl shadow-primary/10">
+      <Card className="w-full max-w-md relative z-10 animate-scale-in border-border shadow-lg">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="rounded-full bg-gradient-to-br from-primary to-neon-pink p-3 shadow-glow animate-float">
+            <div className="rounded-full bg-primary p-3 shadow-md animate-float">
               <MapPin className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-neon-pink bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-bold text-foreground">
             Field Visit
           </CardTitle>
           <CardDescription>Manage your field visits efficiently</CardDescription>
@@ -210,9 +209,9 @@ export default function Auth() {
         <CardContent>
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'signin' | 'signup' | 'reset')}>
             <TabsList className="grid w-full grid-cols-3 bg-muted/50">
-              <TabsTrigger value="signin" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-neon-pink data-[state=active]:text-primary-foreground">Sign In</TabsTrigger>
-              <TabsTrigger value="signup" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-neon-pink data-[state=active]:text-primary-foreground">Sign Up</TabsTrigger>
-              <TabsTrigger value="reset" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-neon-pink data-[state=active]:text-primary-foreground">Reset</TabsTrigger>
+              <TabsTrigger value="signin" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sign Up</TabsTrigger>
+              <TabsTrigger value="reset" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Reset</TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
