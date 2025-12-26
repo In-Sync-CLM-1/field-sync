@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, Users, TrendingUp } from 'lucide-react';
+import { Calendar, MapPin, ClipboardList, TrendingUp, Users } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { useNavigate } from 'react-router-dom';
@@ -27,10 +27,10 @@ export default function Dashboard() {
       variant: 'outline' as const,
     },
     {
-      icon: Users,
-      label: 'Leads',
-      description: 'Manage leads',
-      action: () => navigate('/leads'),
+      icon: ClipboardList,
+      label: 'Daily Planning',
+      description: 'Manage daily plans',
+      action: () => navigate('/planning'),
       variant: 'outline' as const,
     },
     {
