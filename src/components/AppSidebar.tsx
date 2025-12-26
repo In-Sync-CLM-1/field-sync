@@ -69,9 +69,17 @@ export function AppSidebar() {
   const currentPath = location.pathname;
 
   return (
-    <Sidebar collapsible="offcanvas" className="md:w-60">
-      <SidebarHeader className="border-b px-4 py-3 flex flex-col items-center">
-        <img src={inSyncLogo} alt="In-Sync" className="h-10 w-auto object-contain" />
+    <Sidebar collapsible="offcanvas" className="md:w-60 bg-gradient-to-b from-sidebar to-sidebar/95">
+      <SidebarHeader className="border-b border-sidebar-border/50 px-4 py-3 flex flex-col items-center">
+        <div className="relative group">
+          <img 
+            src={inSyncLogo} 
+            alt="In-Sync" 
+            className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" 
+          />
+          {/* Glow effect on hover */}
+          <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+        </div>
         {user?.email && (
           <p className="text-xs text-muted-foreground mt-1 truncate text-center">{user.email}</p>
         )}
@@ -80,7 +88,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {dashboards.map((item) => {
+              {dashboards.map((item, index) => {
                 const Icon = item.icon;
                 const isActive = currentPath === item.path;
                 
@@ -90,11 +98,19 @@ export function AppSidebar() {
                       <NavLink 
                         to={item.path} 
                         end
-                        className="flex items-center gap-2 hover:bg-accent text-sm"
-                        activeClassName="bg-primary/10 text-primary font-medium"
+                        className={`flex items-center gap-2 text-sm rounded-md transition-all duration-200 ${
+                          isActive 
+                            ? 'bg-primary/15 text-primary font-medium border-l-2 border-accent shadow-sm' 
+                            : 'hover:bg-primary/10 hover:text-primary'
+                        }`}
+                        activeClassName=""
+                        style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <Icon className="h-4 w-4 flex-shrink-0" />
+                        <Icon className={`h-4 w-4 flex-shrink-0 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
                         {!collapsed && <span>{item.label}</span>}
+                        {isActive && !collapsed && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent animate-glow-pulse" />
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -108,7 +124,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-2">
         <Button 
           variant="ghost" 
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground hover:bg-destructive/10"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
           onClick={async () => {
             await supabase.auth.signOut();
           }}
