@@ -58,7 +58,7 @@ export function AppSidebar() {
     { icon: Home, label: 'My Dashboard', path: '/', roles: ['all'] },
     { icon: ClipboardList, label: 'Planning', path: '/planning', roles: ['all'] },
     { icon: ClipboardList, label: 'Team Planning', path: '/planning/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: ClipboardList, label: 'Planning Overview', path: '/planning/overview', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: ClipboardList, label: 'Admin', path: '/planning/overview', roles: ['admin', 'super_admin', 'platform_admin'] },
     { icon: LayoutDashboard, label: 'Team', path: '/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: Globe, label: 'Territory', path: '/territory', roles: ['all'] },
