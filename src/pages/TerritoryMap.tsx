@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, MapPin, Users, Route } from 'lucide-react';
+import { CalendarIcon, MapPin, Route } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -26,16 +26,6 @@ interface Visit {
   user_name?: string;
 }
 
-interface Lead {
-  id: string;
-  name: string;
-  entity_name: string | null;
-  latitude: number;
-  longitude: number;
-  village_city: string | null;
-  district: string | null;
-  mobile_no: string | null;
-}
 
 interface TeamMember {
   id: string;
@@ -49,14 +39,12 @@ export default function TerritoryMap() {
   
   const { user, currentOrganization } = useAuthStore();
   const [visits, setVisits] = useState<Visit[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
   const [dateTo, setDateTo] = useState<Date | undefined>(new Date());
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<'sales_officer' | 'branch_manager' | 'admin'>('sales_officer');
-  const [showLeads, setShowLeads] = useState(true);
   const [showRoutes, setShowRoutes] = useState(true);
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -237,28 +225,6 @@ export default function TerritoryMap() {
     fetchVisits();
   }, [user, currentOrganization, selectedUser, dateFrom, dateTo, userRole, teamMembers]);
 
-  // Fetch leads with locations
-  useEffect(() => {
-    const fetchLeads = async () => {
-      if (!currentOrganization) return;
-
-      const { data, error } = await supabase
-        .from('leads')
-        .select('id, name, entity_name, latitude, longitude, village_city, district, mobile_no')
-        .eq('organization_id', currentOrganization.id)
-        .not('latitude', 'is', null)
-        .not('longitude', 'is', null);
-
-      if (error) {
-        console.error('Error fetching leads:', error);
-        return;
-      }
-
-      setLeads(data || []);
-    };
-
-    fetchLeads();
-  }, [currentOrganization]);
 
   // Set up map event handlers once when map is loaded
   useEffect(() => {
@@ -464,47 +430,11 @@ export default function TerritoryMap() {
       });
     }
 
-    // Add lead markers as DOM elements
-    if (showLeads) {
-      leads.forEach((lead) => {
-        if (!lead.latitude || !lead.longitude) return;
-
-        const el = document.createElement('div');
-        el.className = 'lead-marker';
-        el.style.width = '20px';
-        el.style.height = '20px';
-        el.style.borderRadius = '4px';
-        el.style.backgroundColor = '#3b82f6';
-        el.style.border = '2px solid white';
-        el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-        el.style.cursor = 'pointer';
-
-        const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
-          <div style="padding: 8px; min-width: 180px;">
-            <div style="font-size: 10px; color: #3b82f6; font-weight: 600; margin-bottom: 4px;">LEAD</div>
-            <h3 style="font-weight: 600; margin-bottom: 4px; color: #1f2937;">${lead.name}</h3>
-            ${lead.entity_name ? `<div style="font-size: 13px; color: #6b7280; margin-bottom: 4px;">${lead.entity_name}</div>` : ''}
-            ${lead.village_city || lead.district ? `<div style="font-size: 12px; color: #9ca3af;">${[lead.village_city, lead.district].filter(Boolean).join(', ')}</div>` : ''}
-            ${lead.mobile_no ? `<div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">📞 ${lead.mobile_no}</div>` : ''}
-          </div>
-        `);
-
-        const marker = new mapboxgl.Marker(el)
-          .setLngLat([Number(lead.longitude), Number(lead.latitude)])
-          .setPopup(popup)
-          .addTo(map.current!);
-
-        markers.current.push(marker);
-        bounds.extend([Number(lead.longitude), Number(lead.latitude)]);
-        hasMarkers = true;
-      });
-    }
-
     // Fit map to all markers
     if (hasMarkers && !bounds.isEmpty()) {
       map.current.fitBounds(bounds, { padding: 50, maxZoom: 15 });
     }
-  }, [visits, leads, showLeads, mapLoaded]);
+  }, [visits, mapLoaded]);
 
   // Draw routes connecting visits chronologically
   useEffect(() => {
@@ -670,19 +600,6 @@ export default function TerritoryMap() {
             </Select>
           )}
 
-          {/* Toggle leads */}
-          <div className="flex items-center gap-1.5 ml-1">
-            <Switch
-              id="show-leads"
-              checked={showLeads}
-              onCheckedChange={setShowLeads}
-              className="scale-75"
-            />
-            <Label htmlFor="show-leads" className="text-[10px] text-muted-foreground cursor-pointer">
-              <Users className="h-3 w-3 inline mr-0.5" />
-              {leads.length}
-            </Label>
-          </div>
 
           {/* Toggle routes */}
           <div className="flex items-center gap-1.5">
