@@ -78,7 +78,7 @@ export default function Dashboard() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
       <div className="flex items-center justify-between animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-neon-pink bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Welcome back!
           </h1>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
@@ -131,7 +131,7 @@ export default function Dashboard() {
         <CardContent>
           <div className="text-center py-4 text-muted-foreground">
             <p className="text-sm">View all your visits in the Visits section</p>
-            <Button variant="gradient" size="sm" className="mt-2" onClick={() => navigate('/visits')}>
+            <Button variant="default" size="sm" className="mt-2" onClick={() => navigate('/visits')}>
               Go to Visits
             </Button>
           </div>
