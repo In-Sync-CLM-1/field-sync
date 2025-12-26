@@ -27,6 +27,7 @@ import SyncMonitoring from "./pages/SyncMonitoring";
 import Planning from "./pages/Planning";
 import TeamPlanning from "./pages/TeamPlanning";
 import PlanningOverview from "./pages/PlanningOverview";
+import BranchAnalytics from "./pages/BranchAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
                 <Route path="planning/overview" element={<PlanningOverview />} />
                 <Route path="team" element={<TeamDashboard />} />
                 <Route path="analytics" element={<AnalyticsHub />} />
+                <Route path="analytics/branch" element={<BranchAnalytics />} />
                 <Route path="territory" element={<TerritoryMap />} />
                 <Route path="performance" element={
                   <AdminRoute>
