@@ -174,7 +174,7 @@ export default function Auth() {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" className="w-full" disabled={loading || loadingOrgs}>
+            <Button type="submit" className="w-full mt-6" disabled={loading || loadingOrgs}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
