@@ -77,56 +77,48 @@ const BranchAnalytics = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg w-fit">
-                <TrendingUp className="h-5 w-5 text-primary" />
-              </div>
+          <CardContent className="p-3">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Total Enrollments</p>
-                <p className="text-2xl font-bold">{kpis.totalEnrollments}</p>
+                <p className="text-[10px] text-muted-foreground">Total Enrollments</p>
+                <p className="text-xl font-bold">{kpis.totalEnrollments}</p>
               </div>
+              <TrendingUp className="h-4 w-4 text-primary" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col gap-3">
-              <div className="p-2 bg-green-100 rounded-lg w-fit">
-                <Target className="h-5 w-5 text-green-600" />
-              </div>
+          <CardContent className="p-3">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Achievement Rate</p>
-                <p className="text-2xl font-bold">{kpis.overallAchievement}%</p>
+                <p className="text-[10px] text-muted-foreground">Achievement Rate</p>
+                <p className="text-xl font-bold">{kpis.overallAchievement}%</p>
               </div>
+              <Target className="h-4 w-4 text-green-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg w-fit">
-                <IndianRupee className="h-5 w-5 text-amber-600" />
-              </div>
+          <CardContent className="p-3">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Team Incentive</p>
-                <p className="text-2xl font-bold">₹{kpis.totalIncentive.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground">Team Incentive</p>
+                <p className="text-xl font-bold">₹{kpis.totalIncentive.toLocaleString()}</p>
               </div>
+              <IndianRupee className="h-4 w-4 text-amber-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg w-fit">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
+          <CardContent className="p-3">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-muted-foreground">Sales Officers</p>
-                <p className="text-2xl font-bold">{kpis.activeSalesOfficers}</p>
+                <p className="text-[10px] text-muted-foreground">Sales Officers</p>
+                <p className="text-xl font-bold">{kpis.activeSalesOfficers}</p>
               </div>
+              <Users className="h-4 w-4 text-blue-600" />
             </div>
           </CardContent>
         </Card>
