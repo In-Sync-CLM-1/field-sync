@@ -170,7 +170,7 @@ export default function Layout() {
                     }`}
                   >
                     <div className={`relative transition-transform duration-200 ${active ? 'scale-110' : 'hover:scale-105'}`}>
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-6 w-6" />
                       {active && (
                         <div className="absolute -inset-2 bg-primary/20 rounded-full blur-md -z-10" />
                       )}
