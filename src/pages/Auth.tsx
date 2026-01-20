@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Building2, Plus } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -30,10 +30,20 @@ const signUpSchema = z.object({
   ),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
-  organizationId: z.string().min(1, 'Organization is required'),
+  organizationId: z.string().optional(),
+  newOrgName: z.string().optional(),
+  createNewOrg: z.boolean(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
+}).refine((data) => {
+  if (data.createNewOrg) {
+    return data.newOrgName && data.newOrgName.trim().length >= 2;
+  }
+  return data.organizationId && data.organizationId.length > 0;
+}, {
+  message: "Organization is required",
+  path: ["organizationId"],
 });
 
 export default function Auth() {
@@ -58,7 +68,9 @@ export default function Auth() {
     phone: '',
     password: '', 
     confirmPassword: '',
-    organizationId: '' 
+    organizationId: '',
+    newOrgName: '',
+    createNewOrg: false
   });
 
   useEffect(() => {
@@ -162,8 +174,38 @@ export default function Auth() {
       const { data: { user: newUser } } = await supabase.auth.getUser();
       
       if (newUser) {
+        let organizationId = validatedData.organizationId;
+
+        // Create new organization if user chose that option
+        if (validatedData.createNewOrg && validatedData.newOrgName) {
+          const { data: newOrg, error: orgError } = await supabase
+            .from('organizations')
+            .insert({ name: validatedData.newOrgName.trim() })
+            .select()
+            .single();
+
+          if (orgError) {
+            console.error('Organization creation error:', orgError);
+            toast.error('Failed to create organization');
+            setLoading(false);
+            return;
+          }
+
+          organizationId = newOrg.id;
+
+          // Assign admin role to the creator
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({ user_id: newUser.id, role: 'admin' });
+
+          if (roleError) {
+            console.error('Role assignment error:', roleError);
+            // Don't block - they can still use the app
+          }
+        }
+
         const updateData: { organization_id: string; phone?: string } = {
-          organization_id: validatedData.organizationId,
+          organization_id: organizationId!,
         };
         
         if (validatedData.phone) {
@@ -177,16 +219,18 @@ export default function Auth() {
 
         if (profileError) {
           console.error('Profile update error:', profileError);
-          // Don't block registration, profile can be updated later
         }
 
-        const selectedOrg = organizations.find(org => org.id === validatedData.organizationId);
+        const selectedOrg = validatedData.createNewOrg 
+          ? { id: organizationId, name: validatedData.newOrgName }
+          : organizations.find(org => org.id === organizationId);
         if (selectedOrg) setCurrentOrganization(selectedOrg);
 
-        toast.success('Account created successfully! Welcome to InSync.');
+        toast.success(validatedData.createNewOrg 
+          ? 'Organization created! Welcome to InSync.' 
+          : 'Account created successfully! Welcome to InSync.');
         navigate('/', { replace: true });
       } else {
-        // Email confirmation might be required
         toast.success('Account created! Please check your email to verify your account.');
         setActiveTab('signin');
       }
@@ -418,24 +462,66 @@ export default function Auth() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-organization">Organization</Label>
-                  <Select 
-                    value={signUpData.organizationId} 
-                    onValueChange={(value) => setSignUpData({ ...signUpData, organizationId: value })} 
-                    disabled={loading || loadingOrgs}
-                  >
-                    <SelectTrigger id="signup-organization">
-                      <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {organizations.map((org) => (
-                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <Label>Organization</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={!signUpData.createNewOrg ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setSignUpData({ ...signUpData, createNewOrg: false, newOrgName: '' })}
+                      disabled={loading}
+                    >
+                      <Building2 className="mr-2 h-4 w-4" />
+                      Join Existing
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={signUpData.createNewOrg ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setSignUpData({ ...signUpData, createNewOrg: true, organizationId: '' })}
+                      disabled={loading}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create New
+                    </Button>
+                  </div>
+                  
+                  {!signUpData.createNewOrg ? (
+                    <Select 
+                      value={signUpData.organizationId} 
+                      onValueChange={(value) => setSignUpData({ ...signUpData, organizationId: value })} 
+                      disabled={loading || loadingOrgs}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input 
+                      type="text" 
+                      placeholder="Enter organization name" 
+                      value={signUpData.newOrgName} 
+                      onChange={(e) => setSignUpData({ ...signUpData, newOrgName: e.target.value })} 
+                      disabled={loading} 
+                      className="focus:ring-primary/30 focus:border-primary" 
+                    />
+                  )}
+                  
+                  {signUpData.createNewOrg && (
+                    <p className="text-xs text-muted-foreground">
+                      You'll be assigned as the admin of this organization.
+                    </p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full mt-6" disabled={loading || loadingOrgs}>
+                <Button type="submit" className="w-full mt-6" disabled={loading || (!signUpData.createNewOrg && loadingOrgs)}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create Account
                 </Button>
