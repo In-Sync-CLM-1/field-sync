@@ -1,11 +1,8 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import Landing from '@/pages/Landing';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
-
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const LandingRoute = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -19,9 +16,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/" replace />;
+  // Authenticated users go to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
   }
 
-  return <>{children}</>;
+  // Unauthenticated users see the landing page
+  return <Landing />;
 };

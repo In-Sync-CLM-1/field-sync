@@ -9,6 +9,7 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { AdminRoute } from "@/components/AdminRoute";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ServiceWorkerUpdateHandler } from "@/components/ServiceWorkerUpdateHandler";
+import { LandingRoute } from "@/components/LandingRoute";
 import Layout from "@/components/Layout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -19,7 +20,6 @@ import PerformanceBoard from "./pages/PerformanceBoard";
 import Leads from "./pages/Leads";
 import LeadDetail from "./pages/LeadDetail";
 import Visits from "./pages/Visits";
-
 import VisitDetail from "./pages/VisitDetail";
 import NewVisit from "./pages/NewVisit";
 import Users from "./pages/Users";
@@ -45,11 +45,15 @@ const App = () => (
           <BrowserRouter>
             <OfflineBanner />
             <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingRoute />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              
+              {/* Protected routes */}
               <Route
-                path="/"
+                path="/dashboard"
                 element={
                   <ProtectedRoute>
                     <Layout />
