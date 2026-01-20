@@ -56,9 +56,10 @@ export default function LeadDetail() {
 
   const getStatusColor = (status?: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
-      case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
-      case 'new': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
+      case 'policy_issued': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
+      case 'quoted': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
+      case 'lead': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+      case 'proposal_submitted': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
     }
   };
@@ -76,13 +77,13 @@ export default function LeadDetail() {
       <div className="container py-6">
         <Button variant="ghost" onClick={() => navigate('/leads')}>
           <ArrowLeft />
-          Back to Leads
+          Back to Prospects
         </Button>
         <Card className="mt-6">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-lg font-medium mb-2">Lead not found</p>
+            <p className="text-lg font-medium mb-2">Prospect not found</p>
             <p className="text-sm text-muted-foreground">
-              This lead may have been deleted or doesn't exist
+              This prospect may have been deleted or doesn't exist
             </p>
           </CardContent>
         </Card>
@@ -106,10 +107,10 @@ export default function LeadDetail() {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">{lead.name}</CardTitle>
-          {lead.entity_name && (
+          {lead.policy_type_category && (
             <CardDescription className="flex items-center gap-1">
               <Building2 className="h-4 w-4" />
-              {lead.entity_name}
+              {lead.policy_type_category}
             </CardDescription>
           )}
           {(lead.village_city || lead.district || lead.state) && (
@@ -122,10 +123,10 @@ export default function LeadDetail() {
         <CardContent className="space-y-4">
           {/* IDs */}
           <div className="grid grid-cols-2 gap-4">
-            {lead.lead_id && (
+            {lead.proposal_number && (
               <div>
-                <p className="text-xs text-muted-foreground">Lead ID</p>
-                <p className="text-sm font-medium">{lead.lead_id}</p>
+                <p className="text-xs text-muted-foreground">Proposal Number</p>
+                <p className="text-sm font-medium">{lead.proposal_number}</p>
               </div>
             )}
             {lead.customer_id && (
@@ -150,25 +151,25 @@ export default function LeadDetail() {
 
           <Separator />
 
-          {/* Loan Details */}
-          {(lead.loan_amount || lead.loan_purpose) && (
+          {/* Policy Details */}
+          {(lead.premium_amount || lead.policy_type) && (
             <>
               <div className="space-y-2">
                 <h3 className="text-sm font-medium flex items-center gap-2">
                   <IndianRupee className="h-4 w-4" />
-                  Loan Details
+                  Policy Details
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  {lead.loan_amount && (
+                  {lead.premium_amount && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Loan Amount</p>
-                      <p className="text-sm font-medium">₹{Number(lead.loan_amount).toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Premium Amount (Annual)</p>
+                      <p className="text-sm font-medium">₹{Number(lead.premium_amount).toLocaleString()}</p>
                     </div>
                   )}
-                  {lead.loan_purpose && (
+                  {lead.policy_type && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Loan Purpose</p>
-                      <p className="text-sm font-medium">{lead.loan_purpose}</p>
+                      <p className="text-xs text-muted-foreground">Policy Type</p>
+                      <p className="text-sm font-medium">{lead.policy_type}</p>
                     </div>
                   )}
                 </div>

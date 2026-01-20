@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 const BranchAnalytics = () => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(startOfMonth(new Date()));
-  const { teamPerformance, enrollmentTrend, incentiveToppers, kpis, isLoading } = useBranchAnalytics(selectedMonth);
+  const { teamPerformance, policyTrend, incentiveToppers, kpis, isLoading } = useBranchAnalytics(selectedMonth);
 
   const getAchievementColor = (actual: number, target: number) => {
     if (target === 0) return 'text-muted-foreground';
@@ -23,10 +23,10 @@ const BranchAnalytics = () => {
     return 'text-red-600';
   };
 
-  const getMilestoneBadge = (enrollments: number) => {
-    if (enrollments >= 25) return { label: 'Gold', className: 'bg-yellow-500 text-white' };
-    if (enrollments >= 15) return { label: 'Silver', className: 'bg-gray-400 text-white' };
-    if (enrollments >= 7) return { label: 'Bronze', className: 'bg-amber-700 text-white' };
+  const getMilestoneBadge = (policies: number) => {
+    if (policies >= 25) return { label: 'Gold', className: 'bg-yellow-500 text-white' };
+    if (policies >= 15) return { label: 'Silver', className: 'bg-gray-400 text-white' };
+    if (policies >= 7) return { label: 'Bronze', className: 'bg-amber-700 text-white' };
     return null;
   };
 
@@ -38,8 +38,8 @@ const BranchAnalytics = () => {
   // Prepare bar chart data
   const barChartData = teamPerformance.slice(0, 8).map(member => ({
     name: member.name.split(' ')[0],
-    Target: member.enrollTarget,
-    Actual: member.enrollActual
+    Target: member.policiesTarget,
+    Actual: member.policiesActual
   }));
 
   if (isLoading) {
@@ -82,8 +82,8 @@ const BranchAnalytics = () => {
           <CardContent className="p-3">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] text-muted-foreground">Total Enrollments</p>
-                <p className="text-xl font-bold">{kpis.totalEnrollments}</p>
+                <p className="text-[10px] text-muted-foreground">Total Policies Issued</p>
+                <p className="text-xl font-bold">{kpis.totalPolicies}</p>
               </div>
               <TrendingUp className="h-4 w-4 text-primary" />
             </div>
@@ -93,7 +93,7 @@ const BranchAnalytics = () => {
           <CardContent className="p-3">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] text-muted-foreground">Achievement Rate</p>
+                <p className="text-[10px] text-muted-foreground">Conversion Rate</p>
                 <p className="text-xl font-bold">{kpis.overallAchievement}%</p>
               </div>
               <Target className="h-4 w-4 text-green-600" />
@@ -104,7 +104,7 @@ const BranchAnalytics = () => {
           <CardContent className="p-3">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] text-muted-foreground">Team Incentive</p>
+                <p className="text-[10px] text-muted-foreground">Team Commission</p>
                 <p className="text-xl font-bold">₹{kpis.totalIncentive.toLocaleString()}</p>
               </div>
               <IndianRupee className="h-4 w-4 text-amber-600" />
@@ -126,15 +126,15 @@ const BranchAnalytics = () => {
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Enrollment Trend */}
+        {/* Policy Trend */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Enrollment Trend (30 Days)</CardTitle>
+            <CardTitle className="text-lg">Policy Issuance Trend (30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={enrollmentTrend}>
+                <LineChart data={policyTrend}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis 
                     dataKey="date" 
@@ -144,11 +144,11 @@ const BranchAnalytics = () => {
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip 
                     labelFormatter={(value) => format(new Date(value), 'dd MMM yyyy')}
-                    formatter={(value: number) => [value, 'Enrollments']}
+                    formatter={(value: number) => [value, 'Policies']}
                   />
                   <Line 
                     type="monotone" 
-                    dataKey="enrollments" 
+                    dataKey="policies" 
                     stroke="hsl(var(--primary))" 
                     strokeWidth={2}
                     dot={false}
@@ -162,7 +162,7 @@ const BranchAnalytics = () => {
         {/* Target vs Achievement */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Enrollment: Target vs Actual</CardTitle>
+            <CardTitle className="text-lg">Policies: Target vs Actual</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
@@ -182,13 +182,13 @@ const BranchAnalytics = () => {
         </Card>
       </div>
 
-      {/* Incentive Toppers */}
+      {/* Top Performers */}
       {incentiveToppers.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Trophy className="h-5 w-5 text-yellow-500" />
-              Incentive Toppers
+              Top Performers
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -197,7 +197,7 @@ const BranchAnalytics = () => {
                 const icons = [Trophy, Medal, Award];
                 const colors = ['text-yellow-500', 'text-gray-400', 'text-amber-700'];
                 const Icon = icons[index];
-                const badge = getMilestoneBadge(topper.enrollments);
+                const badge = getMilestoneBadge(topper.policies);
                 
                 return (
                   <div 
@@ -209,8 +209,8 @@ const BranchAnalytics = () => {
                   >
                     <Icon className={cn("h-8 w-8 mb-2", colors[index])} />
                     <p className="font-semibold text-center">{topper.name}</p>
-                    <p className="text-2xl font-bold">{topper.enrollments}</p>
-                    <p className="text-sm text-muted-foreground">enrollments</p>
+                    <p className="text-2xl font-bold">{topper.policies}</p>
+                    <p className="text-sm text-muted-foreground">policies</p>
                     <p className="text-lg font-semibold text-green-600 mt-1">₹{topper.incentive.toLocaleString()}</p>
                     {badge && (
                       <Badge className={cn("mt-2", badge.className)}>{badge.label}</Badge>
@@ -234,10 +234,10 @@ const BranchAnalytics = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Officer</TableHead>
-                  <TableHead className="text-center">Leads (T/A/%)</TableHead>
-                  <TableHead className="text-center">Logins (T/A/%)</TableHead>
-                  <TableHead className="text-center">Enroll (T/A/%)</TableHead>
-                  <TableHead className="text-right">Incentive</TableHead>
+                  <TableHead className="text-center">Prospects (T/A/%)</TableHead>
+                  <TableHead className="text-center">Quotes (T/A/%)</TableHead>
+                  <TableHead className="text-center">Policies (T/A/%)</TableHead>
+                  <TableHead className="text-right">Commission</TableHead>
                   <TableHead className="text-center">Badge</TableHead>
                 </TableRow>
               </TableHeader>
@@ -250,41 +250,41 @@ const BranchAnalytics = () => {
                   </TableRow>
                 ) : (
                   teamPerformance.map((member) => {
-                    const badge = getMilestoneBadge(member.enrollActual);
+                    const badge = getMilestoneBadge(member.policiesActual);
                     return (
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">{member.name}</TableCell>
                         <TableCell className="text-center">
-                          <span className="text-muted-foreground">{member.leadsTarget}</span>
+                          <span className="text-muted-foreground">{member.prospectsTarget}</span>
                           {' / '}
-                          <span className={getAchievementColor(member.leadsActual, member.leadsTarget)}>
-                            {member.leadsActual}
+                          <span className={getAchievementColor(member.prospectsActual, member.prospectsTarget)}>
+                            {member.prospectsActual}
                           </span>
                           {' / '}
-                          <span className={getAchievementColor(member.leadsActual, member.leadsTarget)}>
-                            {formatPct(member.leadsActual, member.leadsTarget)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className="text-muted-foreground">{member.loginsTarget}</span>
-                          {' / '}
-                          <span className={getAchievementColor(member.loginsActual, member.loginsTarget)}>
-                            {member.loginsActual}
-                          </span>
-                          {' / '}
-                          <span className={getAchievementColor(member.loginsActual, member.loginsTarget)}>
-                            {formatPct(member.loginsActual, member.loginsTarget)}
+                          <span className={getAchievementColor(member.prospectsActual, member.prospectsTarget)}>
+                            {formatPct(member.prospectsActual, member.prospectsTarget)}
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="text-muted-foreground">{member.enrollTarget}</span>
+                          <span className="text-muted-foreground">{member.quotesTarget}</span>
                           {' / '}
-                          <span className={getAchievementColor(member.enrollActual, member.enrollTarget)}>
-                            {member.enrollActual}
+                          <span className={getAchievementColor(member.quotesActual, member.quotesTarget)}>
+                            {member.quotesActual}
                           </span>
                           {' / '}
-                          <span className={getAchievementColor(member.enrollActual, member.enrollTarget)}>
-                            {formatPct(member.enrollActual, member.enrollTarget)}
+                          <span className={getAchievementColor(member.quotesActual, member.quotesTarget)}>
+                            {formatPct(member.quotesActual, member.quotesTarget)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="text-muted-foreground">{member.policiesTarget}</span>
+                          {' / '}
+                          <span className={getAchievementColor(member.policiesActual, member.policiesTarget)}>
+                            {member.policiesActual}
+                          </span>
+                          {' / '}
+                          <span className={getAchievementColor(member.policiesActual, member.policiesTarget)}>
+                            {formatPct(member.policiesActual, member.policiesTarget)}
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-semibold text-green-600">

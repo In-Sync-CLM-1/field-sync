@@ -23,11 +23,11 @@ export const useLeads = () => {
     const matchesSearch = 
       searchQuery === '' ||
       lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.entityName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.policyTypeCategory?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.mobileNo?.includes(searchQuery) ||
       lead.villageCity?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.district?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.leadId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.proposalNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.customerId?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = 
@@ -61,14 +61,14 @@ export const useLeads = () => {
           id: l.id,
           organizationId: l.organization_id,
           branch: l.branch,
-          leadId: l.lead_id,
+          proposalNumber: l.proposal_number,
           customerId: l.customer_id,
           status: l.status,
           assignedUserId: l.assigned_user_id,
-          entityName: l.entity_name,
+          policyTypeCategory: l.policy_type_category,
           name: l.name,
-          loanAmount: l.loan_amount ? Number(l.loan_amount) : undefined,
-          loanPurpose: l.loan_purpose,
+          premiumAmount: l.premium_amount ? Number(l.premium_amount) : undefined,
+          policyType: l.policy_type,
           villageCity: l.village_city,
           district: l.district,
           state: l.state,
@@ -89,10 +89,10 @@ export const useLeads = () => {
         await db.leads.bulkAdd(leads);
       }
 
-      toast.success(`Synced ${data?.length || 0} leads`);
+      toast.success(`Synced ${data?.length || 0} prospects`);
     } catch (error) {
-      console.error('Error syncing leads:', error);
-      toast.error('Failed to sync leads');
+      console.error('Error syncing prospects:', error);
+      toast.error('Failed to sync prospects');
     } finally {
       setSyncing(false);
     }
@@ -122,11 +122,11 @@ export const useLeads = () => {
         createdAt: new Date(),
       });
 
-      toast.success('Lead added');
+      toast.success('Prospect added');
       return newLead;
     } catch (error) {
-      console.error('Error adding lead:', error);
-      toast.error('Failed to add lead');
+      console.error('Error adding prospect:', error);
+      toast.error('Failed to add prospect');
       throw error;
     }
   };
@@ -152,10 +152,10 @@ export const useLeads = () => {
         createdAt: new Date(),
       });
 
-      toast.success('Lead updated');
+      toast.success('Prospect updated');
     } catch (error) {
-      console.error('Error updating lead:', error);
-      toast.error('Failed to update lead');
+      console.error('Error updating prospect:', error);
+      toast.error('Failed to update prospect');
       throw error;
     }
   };
@@ -184,12 +184,12 @@ export const useLeads = () => {
           id: lead.id,
           name: lead.name,
           branch: lead.branch || null,
-          lead_id: lead.leadId || null,
+          proposal_number: lead.proposalNumber || null,
           customer_id: lead.customerId || null,
-          status: lead.status || 'new',
-          entity_name: lead.entityName || null,
-          loan_amount: lead.loanAmount || null,
-          loan_purpose: lead.loanPurpose || null,
+          status: lead.status || 'lead',
+          policy_type_category: lead.policyTypeCategory || null,
+          premium_amount: lead.premiumAmount || null,
+          policy_type: lead.policyType || null,
           village_city: lead.villageCity || null,
           district: lead.district || null,
           state: lead.state || null,
@@ -239,12 +239,12 @@ export const useLeads = () => {
         }));
 
         await db.syncQueue.bulkAdd(syncItems);
-        toast.info('Leads saved offline. Will sync when online.');
+        toast.info('Prospects saved offline. Will sync when online.');
         
         return newLeads;
       }
     } catch (error) {
-      console.error('Error bulk adding leads:', error);
+      console.error('Error bulk adding prospects:', error);
       throw error;
     }
   };

@@ -7,16 +7,16 @@ export interface Lead {
   
   // Core Lead Fields
   branch?: string;
-  leadId?: string;  // Custom lead identifier (e.g., LD-001)
+  proposalNumber?: string;  // Renamed from leadId - Proposal/Policy number
   customerId?: string;  // Custom customer identifier (e.g., CUST-001)
   status?: string;
   assignedUserId?: string;
-  entityName?: string;
+  policyTypeCategory?: string;  // Renamed from entityName - Life/Health/Motor/General
   name: string;
   
-  // Loan Details
-  loanAmount?: number;
-  loanPurpose?: string;
+  // Policy Details (renamed from Loan Details)
+  premiumAmount?: number;  // Renamed from loanAmount - Annual premium
+  policyType?: string;  // Renamed from loanPurpose - Type of policy
   
   // Location
   villageCity?: string;
@@ -111,18 +111,18 @@ export interface DailyPlanLocal {
   userId: string;
   organizationId: string;
   planDate: string;
-  leadsTarget: number;
-  loginsTarget: number;
-  enrollTarget: number;
-  leadsActual: number;
-  loginsActual: number;
-  enrollActual: number;
-  fiTarget: number | null;
-  dbTarget: number | null;
-  fiActual: number | null;
-  dbActual: number | null;
-  leadsMarket?: string | null;
-  loginsMarket?: string | null;
+  prospectsTarget: number;  // Renamed from leadsTarget
+  quotesTarget: number;  // Renamed from loginsTarget
+  policiesTarget: number;  // Renamed from enrollTarget
+  prospectsActual: number;  // Renamed from leadsActual
+  quotesActual: number;  // Renamed from loginsActual
+  policiesActual: number;  // Renamed from enrollActual
+  lifeInsuranceTarget: number | null;  // Renamed from fiTarget
+  healthInsuranceTarget: number | null;  // Renamed from dbTarget
+  lifeInsuranceActual: number | null;  // Renamed from fiActual
+  healthInsuranceActual: number | null;  // Renamed from dbActual
+  prospectsMarket?: string | null;  // Renamed from leadsMarket
+  quotesMarket?: string | null;  // Renamed from loginsMarket
   status: string;
   correctedBy: string | null;
   originalValues: Record<string, unknown> | null;
@@ -171,9 +171,9 @@ export interface Communication {
   lastSyncedAt?: Date;
 }
 
-// Database version - ONLY increment this when schema actually changes
-// Current: 15 (renamed customers to leads with new schema)
-export const DB_VERSION = 15;
+// Database version - INCREMENT when schema changes
+// Current: 16 (insurance terminology update)
+export const DB_VERSION = 16;
 
 class FieldVisitDatabase extends Dexie {
   leads!: Table<Lead, string>;
@@ -190,9 +190,8 @@ class FieldVisitDatabase extends Dexie {
     super('FieldVisitDB');
     
     // Define schema - Dexie handles all version upgrades automatically
-    // STABLE VERSION: Do not change unless schema actually needs modification
     this.version(DB_VERSION).stores({
-      leads: 'id, organizationId, name, villageCity, district, state, status, leadId, customerId, syncStatus, updatedAt',
+      leads: 'id, organizationId, name, villageCity, district, state, status, proposalNumber, customerId, syncStatus, updatedAt',
       visits: 'id, customerId, userId, checkInTime, status, syncStatus, createdAt',
       photos: 'id, visitId, timestamp, syncStatus',
       forms: 'id, name, isActive, version, createdAt',

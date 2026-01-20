@@ -42,7 +42,7 @@ export function ApplicationIdSearch({
         .from('leads')
         .select('*')
         .eq('organization_id', currentOrganization.id)
-        .or(`name.ilike.%${query}%,lead_id.ilike.%${query}%,customer_id.ilike.%${query}%`)
+        .or(`name.ilike.%${query}%,proposal_number.ilike.%${query}%,customer_id.ilike.%${query}%`)
         .limit(10);
       
       if (excludeList.length > 0) {
@@ -58,14 +58,14 @@ export function ApplicationIdSearch({
         id: l.id,
         organizationId: l.organization_id,
         branch: l.branch || undefined,
-        leadId: l.lead_id || undefined,
+        proposalNumber: l.proposal_number || undefined,
         customerId: l.customer_id || undefined,
         status: l.status || undefined,
         assignedUserId: l.assigned_user_id || undefined,
-        entityName: l.entity_name || undefined,
+        policyTypeCategory: l.policy_type_category || undefined,
         name: l.name,
-        loanAmount: l.loan_amount ? Number(l.loan_amount) : undefined,
-        loanPurpose: l.loan_purpose || undefined,
+        premiumAmount: l.premium_amount ? Number(l.premium_amount) : undefined,
+        policyType: l.policy_type || undefined,
         villageCity: l.village_city || undefined,
         district: l.district || undefined,
         state: l.state || undefined,
@@ -81,7 +81,7 @@ export function ApplicationIdSearch({
       
       setSearchResults(results);
     } catch (error) {
-      console.error('Error searching leads:', error);
+      console.error('Error searching prospects:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -111,7 +111,7 @@ export function ApplicationIdSearch({
 
   return (
     <div className="space-y-3">
-      {/* Selected Leads */}
+      {/* Selected Prospects */}
       {selectedContacts.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {selectedContacts.map(lead => (
@@ -120,7 +120,7 @@ export function ApplicationIdSearch({
               variant="secondary" 
               className="flex items-center gap-1.5 px-2 py-1"
             >
-              <span className="font-mono text-xs">{lead.leadId || lead.customerId}</span>
+              <span className="font-mono text-xs">{lead.proposalNumber || lead.customerId}</span>
               <span className="text-muted-foreground">-</span>
               <span className="text-xs truncate max-w-[100px]">{lead.name}</span>
               <Button
@@ -153,7 +153,7 @@ export function ApplicationIdSearch({
       {canSelectMore && (
         <Command className="border rounded-lg">
           <CommandInput
-            placeholder="Search by Lead ID, Customer ID or Name..."
+            placeholder="Search by Proposal No., Customer ID or Name..."
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
@@ -164,20 +164,20 @@ export function ApplicationIdSearch({
               </div>
             )}
             {!isSearching && searchQuery.length >= 2 && searchResults.length === 0 && (
-              <CommandEmpty>No leads found with ID</CommandEmpty>
+              <CommandEmpty>No prospects found</CommandEmpty>
             )}
             {!isSearching && searchResults.length > 0 && (
-              <CommandGroup heading="Leads">
+              <CommandGroup heading="Prospects">
                 {searchResults.map(lead => (
                   <CommandItem
                     key={lead.id}
-                    value={lead.leadId || lead.customerId || lead.id}
+                    value={lead.proposalNumber || lead.customerId || lead.id}
                     onSelect={() => handleSelect(lead)}
                     className="flex items-center justify-between cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-sm font-medium text-primary">
-                        {lead.leadId || lead.customerId}
+                        {lead.proposalNumber || lead.customerId}
                       </span>
                       <span className="text-muted-foreground">-</span>
                       <span className="text-sm">{lead.name}</span>

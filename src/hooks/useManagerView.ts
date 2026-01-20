@@ -12,22 +12,22 @@ interface TeamMember {
 }
 
 interface TeamAggregates {
-  leads_target: number;
-  leads_actual: number;
-  logins_target: number;
-  logins_actual: number;
-  enroll_target: number;
-  enroll_actual: number;
-  fi_target: number;
-  fi_actual: number;
-  db_target: number;
-  db_actual: number;
+  prospects_target: number;
+  prospects_actual: number;
+  quotes_target: number;
+  quotes_actual: number;
+  policies_target: number;
+  policies_actual: number;
+  life_insurance_target: number;
+  life_insurance_actual: number;
+  health_insurance_target: number;
+  health_insurance_actual: number;
 }
 
 interface TeamMemberIncentive {
   user_id: string;
   full_name: string | null;
-  total_enrollments: number;
+  total_policies: number;
   incentive_earned: number;
 }
 
@@ -85,11 +85,11 @@ export function useTeamAggregates(planDate: string) {
     queryFn: async (): Promise<TeamAggregates> => {
       if (!user?.id) {
         return { 
-          leads_target: 0, leads_actual: 0, 
-          logins_target: 0, logins_actual: 0, 
-          enroll_target: 0, enroll_actual: 0,
-          fi_target: 0, fi_actual: 0,
-          db_target: 0, db_actual: 0,
+          prospects_target: 0, prospects_actual: 0, 
+          quotes_target: 0, quotes_actual: 0, 
+          policies_target: 0, policies_actual: 0,
+          life_insurance_target: 0, life_insurance_actual: 0,
+          health_insurance_target: 0, health_insurance_actual: 0,
         };
       }
 
@@ -102,11 +102,11 @@ export function useTeamAggregates(planDate: string) {
       if (teamError) throw teamError;
       if (!teamMembers || teamMembers.length === 0) {
         return { 
-          leads_target: 0, leads_actual: 0, 
-          logins_target: 0, logins_actual: 0, 
-          enroll_target: 0, enroll_actual: 0,
-          fi_target: 0, fi_actual: 0,
-          db_target: 0, db_actual: 0,
+          prospects_target: 0, prospects_actual: 0, 
+          quotes_target: 0, quotes_actual: 0, 
+          policies_target: 0, policies_actual: 0,
+          life_insurance_target: 0, life_insurance_actual: 0,
+          health_insurance_target: 0, health_insurance_actual: 0,
         };
       }
 
@@ -115,7 +115,7 @@ export function useTeamAggregates(planDate: string) {
       // Get plans for team members on this date
       const { data: plans, error: plansError } = await supabase
         .from('daily_plans')
-        .select('leads_target, leads_actual, logins_target, logins_actual, enroll_target, enroll_actual, fi_target, fi_actual, db_target, db_actual')
+        .select('prospects_target, prospects_actual, quotes_target, quotes_actual, policies_target, policies_actual, life_insurance_target, life_insurance_actual, health_insurance_target, health_insurance_actual')
         .eq('plan_date', planDate)
         .in('user_id', teamIds);
 
@@ -123,22 +123,22 @@ export function useTeamAggregates(planDate: string) {
 
       // Aggregate all values
       const aggregates = (plans || []).reduce((acc, plan) => ({
-        leads_target: acc.leads_target + (plan.leads_target || 0),
-        leads_actual: acc.leads_actual + (plan.leads_actual || 0),
-        logins_target: acc.logins_target + (plan.logins_target || 0),
-        logins_actual: acc.logins_actual + (plan.logins_actual || 0),
-        enroll_target: acc.enroll_target + (plan.enroll_target || 0),
-        enroll_actual: acc.enroll_actual + (plan.enroll_actual || 0),
-        fi_target: acc.fi_target + (plan.fi_target || 0),
-        fi_actual: acc.fi_actual + (plan.fi_actual || 0),
-        db_target: acc.db_target + (plan.db_target || 0),
-        db_actual: acc.db_actual + (plan.db_actual || 0),
+        prospects_target: acc.prospects_target + (plan.prospects_target || 0),
+        prospects_actual: acc.prospects_actual + (plan.prospects_actual || 0),
+        quotes_target: acc.quotes_target + (plan.quotes_target || 0),
+        quotes_actual: acc.quotes_actual + (plan.quotes_actual || 0),
+        policies_target: acc.policies_target + (plan.policies_target || 0),
+        policies_actual: acc.policies_actual + (plan.policies_actual || 0),
+        life_insurance_target: acc.life_insurance_target + (plan.life_insurance_target || 0),
+        life_insurance_actual: acc.life_insurance_actual + (plan.life_insurance_actual || 0),
+        health_insurance_target: acc.health_insurance_target + (plan.health_insurance_target || 0),
+        health_insurance_actual: acc.health_insurance_actual + (plan.health_insurance_actual || 0),
       }), { 
-        leads_target: 0, leads_actual: 0, 
-        logins_target: 0, logins_actual: 0, 
-        enroll_target: 0, enroll_actual: 0,
-        fi_target: 0, fi_actual: 0,
-        db_target: 0, db_actual: 0,
+        prospects_target: 0, prospects_actual: 0, 
+        quotes_target: 0, quotes_actual: 0, 
+        policies_target: 0, policies_actual: 0,
+        life_insurance_target: 0, life_insurance_actual: 0,
+        health_insurance_target: 0, health_insurance_actual: 0,
       });
 
       return aggregates;
@@ -147,11 +147,11 @@ export function useTeamAggregates(planDate: string) {
   });
 }
 
-// Calculate incentive based on enrollments (same logic as useMonthlyIncentive)
-const calculateIncentive = (enrollments: number): number => {
-  if (enrollments <= 6) return 0;
-  if (enrollments === 7) return 1500;
-  return 1500 + (enrollments - 7) * 250;
+// Calculate incentive based on policies (same logic as useMonthlyIncentive)
+const calculateIncentive = (policies: number): number => {
+  if (policies <= 6) return 0;
+  if (policies === 7) return 1500;
+  return 1500 + (policies - 7) * 250;
 };
 
 // Get team incentive toppers for the current month
@@ -180,22 +180,22 @@ export function useTeamIncentiveToppers(month: Date) {
       // Get all daily plans for the month for team members
       const { data: plans, error: plansError } = await supabase
         .from('daily_plans')
-        .select('user_id, enroll_actual')
+        .select('user_id, policies_actual')
         .in('user_id', teamIds)
         .gte('plan_date', format(monthStart, 'yyyy-MM-dd'))
         .lte('plan_date', format(monthEnd, 'yyyy-MM-dd'));
 
       if (plansError) throw plansError;
 
-      // Aggregate enrollments per user
-      const enrollmentsByUser: Record<string, number> = {};
+      // Aggregate policies per user
+      const policiesByUser: Record<string, number> = {};
       (plans || []).forEach(plan => {
-        enrollmentsByUser[plan.user_id] = (enrollmentsByUser[plan.user_id] || 0) + (plan.enroll_actual || 0);
+        policiesByUser[plan.user_id] = (policiesByUser[plan.user_id] || 0) + (plan.policies_actual || 0);
       });
 
       // Build result with incentive calculations
       const result: TeamMemberIncentive[] = teamMembers.map(member => {
-        const totalEnrollments = enrollmentsByUser[member.id] || 0;
+        const totalPolicies = policiesByUser[member.id] || 0;
         const displayName = member.full_name || 
           [member.first_name, member.last_name].filter(Boolean).join(' ') || 
           'Unknown';
@@ -203,17 +203,17 @@ export function useTeamIncentiveToppers(month: Date) {
         return {
           user_id: member.id,
           full_name: displayName,
-          total_enrollments: totalEnrollments,
-          incentive_earned: calculateIncentive(totalEnrollments),
+          total_policies: totalPolicies,
+          incentive_earned: calculateIncentive(totalPolicies),
         };
       });
 
-      // Sort by incentive earned (descending), then by enrollments
+      // Sort by incentive earned (descending), then by policies
       result.sort((a, b) => {
         if (b.incentive_earned !== a.incentive_earned) {
           return b.incentive_earned - a.incentive_earned;
         }
-        return b.total_enrollments - a.total_enrollments;
+        return b.total_policies - a.total_policies;
       });
 
       return result;

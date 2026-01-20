@@ -9,16 +9,16 @@ export interface DailyPlan {
   user_id: string;
   organization_id: string;
   plan_date: string;
-  leads_target: number;
-  logins_target: number;
-  enroll_target: number;
-  leads_actual: number;
-  logins_actual: number;
-  enroll_actual: number;
-  fi_target: number | null;
-  db_target: number | null;
-  fi_actual: number | null;
-  db_actual: number | null;
+  prospects_target: number;
+  quotes_target: number;
+  policies_target: number;
+  prospects_actual: number;
+  quotes_actual: number;
+  policies_actual: number;
+  life_insurance_target: number | null;
+  health_insurance_target: number | null;
+  life_insurance_actual: number | null;
+  health_insurance_actual: number | null;
   status: string;
   corrected_by: string | null;
   original_values: Record<string, unknown> | null;
@@ -36,25 +36,25 @@ export interface DailyPlan {
 
 export interface CreatePlanInput {
   plan_date: string;
-  leads_target: number;
-  logins_target: number;
-  enroll_target: number;
-  fi_target?: number;
-  db_target?: number;
+  prospects_target: number;
+  quotes_target: number;
+  policies_target: number;
+  life_insurance_target?: number;
+  health_insurance_target?: number;
 }
 
 export interface UpdatePlanInput {
   id: string;
-  leads_target?: number;
-  logins_target?: number;
-  enroll_target?: number;
-  fi_target?: number;
-  db_target?: number;
-  leads_actual?: number;
-  logins_actual?: number;
-  enroll_actual?: number;
-  fi_actual?: number;
-  db_actual?: number;
+  prospects_target?: number;
+  quotes_target?: number;
+  policies_target?: number;
+  life_insurance_target?: number;
+  health_insurance_target?: number;
+  prospects_actual?: number;
+  quotes_actual?: number;
+  policies_actual?: number;
+  life_insurance_actual?: number;
+  health_insurance_actual?: number;
   status?: string;
 }
 
@@ -194,11 +194,11 @@ export function useCreatePlan() {
           user_id: user.id,
           organization_id: currentOrganization.id,
           plan_date: input.plan_date,
-          leads_target: input.leads_target,
-          logins_target: input.logins_target,
-          enroll_target: input.enroll_target,
-          fi_target: input.fi_target || 0,
-          db_target: input.db_target || 0,
+          prospects_target: input.prospects_target,
+          quotes_target: input.quotes_target,
+          policies_target: input.policies_target,
+          life_insurance_target: input.life_insurance_target || 0,
+          health_insurance_target: input.health_insurance_target || 0,
           status: 'submitted',
         })
         .select()
@@ -261,14 +261,14 @@ export function useCorrectPlan() {
       const { data, error } = await supabase
         .from('daily_plans')
         .update({
-          leads_target: updates.leads_target,
-          logins_target: updates.logins_target,
-          enroll_target: updates.enroll_target,
+          prospects_target: updates.prospects_target,
+          quotes_target: updates.quotes_target,
+          policies_target: updates.policies_target,
           corrected_by: user.id,
           original_values: JSON.parse(JSON.stringify({
-            leads_target: original.leads_target,
-            logins_target: original.logins_target,
-            enroll_target: original.enroll_target,
+            prospects_target: original.prospects_target,
+            quotes_target: original.quotes_target,
+            policies_target: original.policies_target,
           })),
           status: 'corrected',
         })

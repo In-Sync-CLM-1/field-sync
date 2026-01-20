@@ -5,34 +5,34 @@ import { format, startOfMonth, endOfMonth, subDays } from 'date-fns';
 interface TeamMemberPerformance {
   id: string;
   name: string;
-  leadsTarget: number;
-  leadsActual: number;
-  loginsTarget: number;
-  loginsActual: number;
-  enrollTarget: number;
-  enrollActual: number;
+  prospectsTarget: number;
+  prospectsActual: number;
+  quotesTarget: number;
+  quotesActual: number;
+  policiesTarget: number;
+  policiesActual: number;
   incentive: number;
   isActive: boolean;
 }
 
 interface DailyTrend {
   date: string;
-  enrollments: number;
+  policies: number;
 }
 
 interface IncentiveTopper {
   id: string;
   name: string;
-  enrollments: number;
+  policies: number;
   incentive: number;
   rank: number;
 }
 
 // Incentive calculation (same formula as useMonthlyIncentive)
-export const calculateIncentive = (enrollments: number): number => {
-  if (enrollments < 7) return 0;
-  if (enrollments === 7) return 1500;
-  return 1500 + (enrollments - 7) * 250;
+export const calculateIncentive = (policies: number): number => {
+  if (policies < 7) return 0;
+  if (policies === 7) return 1500;
+  return 1500 + (policies - 7) * 250;
 };
 
 export const useBranchAnalytics = (month: Date) => {
@@ -68,7 +68,7 @@ export const useBranchAnalytics = (month: Date) => {
 
       const { data: plans, error } = await supabase
         .from('daily_plans')
-        .select('user_id, leads_target, leads_actual, logins_target, logins_actual, enroll_target, enroll_actual')
+        .select('user_id, prospects_target, prospects_actual, quotes_target, quotes_actual, policies_target, policies_actual')
         .in('user_id', teamIds)
         .gte('plan_date', monthStart)
         .lte('plan_date', monthEnd);
@@ -77,33 +77,33 @@ export const useBranchAnalytics = (month: Date) => {
 
       // Aggregate by user
       const userAggregates: Record<string, {
-        leadsTarget: number;
-        leadsActual: number;
-        loginsTarget: number;
-        loginsActual: number;
-        enrollTarget: number;
-        enrollActual: number;
+        prospectsTarget: number;
+        prospectsActual: number;
+        quotesTarget: number;
+        quotesActual: number;
+        policiesTarget: number;
+        policiesActual: number;
       }> = {};
 
       teamIds.forEach(id => {
         userAggregates[id] = {
-          leadsTarget: 0,
-          leadsActual: 0,
-          loginsTarget: 0,
-          loginsActual: 0,
-          enrollTarget: 0,
-          enrollActual: 0
+          prospectsTarget: 0,
+          prospectsActual: 0,
+          quotesTarget: 0,
+          quotesActual: 0,
+          policiesTarget: 0,
+          policiesActual: 0
         };
       });
 
       (plans || []).forEach(plan => {
         if (userAggregates[plan.user_id]) {
-          userAggregates[plan.user_id].leadsTarget += plan.leads_target || 0;
-          userAggregates[plan.user_id].leadsActual += plan.leads_actual || 0;
-          userAggregates[plan.user_id].loginsTarget += plan.logins_target || 0;
-          userAggregates[plan.user_id].loginsActual += plan.logins_actual || 0;
-          userAggregates[plan.user_id].enrollTarget += plan.enroll_target || 0;
-          userAggregates[plan.user_id].enrollActual += plan.enroll_actual || 0;
+          userAggregates[plan.user_id].prospectsTarget += plan.prospects_target || 0;
+          userAggregates[plan.user_id].prospectsActual += plan.prospects_actual || 0;
+          userAggregates[plan.user_id].quotesTarget += plan.quotes_target || 0;
+          userAggregates[plan.user_id].quotesActual += plan.quotes_actual || 0;
+          userAggregates[plan.user_id].policiesTarget += plan.policies_target || 0;
+          userAggregates[plan.user_id].policiesActual += plan.policies_actual || 0;
         }
       });
 
@@ -111,17 +111,17 @@ export const useBranchAnalytics = (month: Date) => {
         id: member.id,
         name: member.full_name || 'Unknown',
         ...userAggregates[member.id],
-        incentive: calculateIncentive(userAggregates[member.id].enrollActual),
+        incentive: calculateIncentive(userAggregates[member.id].policiesActual),
         isActive: member.is_active
       }));
 
-      return performance.sort((a, b) => b.enrollActual - a.enrollActual);
+      return performance.sort((a, b) => b.policiesActual - a.policiesActual);
     }
   });
 
-  // Fetch enrollment trend for last 30 days
-  const { data: enrollmentTrend, isLoading: loadingTrend } = useQuery({
-    queryKey: ['branch-enrollment-trend', teamMembers?.map(m => m.id)],
+  // Fetch policy trend for last 30 days
+  const { data: policyTrend, isLoading: loadingTrend } = useQuery({
+    queryKey: ['branch-policy-trend', teamMembers?.map(m => m.id)],
     enabled: !!teamMembers && teamMembers.length > 0,
     queryFn: async () => {
       if (!teamMembers || teamMembers.length === 0) return [];
@@ -132,7 +132,7 @@ export const useBranchAnalytics = (month: Date) => {
 
       const { data: plans, error } = await supabase
         .from('daily_plans')
-        .select('plan_date, enroll_actual')
+        .select('plan_date, policies_actual')
         .in('user_id', teamIds)
         .gte('plan_date', thirtyDaysAgo)
         .lte('plan_date', today)
@@ -144,11 +144,11 @@ export const useBranchAnalytics = (month: Date) => {
       const dateAggregates: Record<string, number> = {};
       (plans || []).forEach(plan => {
         const date = plan.plan_date;
-        dateAggregates[date] = (dateAggregates[date] || 0) + (plan.enroll_actual || 0);
+        dateAggregates[date] = (dateAggregates[date] || 0) + (plan.policies_actual || 0);
       });
 
       const trend: DailyTrend[] = Object.entries(dateAggregates)
-        .map(([date, enrollments]) => ({ date, enrollments }))
+        .map(([date, policies]) => ({ date, policies }))
         .sort((a, b) => a.date.localeCompare(b.date));
 
       return trend;
@@ -157,29 +157,29 @@ export const useBranchAnalytics = (month: Date) => {
 
   // Calculate incentive toppers
   const incentiveToppers: IncentiveTopper[] = (teamPerformance || [])
-    .filter(m => m.enrollActual > 0)
+    .filter(m => m.policiesActual > 0)
     .slice(0, 10)
     .map((member, index) => ({
       id: member.id,
       name: member.name,
-      enrollments: member.enrollActual,
+      policies: member.policiesActual,
       incentive: member.incentive,
       rank: index + 1
     }));
 
   // Calculate aggregate KPIs
-  const totalEnrollments = (teamPerformance || []).reduce((sum, m) => sum + m.enrollActual, 0);
-  const totalEnrollTarget = (teamPerformance || []).reduce((sum, m) => sum + m.enrollTarget, 0);
-  const overallAchievement = totalEnrollTarget > 0 ? Math.round((totalEnrollments / totalEnrollTarget) * 100) : 0;
+  const totalPolicies = (teamPerformance || []).reduce((sum, m) => sum + m.policiesActual, 0);
+  const totalPoliciesTarget = (teamPerformance || []).reduce((sum, m) => sum + m.policiesTarget, 0);
+  const overallAchievement = totalPoliciesTarget > 0 ? Math.round((totalPolicies / totalPoliciesTarget) * 100) : 0;
   const totalIncentive = (teamPerformance || []).reduce((sum, m) => sum + m.incentive, 0);
   const activeSalesOfficers = teamMembers?.length || 0;
 
   return {
     teamPerformance: teamPerformance || [],
-    enrollmentTrend: enrollmentTrend || [],
+    policyTrend: policyTrend || [],
     incentiveToppers,
     kpis: {
-      totalEnrollments,
+      totalPolicies,
       overallAchievement,
       totalIncentive,
       activeSalesOfficers
