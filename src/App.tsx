@@ -28,6 +28,7 @@ import Planning from "./pages/Planning";
 import TeamPlanning from "./pages/TeamPlanning";
 import PlanningOverview from "./pages/PlanningOverview";
 import BranchAnalytics from "./pages/BranchAnalytics";
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
           <BrowserRouter>
             <OfflineBanner />
             <Routes>
+              <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route
                 path="/"
