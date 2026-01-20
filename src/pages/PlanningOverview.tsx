@@ -28,7 +28,7 @@ interface ManagerGroup {
   managerId: string | null;
   managerName: string;
   plans: DailyPlanLocal[];
-  totals: { leads: number; logins: number; enroll: number; fi: number; db: number };
+  totals: { prospects: number; quotes: number; policies: number; lifeIns: number; healthIns: number };
 }
 
 export default function PlanningOverview() {
@@ -52,17 +52,17 @@ export default function PlanningOverview() {
           managerId,
           managerName: 'All Team Members',
           plans: [],
-          totals: { leads: 0, logins: 0, enroll: 0, fi: 0, db: 0 },
+          totals: { prospects: 0, quotes: 0, policies: 0, lifeIns: 0, healthIns: 0 },
         });
       }
       
       const group = groups.get(key)!;
       group.plans.push(plan);
-      group.totals.leads += plan.leadsTarget;
-      group.totals.logins += plan.loginsTarget;
-      group.totals.enroll += plan.enrollTarget;
-      group.totals.fi += plan.fiTarget || 0;
-      group.totals.db += plan.dbTarget || 0;
+      group.totals.prospects += plan.prospectsTarget;
+      group.totals.quotes += plan.quotesTarget;
+      group.totals.policies += plan.policiesTarget;
+      group.totals.lifeIns += plan.lifeInsuranceTarget || 0;
+      group.totals.healthIns += plan.healthInsuranceTarget || 0;
     });
 
     return Array.from(groups.values());
@@ -71,13 +71,13 @@ export default function PlanningOverview() {
   const orgTotals = useMemo(() => {
     return managerGroups.reduce(
       (acc, group) => ({
-        leads: acc.leads + group.totals.leads,
-        logins: acc.logins + group.totals.logins,
-        enroll: acc.enroll + group.totals.enroll,
-        fi: acc.fi + group.totals.fi,
-        db: acc.db + group.totals.db,
+        prospects: acc.prospects + group.totals.prospects,
+        quotes: acc.quotes + group.totals.quotes,
+        policies: acc.policies + group.totals.policies,
+        lifeIns: acc.lifeIns + group.totals.lifeIns,
+        healthIns: acc.healthIns + group.totals.healthIns,
       }),
-      { leads: 0, logins: 0, enroll: 0, fi: 0, db: 0 }
+      { prospects: 0, quotes: 0, policies: 0, lifeIns: 0, healthIns: 0 }
     );
   }, [managerGroups]);
 
@@ -156,11 +156,11 @@ export default function PlanningOverview() {
         <Building2 className="h-4 w-4 text-primary" />
         <span className="text-xs font-medium text-muted-foreground">Org Total:</span>
         <div className="stats-row">
-          <div className="stat-badge bg-primary/10 text-primary">Leads: {orgTotals.leads}</div>
-          <div className="stat-badge bg-primary/10 text-primary">Logins: {orgTotals.logins}</div>
-          <div className="stat-badge bg-primary/10 text-primary">Enroll: {orgTotals.enroll}</div>
-          <div className="stat-badge bg-success/10 text-success">FI: {orgTotals.fi}</div>
-          <div className="stat-badge bg-success/10 text-success">DB: {orgTotals.db}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Prospects: {orgTotals.prospects}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Quotes: {orgTotals.quotes}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Policies: {orgTotals.policies}</div>
+          <div className="stat-badge bg-success/10 text-success">Life: {orgTotals.lifeIns}</div>
+          <div className="stat-badge bg-success/10 text-success">Health: {orgTotals.healthIns}</div>
         </div>
       </div>
 
@@ -187,11 +187,11 @@ export default function PlanningOverview() {
                         <span className="text-xs text-muted-foreground">({group.plans.length})</span>
                       </div>
                       <div className="stats-row">
-                        <span className="stat-badge bg-muted text-muted-foreground">L:{group.totals.leads}</span>
-                        <span className="stat-badge bg-muted text-muted-foreground">Lo:{group.totals.logins}</span>
-                        <span className="stat-badge bg-muted text-muted-foreground">E:{group.totals.enroll}</span>
-                        <span className="stat-badge bg-success/10 text-success">FI:{group.totals.fi}</span>
-                        <span className="stat-badge bg-success/10 text-success">DB:{group.totals.db}</span>
+                        <span className="stat-badge bg-muted text-muted-foreground">P:{group.totals.prospects}</span>
+                        <span className="stat-badge bg-muted text-muted-foreground">Q:{group.totals.quotes}</span>
+                        <span className="stat-badge bg-muted text-muted-foreground">Po:{group.totals.policies}</span>
+                        <span className="stat-badge bg-success/10 text-success">Life:{group.totals.lifeIns}</span>
+                        <span className="stat-badge bg-success/10 text-success">Health:{group.totals.healthIns}</span>
                       </div>
                     </div>
                   </CollapsibleTrigger>
@@ -202,11 +202,11 @@ export default function PlanningOverview() {
                         <TableHeader>
                           <TableRow className="hover:bg-transparent">
                             <TableHead className="py-1.5 px-3 text-xs">Agent</TableHead>
-                            <TableHead className="py-1.5 px-3 text-xs text-right">Leads</TableHead>
-                            <TableHead className="py-1.5 px-3 text-xs text-right">Logins</TableHead>
-                            <TableHead className="py-1.5 px-3 text-xs text-right">Enroll</TableHead>
-                            <TableHead className="py-1.5 px-3 text-xs text-right">FI</TableHead>
-                            <TableHead className="py-1.5 px-3 text-xs text-right">DB</TableHead>
+                            <TableHead className="py-1.5 px-3 text-xs text-right">Prospects</TableHead>
+                            <TableHead className="py-1.5 px-3 text-xs text-right">Quotes</TableHead>
+                            <TableHead className="py-1.5 px-3 text-xs text-right">Policies</TableHead>
+                            <TableHead className="py-1.5 px-3 text-xs text-right">Life</TableHead>
+                            <TableHead className="py-1.5 px-3 text-xs text-right">Health</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs">Status</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-center">Sync</TableHead>
                           </TableRow>
@@ -215,11 +215,11 @@ export default function PlanningOverview() {
                           {group.plans.map((plan) => (
                             <TableRow key={plan.id} className="hover:bg-muted/20">
                               <TableCell className="py-1 px-3 text-xs">{getUserName(plan)}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.leadsTarget}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.loginsTarget}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.enrollTarget}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.fiTarget || 0}</TableCell>
-                              <TableCell className="py-1 px-3 text-xs text-right">{plan.dbTarget || 0}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.prospectsTarget}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.quotesTarget}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.policiesTarget}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.lifeInsuranceTarget || 0}</TableCell>
+                              <TableCell className="py-1 px-3 text-xs text-right">{plan.healthInsuranceTarget || 0}</TableCell>
                               <TableCell className="py-1 px-3">{getStatusBadge(plan.status)}</TableCell>
                               <TableCell className="py-1 px-3 text-center">{getSyncBadge(plan.syncStatus)}</TableCell>
                             </TableRow>

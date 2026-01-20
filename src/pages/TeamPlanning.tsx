@@ -40,43 +40,43 @@ export default function TeamPlanning() {
   const createPlan = useCreatePlanOffline();
   const updatePlan = useUpdatePlanOffline();
 
-  const [managerTargets, setManagerTargets] = useState({ fi_target: 0, db_target: 0 });
+  const [managerTargets, setManagerTargets] = useState({ life_insurance_target: 0, health_insurance_target: 0 });
 
   useEffect(() => {
     if (myPlan) {
       setManagerTargets({
-        fi_target: myPlan.fiTarget || 0,
-        db_target: myPlan.dbTarget || 0,
+        life_insurance_target: myPlan.lifeInsuranceTarget || 0,
+        health_insurance_target: myPlan.healthInsuranceTarget || 0,
       });
     }
   }, [myPlan]);
 
   const aggregates = useMemo(() => {
-    if (!teamPlans) return { leads: 0, logins: 0, enroll: 0, fi: 0, db: 0 };
+    if (!teamPlans) return { prospects: 0, quotes: 0, policies: 0, lifeIns: 0, healthIns: 0 };
     return teamPlans.reduce((acc, plan) => ({
-      leads: acc.leads + plan.leadsTarget,
-      logins: acc.logins + plan.loginsTarget,
-      enroll: acc.enroll + plan.enrollTarget,
-      fi: acc.fi + (plan.fiTarget || 0),
-      db: acc.db + (plan.dbTarget || 0),
-    }), { leads: 0, logins: 0, enroll: 0, fi: 0, db: 0 });
+      prospects: acc.prospects + plan.prospectsTarget,
+      quotes: acc.quotes + plan.quotesTarget,
+      policies: acc.policies + plan.policiesTarget,
+      lifeIns: acc.lifeIns + (plan.lifeInsuranceTarget || 0),
+      healthIns: acc.healthIns + (plan.healthInsuranceTarget || 0),
+    }), { prospects: 0, quotes: 0, policies: 0, lifeIns: 0, healthIns: 0 });
   }, [teamPlans]);
 
   const handleStartEdit = (plan: DailyPlanLocal) => {
     setEditingPlanId(plan.id);
     setEditValues({
-      leads_target: plan.leadsTarget,
-      logins_target: plan.loginsTarget,
-      enroll_target: plan.enrollTarget,
+      prospects_target: plan.prospectsTarget,
+      quotes_target: plan.quotesTarget,
+      policies_target: plan.policiesTarget,
     });
   };
 
   const handleSaveEdit = async (plan: DailyPlanLocal) => {
     await correctPlan.mutateAsync({
       id: plan.id,
-      leads_target: editValues.leads_target,
-      logins_target: editValues.logins_target,
-      enroll_target: editValues.enroll_target,
+      prospects_target: editValues.prospects_target,
+      quotes_target: editValues.quotes_target,
+      policies_target: editValues.policies_target,
       original: plan,
     });
     setEditingPlanId(null);
@@ -91,17 +91,17 @@ export default function TeamPlanning() {
     if (myPlan) {
       await updatePlan.mutateAsync({
         id: myPlan.id,
-        fi_target: managerTargets.fi_target,
-        db_target: managerTargets.db_target,
+        life_insurance_target: managerTargets.life_insurance_target,
+        health_insurance_target: managerTargets.health_insurance_target,
       });
     } else {
       await createPlan.mutateAsync({
         plan_date: planDate,
-        leads_target: 0,
-        logins_target: 0,
-        enroll_target: 0,
-        fi_target: managerTargets.fi_target,
-        db_target: managerTargets.db_target,
+        prospects_target: 0,
+        quotes_target: 0,
+        policies_target: 0,
+        life_insurance_target: managerTargets.life_insurance_target,
+        health_insurance_target: managerTargets.health_insurance_target,
       });
     }
   };
@@ -151,23 +151,23 @@ export default function TeamPlanning() {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Manager FI/DB inline */}
+          {/* Manager Life/Health inline */}
           <div className="flex items-center gap-2 bg-muted/50 rounded px-2 py-1">
-            <Label className="text-xs">FI:</Label>
+            <Label className="text-xs">Life:</Label>
             <Input
               type="number"
               min="0"
               className="w-14 h-6 text-xs px-1"
-              value={managerTargets.fi_target}
-              onChange={(e) => setManagerTargets(prev => ({ ...prev, fi_target: parseInt(e.target.value) || 0 }))}
+              value={managerTargets.life_insurance_target}
+              onChange={(e) => setManagerTargets(prev => ({ ...prev, life_insurance_target: parseInt(e.target.value) || 0 }))}
             />
-            <Label className="text-xs">DB:</Label>
+            <Label className="text-xs">Health:</Label>
             <Input
               type="number"
               min="0"
               className="w-14 h-6 text-xs px-1"
-              value={managerTargets.db_target}
-              onChange={(e) => setManagerTargets(prev => ({ ...prev, db_target: parseInt(e.target.value) || 0 }))}
+              value={managerTargets.health_insurance_target}
+              onChange={(e) => setManagerTargets(prev => ({ ...prev, health_insurance_target: parseInt(e.target.value) || 0 }))}
             />
             <Button size="sm" className="h-6 px-2 text-xs" onClick={handleSaveManagerTargets} disabled={updatePlan.isPending || createPlan.isPending}>
               Save
@@ -197,11 +197,11 @@ export default function TeamPlanning() {
       <div className="flex items-center gap-3 p-2 bg-primary/5 rounded border border-primary/10">
         <span className="text-xs font-medium text-muted-foreground">Totals:</span>
         <div className="stats-row">
-          <div className="stat-badge bg-primary/10 text-primary">Leads: {aggregates.leads}</div>
-          <div className="stat-badge bg-primary/10 text-primary">Logins: {aggregates.logins}</div>
-          <div className="stat-badge bg-primary/10 text-primary">Enroll: {aggregates.enroll}</div>
-          <div className="stat-badge bg-success/10 text-success">FI: {aggregates.fi + (myPlan?.fiTarget || 0)}</div>
-          <div className="stat-badge bg-success/10 text-success">DB: {aggregates.db + (myPlan?.dbTarget || 0)}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Prospects: {aggregates.prospects}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Quotes: {aggregates.quotes}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Policies: {aggregates.policies}</div>
+          <div className="stat-badge bg-success/10 text-success">Life: {aggregates.lifeIns + (myPlan?.lifeInsuranceTarget || 0)}</div>
+          <div className="stat-badge bg-success/10 text-success">Health: {aggregates.healthIns + (myPlan?.healthInsuranceTarget || 0)}</div>
         </div>
       </div>
 
@@ -217,9 +217,9 @@ export default function TeamPlanning() {
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="py-2 px-3 text-xs">Agent</TableHead>
-                  <TableHead className="py-2 px-3 text-xs text-right">Leads</TableHead>
-                  <TableHead className="py-2 px-3 text-xs text-right">Logins</TableHead>
-                  <TableHead className="py-2 px-3 text-xs text-right">Enroll</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right">Prospects</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right">Quotes</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right">Policies</TableHead>
                   <TableHead className="py-2 px-3 text-xs">Status</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-center">Sync</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-right w-20">Actions</TableHead>
@@ -231,21 +231,21 @@ export default function TeamPlanning() {
                     <TableCell className="py-1.5 px-3 text-sm font-medium">{getUserName(plan)}</TableCell>
                     <TableCell className="py-1.5 px-3 text-sm text-right">
                       {editingPlanId === plan.id ? (
-                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.leads_target}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, leads_target: parseInt(e.target.value) || 0 }))} />
-                      ) : plan.leadsTarget}
+                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.prospects_target}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, prospects_target: parseInt(e.target.value) || 0 }))} />
+                      ) : plan.prospectsTarget}
                     </TableCell>
                     <TableCell className="py-1.5 px-3 text-sm text-right">
                       {editingPlanId === plan.id ? (
-                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.logins_target}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, logins_target: parseInt(e.target.value) || 0 }))} />
-                      ) : plan.loginsTarget}
+                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.quotes_target}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, quotes_target: parseInt(e.target.value) || 0 }))} />
+                      ) : plan.quotesTarget}
                     </TableCell>
                     <TableCell className="py-1.5 px-3 text-sm text-right">
                       {editingPlanId === plan.id ? (
-                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.enroll_target}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, enroll_target: parseInt(e.target.value) || 0 }))} />
-                      ) : plan.enrollTarget}
+                        <Input type="number" min="0" className="w-16 h-6 text-xs ml-auto" value={editValues.policies_target}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, policies_target: parseInt(e.target.value) || 0 }))} />
+                      ) : plan.policiesTarget}
                     </TableCell>
                     <TableCell className="py-1.5 px-3">{getStatusBadge(plan.status)}</TableCell>
                     <TableCell className="py-1.5 px-3 text-center">{getSyncBadge(plan.syncStatus)}</TableCell>
