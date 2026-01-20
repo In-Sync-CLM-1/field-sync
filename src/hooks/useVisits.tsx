@@ -23,7 +23,7 @@ export interface Visit {
     village_city?: string;
     district?: string;
     mobile_no?: string;
-    entity_name?: string;
+    policy_type_category?: string;
   };
 }
 
@@ -195,7 +195,7 @@ export const useVisit = (id?: string) => {
             village_city,
             district,
             mobile_no,
-            entity_name
+            policy_type_category
           )
         `)
         .eq('id', id)

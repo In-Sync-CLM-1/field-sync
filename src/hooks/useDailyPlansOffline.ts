@@ -23,18 +23,18 @@ const toLocalPlan = (plan: any): DailyPlanLocal => ({
   userId: plan.user_id,
   organizationId: plan.organization_id,
   planDate: plan.plan_date,
-  leadsTarget: plan.leads_target,
-  loginsTarget: plan.logins_target,
-  enrollTarget: plan.enroll_target,
-  leadsActual: plan.leads_actual,
-  loginsActual: plan.logins_actual,
-  enrollActual: plan.enroll_actual,
-  fiTarget: plan.fi_target,
-  dbTarget: plan.db_target,
-  fiActual: plan.fi_actual,
-  dbActual: plan.db_actual,
-  leadsMarket: plan.leads_market,
-  loginsMarket: plan.logins_market,
+  prospectsTarget: plan.prospects_target,
+  quotesTarget: plan.quotes_target,
+  policiesTarget: plan.policies_target,
+  prospectsActual: plan.prospects_actual,
+  quotesActual: plan.quotes_actual,
+  policiesActual: plan.policies_actual,
+  lifeInsuranceTarget: plan.life_insurance_target,
+  healthInsuranceTarget: plan.health_insurance_target,
+  lifeInsuranceActual: plan.life_insurance_actual,
+  healthInsuranceActual: plan.health_insurance_actual,
+  prospectsMarket: plan.prospects_market,
+  quotesMarket: plan.quotes_market,
   status: plan.status,
   correctedBy: plan.corrected_by,
   originalValues: plan.original_values,
@@ -49,18 +49,18 @@ const toSupabasePlan = (plan: DailyPlanLocal) => ({
   user_id: plan.userId,
   organization_id: plan.organizationId,
   plan_date: plan.planDate,
-  leads_target: plan.leadsTarget,
-  logins_target: plan.loginsTarget,
-  enroll_target: plan.enrollTarget,
-  leads_actual: plan.leadsActual,
-  logins_actual: plan.loginsActual,
-  enroll_actual: plan.enrollActual,
-  fi_target: plan.fiTarget || 0,
-  db_target: plan.dbTarget || 0,
-  fi_actual: plan.fiActual || 0,
-  db_actual: plan.dbActual || 0,
-  leads_market: plan.leadsMarket || null,
-  logins_market: plan.loginsMarket || null,
+  prospects_target: plan.prospectsTarget,
+  quotes_target: plan.quotesTarget,
+  policies_target: plan.policiesTarget,
+  prospects_actual: plan.prospectsActual,
+  quotes_actual: plan.quotesActual,
+  policies_actual: plan.policiesActual,
+  life_insurance_target: plan.lifeInsuranceTarget || 0,
+  health_insurance_target: plan.healthInsuranceTarget || 0,
+  life_insurance_actual: plan.lifeInsuranceActual || 0,
+  health_insurance_actual: plan.healthInsuranceActual || 0,
+  prospects_market: plan.prospectsMarket || null,
+  quotes_market: plan.quotesMarket || null,
   status: plan.status,
 });
 
@@ -305,13 +305,13 @@ export function useCreatePlanOffline() {
   return useMutation({
     mutationFn: async (input: {
       plan_date: string;
-      leads_target: number;
-      logins_target: number;
-      enroll_target: number;
-      fi_target?: number;
-      db_target?: number;
-      leads_market?: string;
-      logins_market?: string;
+      prospects_target: number;
+      quotes_target: number;
+      policies_target: number;
+      life_insurance_target?: number;
+      health_insurance_target?: number;
+      prospects_market?: string;
+      quotes_market?: string;
     }) => {
       if (!user || !currentOrganization) throw new Error('Not authenticated');
 
@@ -323,18 +323,18 @@ export function useCreatePlanOffline() {
         userId: user.id,
         organizationId: currentOrganization.id,
         planDate: input.plan_date,
-        leadsTarget: input.leads_target,
-        loginsTarget: input.logins_target,
-        enrollTarget: input.enroll_target,
-        leadsActual: 0,
-        loginsActual: 0,
-        enrollActual: 0,
-        fiTarget: input.fi_target || 0,
-        dbTarget: input.db_target || 0,
-        fiActual: 0,
-        dbActual: 0,
-        leadsMarket: input.leads_market || null,
-        loginsMarket: input.logins_market || null,
+        prospectsTarget: input.prospects_target,
+        quotesTarget: input.quotes_target,
+        policiesTarget: input.policies_target,
+        prospectsActual: 0,
+        quotesActual: 0,
+        policiesActual: 0,
+        lifeInsuranceTarget: input.life_insurance_target || 0,
+        healthInsuranceTarget: input.health_insurance_target || 0,
+        lifeInsuranceActual: 0,
+        healthInsuranceActual: 0,
+        prospectsMarket: input.prospects_market || null,
+        quotesMarket: input.quotes_market || null,
         status: 'submitted',
         correctedBy: null,
         originalValues: null,
@@ -403,18 +403,18 @@ export function useUpdatePlanOffline() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      leads_target?: number;
-      logins_target?: number;
-      enroll_target?: number;
-      fi_target?: number;
-      db_target?: number;
-      leads_actual?: number;
-      logins_actual?: number;
-      enroll_actual?: number;
-      fi_actual?: number;
-      db_actual?: number;
-      leads_market?: string;
-      logins_market?: string;
+      prospects_target?: number;
+      quotes_target?: number;
+      policies_target?: number;
+      life_insurance_target?: number;
+      health_insurance_target?: number;
+      prospects_actual?: number;
+      quotes_actual?: number;
+      policies_actual?: number;
+      life_insurance_actual?: number;
+      health_insurance_actual?: number;
+      prospects_market?: string;
+      quotes_market?: string;
       status?: string;
     }) => {
       const { id, ...updates } = input;
@@ -425,18 +425,18 @@ export function useUpdatePlanOffline() {
 
       const now = new Date();
       const updatedPlan: Partial<DailyPlanLocal> = {
-        ...(updates.leads_target !== undefined && { leadsTarget: updates.leads_target }),
-        ...(updates.logins_target !== undefined && { loginsTarget: updates.logins_target }),
-        ...(updates.enroll_target !== undefined && { enrollTarget: updates.enroll_target }),
-        ...(updates.fi_target !== undefined && { fiTarget: updates.fi_target }),
-        ...(updates.db_target !== undefined && { dbTarget: updates.db_target }),
-        ...(updates.leads_actual !== undefined && { leadsActual: updates.leads_actual }),
-        ...(updates.logins_actual !== undefined && { loginsActual: updates.logins_actual }),
-        ...(updates.enroll_actual !== undefined && { enrollActual: updates.enroll_actual }),
-        ...(updates.fi_actual !== undefined && { fiActual: updates.fi_actual }),
-        ...(updates.db_actual !== undefined && { dbActual: updates.db_actual }),
-        ...(updates.leads_market !== undefined && { leadsMarket: updates.leads_market }),
-        ...(updates.logins_market !== undefined && { loginsMarket: updates.logins_market }),
+        ...(updates.prospects_target !== undefined && { prospectsTarget: updates.prospects_target }),
+        ...(updates.quotes_target !== undefined && { quotesTarget: updates.quotes_target }),
+        ...(updates.policies_target !== undefined && { policiesTarget: updates.policies_target }),
+        ...(updates.life_insurance_target !== undefined && { lifeInsuranceTarget: updates.life_insurance_target }),
+        ...(updates.health_insurance_target !== undefined && { healthInsuranceTarget: updates.health_insurance_target }),
+        ...(updates.prospects_actual !== undefined && { prospectsActual: updates.prospects_actual }),
+        ...(updates.quotes_actual !== undefined && { quotesActual: updates.quotes_actual }),
+        ...(updates.policies_actual !== undefined && { policiesActual: updates.policies_actual }),
+        ...(updates.life_insurance_actual !== undefined && { lifeInsuranceActual: updates.life_insurance_actual }),
+        ...(updates.health_insurance_actual !== undefined && { healthInsuranceActual: updates.health_insurance_actual }),
+        ...(updates.prospects_market !== undefined && { prospectsMarket: updates.prospects_market }),
+        ...(updates.quotes_market !== undefined && { quotesMarket: updates.quotes_market }),
         ...(updates.status !== undefined && { status: updates.status }),
         syncStatus: 'pending',
         updatedAt: now,
@@ -464,18 +464,18 @@ export function useUpdatePlanOffline() {
           const { error } = await supabase
             .from('daily_plans')
             .update({
-              ...(updates.leads_target !== undefined && { leads_target: updates.leads_target }),
-              ...(updates.logins_target !== undefined && { logins_target: updates.logins_target }),
-              ...(updates.enroll_target !== undefined && { enroll_target: updates.enroll_target }),
-              ...(updates.fi_target !== undefined && { fi_target: updates.fi_target }),
-              ...(updates.db_target !== undefined && { db_target: updates.db_target }),
-              ...(updates.leads_actual !== undefined && { leads_actual: updates.leads_actual }),
-              ...(updates.logins_actual !== undefined && { logins_actual: updates.logins_actual }),
-              ...(updates.enroll_actual !== undefined && { enroll_actual: updates.enroll_actual }),
-              ...(updates.fi_actual !== undefined && { fi_actual: updates.fi_actual }),
-              ...(updates.db_actual !== undefined && { db_actual: updates.db_actual }),
-              ...(updates.leads_market !== undefined && { leads_market: updates.leads_market }),
-              ...(updates.logins_market !== undefined && { logins_market: updates.logins_market }),
+              ...(updates.prospects_target !== undefined && { prospects_target: updates.prospects_target }),
+              ...(updates.quotes_target !== undefined && { quotes_target: updates.quotes_target }),
+              ...(updates.policies_target !== undefined && { policies_target: updates.policies_target }),
+              ...(updates.life_insurance_target !== undefined && { life_insurance_target: updates.life_insurance_target }),
+              ...(updates.health_insurance_target !== undefined && { health_insurance_target: updates.health_insurance_target }),
+              ...(updates.prospects_actual !== undefined && { prospects_actual: updates.prospects_actual }),
+              ...(updates.quotes_actual !== undefined && { quotes_actual: updates.quotes_actual }),
+              ...(updates.policies_actual !== undefined && { policies_actual: updates.policies_actual }),
+              ...(updates.life_insurance_actual !== undefined && { life_insurance_actual: updates.life_insurance_actual }),
+              ...(updates.health_insurance_actual !== undefined && { health_insurance_actual: updates.health_insurance_actual }),
+              ...(updates.prospects_market !== undefined && { prospects_market: updates.prospects_market }),
+              ...(updates.quotes_market !== undefined && { quotes_market: updates.quotes_market }),
               ...(updates.status !== undefined && { status: updates.status }),
             })
             .eq('id', existingPlan.odataId);
@@ -514,9 +514,9 @@ export function useCorrectPlanOffline() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      leads_target?: number;
-      logins_target?: number;
-      enroll_target?: number;
+      prospects_target?: number;
+      quotes_target?: number;
+      policies_target?: number;
       original: DailyPlanLocal;
     }) => {
       if (!user) throw new Error('Not authenticated');
@@ -525,14 +525,14 @@ export function useCorrectPlanOffline() {
       const now = new Date();
 
       const correction: Partial<DailyPlanLocal> = {
-        ...(updates.leads_target !== undefined && { leadsTarget: updates.leads_target }),
-        ...(updates.logins_target !== undefined && { loginsTarget: updates.logins_target }),
-        ...(updates.enroll_target !== undefined && { enrollTarget: updates.enroll_target }),
+        ...(updates.prospects_target !== undefined && { prospectsTarget: updates.prospects_target }),
+        ...(updates.quotes_target !== undefined && { quotesTarget: updates.quotes_target }),
+        ...(updates.policies_target !== undefined && { policiesTarget: updates.policies_target }),
         correctedBy: user.id,
         originalValues: {
-          leads_target: original.leadsTarget,
-          logins_target: original.loginsTarget,
-          enroll_target: original.enrollTarget,
+          prospects_target: original.prospectsTarget,
+          quotes_target: original.quotesTarget,
+          policies_target: original.policiesTarget,
         },
         status: 'corrected',
         syncStatus: 'pending',
@@ -561,14 +561,14 @@ export function useCorrectPlanOffline() {
           const { error } = await supabase
             .from('daily_plans')
             .update({
-              leads_target: updates.leads_target,
-              logins_target: updates.logins_target,
-              enroll_target: updates.enroll_target,
+              prospects_target: updates.prospects_target,
+              quotes_target: updates.quotes_target,
+              policies_target: updates.policies_target,
               corrected_by: user.id,
               original_values: JSON.parse(JSON.stringify({
-                leads_target: original.leadsTarget,
-                logins_target: original.loginsTarget,
-                enroll_target: original.enrollTarget,
+                prospects_target: original.prospectsTarget,
+                quotes_target: original.quotesTarget,
+                policies_target: original.policiesTarget,
               })),
               status: 'corrected',
             })

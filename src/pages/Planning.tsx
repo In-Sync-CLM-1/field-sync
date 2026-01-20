@@ -56,22 +56,22 @@ export default function Planning() {
   const { data: monthlyData, isLoading: isLoadingMonthly } = useMonthlyEnrollments(selectedDate);
 
   const [formData, setFormData] = useState({
-    leads_target: 0,
-    logins_target: 0,
-    enroll_target: 0,
-    leads_market: '',
-    logins_market: '',
+    prospects_target: 0,
+    quotes_target: 0,
+    policies_target: 0,
+    prospects_market: '',
+    quotes_market: '',
   });
 
-  // Manager's own IL/DB targets
+  // Manager's own Life/Health targets
   const [managerTargets, setManagerTargets] = useState({
-    fi_target: 0,
-    db_target: 0,
+    life_insurance_target: 0,
+    health_insurance_target: 0,
   });
 
   const [monthlyTargetInput, setMonthlyTargetInput] = useState<number>(0);
   const [shownMilestones, setShownMilestones] = useState<Set<number>>(new Set());
-  const prevEnrollments = useRef<number>(0);
+  const prevPolicies = useRef<number>(0);
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
 
   // Get enrolled leads for current plan
@@ -97,28 +97,28 @@ export default function Planning() {
   useEffect(() => {
     if (plan) {
       setFormData({
-        leads_target: plan.leadsTarget,
-        logins_target: plan.loginsTarget,
-        enroll_target: plan.enrollTarget,
-        leads_market: plan.leadsMarket || '',
-        logins_market: plan.loginsMarket || '',
+        prospects_target: plan.prospectsTarget,
+        quotes_target: plan.quotesTarget,
+        policies_target: plan.policiesTarget,
+        prospects_market: plan.prospectsMarket || '',
+        quotes_market: plan.quotesMarket || '',
       });
       setManagerTargets({
-        fi_target: plan.fiTarget || 0,
-        db_target: plan.dbTarget || 0,
+        life_insurance_target: plan.lifeInsuranceTarget || 0,
+        health_insurance_target: plan.healthInsuranceTarget || 0,
       });
     }
   }, [plan]);
 
   useEffect(() => {
     if (monthlyTarget) {
-      setMonthlyTargetInput(monthlyTarget.enrollment_target);
+      setMonthlyTargetInput(monthlyTarget.policy_target);
     }
   }, [monthlyTarget]);
 
-  // Confetti effect when reaching milestones (7, 15, 25)
+  // Confetti effect when reaching milestones (7, 15, 25 policies)
   useEffect(() => {
-    const currentEnrollments = monthlyData.totalEnrollments;
+    const currentPolicies = monthlyData.totalPoliciesIssued;
     const milestones = [
       { threshold: 7, colors: ['#d97706', '#b45309', '#f59e0b', '#fbbf24'] }, // Bronze - amber
       { threshold: 15, colors: ['#64748b', '#475569', '#94a3b8', '#cbd5e1'] }, // Silver - slate
@@ -126,7 +126,7 @@ export default function Planning() {
     ];
 
     milestones.forEach(({ threshold, colors }) => {
-      if (currentEnrollments >= threshold && prevEnrollments.current < threshold && !shownMilestones.has(threshold)) {
+      if (currentPolicies >= threshold && prevPolicies.current < threshold && !shownMilestones.has(threshold)) {
         // Fire confetti celebration
         const duration = 3000;
         const end = Date.now() + duration;
@@ -157,8 +157,8 @@ export default function Planning() {
       }
     });
     
-    prevEnrollments.current = currentEnrollments;
-  }, [monthlyData.totalEnrollments, shownMilestones]);
+    prevPolicies.current = currentPolicies;
+  }, [monthlyData.totalPoliciesIssued, shownMilestones]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,20 +166,20 @@ export default function Planning() {
     if (plan) {
       await updatePlan.mutateAsync({
         id: plan.id,
-        leads_target: formData.leads_target,
-        logins_target: formData.logins_target,
-        enroll_target: formData.enroll_target,
-        leads_market: formData.leads_market,
-        logins_market: formData.logins_market,
-        fi_target: managerTargets.fi_target,
-        db_target: managerTargets.db_target,
+        prospects_target: formData.prospects_target,
+        quotes_target: formData.quotes_target,
+        policies_target: formData.policies_target,
+        prospects_market: formData.prospects_market,
+        quotes_market: formData.quotes_market,
+        life_insurance_target: managerTargets.life_insurance_target,
+        health_insurance_target: managerTargets.health_insurance_target,
       });
     } else {
       await createPlan.mutateAsync({
         plan_date: planDate,
         ...formData,
-        fi_target: managerTargets.fi_target,
-        db_target: managerTargets.db_target,
+        life_insurance_target: managerTargets.life_insurance_target,
+        health_insurance_target: managerTargets.health_insurance_target,
       });
     }
   };
@@ -230,14 +230,14 @@ export default function Planning() {
   // Calculate progress towards personal target
   const getTargetProgress = () => {
     if (!monthlyTargetInput || monthlyTargetInput === 0) return 0;
-    return Math.min(100, Math.round((monthlyData.totalEnrollments / monthlyTargetInput) * 100));
+    return Math.min(100, Math.round((monthlyData.totalPoliciesIssued / monthlyTargetInput) * 100));
   };
 
   // Get next tier hint
   const getNextTierHint = () => {
-    const enrollments = monthlyData.totalEnrollments;
-    if (enrollments < 7) {
-      return { needed: 7 - enrollments, reward: '₹1,500' };
+    const policies = monthlyData.totalPoliciesIssued;
+    if (policies < 7) {
+      return { needed: 7 - policies, reward: '₹1,500' };
     }
     return null;
   };
@@ -304,70 +304,70 @@ export default function Planning() {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Leads */}
+                    {/* Prospects */}
                     <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Leads</td>
-                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.leads_target || 0}</td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.leads_actual || 0}</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Prospects</td>
+                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.prospects_target || 0}</td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.prospects_actual || 0}</td>
                       <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        teamAggregates ? getProgress(teamAggregates.leads_actual, teamAggregates.leads_target).color : 'text-muted-foreground')}>
-                        {teamAggregates ? getProgress(teamAggregates.leads_actual, teamAggregates.leads_target).percent : 0}%
+                        teamAggregates ? getProgress(teamAggregates.prospects_actual, teamAggregates.prospects_target).color : 'text-muted-foreground')}>
+                        {teamAggregates ? getProgress(teamAggregates.prospects_actual, teamAggregates.prospects_target).percent : 0}%
                       </td>
                     </tr>
-                    {/* Logins */}
+                    {/* Quotes */}
                     <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Logins</td>
-                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.logins_target || 0}</td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.logins_actual || 0}</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Quotes</td>
+                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.quotes_target || 0}</td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.quotes_actual || 0}</td>
                       <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        teamAggregates ? getProgress(teamAggregates.logins_actual, teamAggregates.logins_target).color : 'text-muted-foreground')}>
-                        {teamAggregates ? getProgress(teamAggregates.logins_actual, teamAggregates.logins_target).percent : 0}%
+                        teamAggregates ? getProgress(teamAggregates.quotes_actual, teamAggregates.quotes_target).color : 'text-muted-foreground')}>
+                        {teamAggregates ? getProgress(teamAggregates.quotes_actual, teamAggregates.quotes_target).percent : 0}%
                       </td>
                     </tr>
-                    {/* Enroll */}
+                    {/* Policies */}
                     <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Enroll</td>
-                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.enroll_target || 0}</td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.enroll_actual || 0}</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Policies</td>
+                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.policies_target || 0}</td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.policies_actual || 0}</td>
                       <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        teamAggregates ? getProgress(teamAggregates.enroll_actual, teamAggregates.enroll_target).color : 'text-muted-foreground')}>
-                        {teamAggregates ? getProgress(teamAggregates.enroll_actual, teamAggregates.enroll_target).percent : 0}%
+                        teamAggregates ? getProgress(teamAggregates.policies_actual, teamAggregates.policies_target).color : 'text-muted-foreground')}>
+                        {teamAggregates ? getProgress(teamAggregates.policies_actual, teamAggregates.policies_target).percent : 0}%
                       </td>
                     </tr>
-                    {/* IL (FI) - Manager specific */}
+                    {/* Life Insurance - Manager specific */}
                     <tr className="border-t border-border/50 bg-primary/5">
-                      <td className="py-1.5 px-3 text-xs font-medium">IL</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Life Ins</td>
                       <td className="py-1 px-2 text-center">
                         <Input
                           type="number"
                           min="0"
-                          value={managerTargets.fi_target}
-                          onChange={(e) => setManagerTargets(prev => ({ ...prev, fi_target: parseInt(e.target.value) || 0 }))}
+                          value={managerTargets.life_insurance_target}
+                          onChange={(e) => setManagerTargets(prev => ({ ...prev, life_insurance_target: parseInt(e.target.value) || 0 }))}
                           className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.fiActual ?? 0}</td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.lifeInsuranceActual ?? 0}</td>
                       <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        plan ? getProgress(plan.fiActual || 0, managerTargets.fi_target).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.fiActual || 0, managerTargets.fi_target).percent : 0}%
+                        plan ? getProgress(plan.lifeInsuranceActual || 0, managerTargets.life_insurance_target).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.lifeInsuranceActual || 0, managerTargets.life_insurance_target).percent : 0}%
                       </td>
                     </tr>
-                    {/* DB - Manager specific */}
+                    {/* Health Insurance - Manager specific */}
                     <tr className="border-t border-border/50 bg-primary/5">
-                      <td className="py-1.5 px-3 text-xs font-medium">DB</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Health Ins</td>
                       <td className="py-1 px-2 text-center">
                         <Input
                           type="number"
                           min="0"
-                          value={managerTargets.db_target}
-                          onChange={(e) => setManagerTargets(prev => ({ ...prev, db_target: parseInt(e.target.value) || 0 }))}
+                          value={managerTargets.health_insurance_target}
+                          onChange={(e) => setManagerTargets(prev => ({ ...prev, health_insurance_target: parseInt(e.target.value) || 0 }))}
                           className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.dbActual ?? 0}</td>
+                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.healthInsuranceActual ?? 0}</td>
                       <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        plan ? getProgress(plan.dbActual || 0, managerTargets.db_target).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.dbActual || 0, managerTargets.db_target).percent : 0}%
+                        plan ? getProgress(plan.healthInsuranceActual || 0, managerTargets.health_insurance_target).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.healthInsuranceActual || 0, managerTargets.health_insurance_target).percent : 0}%
                       </td>
                     </tr>
                   </tbody>
@@ -383,7 +383,7 @@ export default function Planning() {
                 onClick={handleSubmit}
                 disabled={createPlan.isPending || updatePlan.isPending}
               >
-                Save IL/DB
+                Save Targets
               </Button>
             </div>
           </CardContent>
@@ -395,7 +395,7 @@ export default function Planning() {
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-yellow-500" />
-                Team Incentive - {format(selectedDate, 'MMM yyyy')}
+                Team Commission - {format(selectedDate, 'MMM yyyy')}
               </span>
             </CardTitle>
           </CardHeader>
@@ -409,8 +409,8 @@ export default function Planning() {
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="py-2 px-3 text-xs w-8">#</TableHead>
                       <TableHead className="py-2 px-3 text-xs">Agent</TableHead>
-                      <TableHead className="py-2 px-3 text-xs text-center">Enrollments</TableHead>
-                      <TableHead className="py-2 px-3 text-xs text-right">Incentive</TableHead>
+                      <TableHead className="py-2 px-3 text-xs text-center">Policies</TableHead>
+                      <TableHead className="py-2 px-3 text-xs text-right">Commission</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -433,7 +433,7 @@ export default function Planning() {
                           )}
                         </TableCell>
                         <TableCell className="py-1.5 px-3 text-sm font-medium">{member.full_name}</TableCell>
-                        <TableCell className="py-1.5 px-3 text-sm text-center">{member.total_enrollments}</TableCell>
+                        <TableCell className="py-1.5 px-3 text-sm text-center">{member.total_policies}</TableCell>
                         <TableCell className={cn(
                           "py-1.5 px-3 text-sm text-right font-semibold",
                           member.incentive_earned > 0 ? "text-success" : "text-muted-foreground"
@@ -452,10 +452,10 @@ export default function Planning() {
               </div>
             )}
 
-            {/* Total Team Incentive */}
+            {/* Total Team Commission */}
             {teamToppers && teamToppers.length > 0 && (
               <div className="mt-3 p-3 bg-primary/5 border border-primary/10 rounded flex items-center justify-between">
-                <span className="text-sm font-medium">Total Team Incentive</span>
+                <span className="text-sm font-medium">Total Team Commission</span>
                 <span className="text-lg font-bold text-success">
                   ₹{teamToppers.reduce((sum, m) => sum + m.incentive_earned, 0).toLocaleString('en-IN')}
                 </span>
@@ -488,13 +488,13 @@ export default function Planning() {
         </div>
       </div>
 
-      {/* Monthly Incentive Card - First */}
+      {/* Monthly Commission Card - First */}
       <Card className="glass-card">
         <CardHeader className="compact-header pb-1">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             <span className="flex items-center gap-2">
               <IndianRupee className="h-4 w-4 text-success" />
-              Monthly Incentive
+              Monthly Commission
             </span>
             <Badge variant="outline" className="text-xs h-5">
               {format(selectedDate, 'MMM yyyy')}
@@ -527,7 +527,7 @@ export default function Planning() {
             </div>
             <div className="text-right shrink-0">
               <div className="text-xs text-muted-foreground">Achieved</div>
-              <div className="text-xl font-bold">{monthlyData.totalEnrollments}</div>
+              <div className="text-xl font-bold">{monthlyData.totalPoliciesIssued}</div>
             </div>
           </div>
 
@@ -539,9 +539,9 @@ export default function Planning() {
                 <span>{getTargetProgress()}%</span>
               </div>
               <Progress value={getTargetProgress()} className="h-2" />
-              {monthlyData.totalEnrollments < monthlyTargetInput && (
+              {monthlyData.totalPoliciesIssued < monthlyTargetInput && (
                 <div className="text-xs text-muted-foreground">
-                  {monthlyTargetInput - monthlyData.totalEnrollments} more to reach your target
+                  {monthlyTargetInput - monthlyData.totalPoliciesIssued} more to reach your target
                 </div>
               )}
             </div>
@@ -549,62 +549,62 @@ export default function Planning() {
 
           {/* Milestone Badges */}
           <div className="flex items-center justify-between gap-2">
-            {/* Bronze - 7 enrollments */}
+            {/* Bronze - 7 policies */}
             <div className={cn(
               "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
-              monthlyData.totalEnrollments >= 7
+              monthlyData.totalPoliciesIssued >= 7
                 ? "bg-gradient-to-b from-amber-600/20 to-amber-700/10 border-amber-600/50"
                 : "bg-muted/30 border-muted-foreground/20 opacity-50"
             )}>
               <Award className={cn(
                 "h-6 w-6 mb-1",
-                monthlyData.totalEnrollments >= 7 ? "text-amber-600" : "text-muted-foreground"
+                monthlyData.totalPoliciesIssued >= 7 ? "text-amber-600" : "text-muted-foreground"
               )} />
               <span className={cn(
                 "text-[10px] font-bold",
-                monthlyData.totalEnrollments >= 7 ? "text-amber-600" : "text-muted-foreground"
+                monthlyData.totalPoliciesIssued >= 7 ? "text-amber-600" : "text-muted-foreground"
               )}>BRONZE</span>
-              <span className="text-[9px] text-muted-foreground">7 Enroll</span>
+              <span className="text-[9px] text-muted-foreground">7 Policies</span>
             </div>
 
-            {/* Silver - 15 enrollments */}
+            {/* Silver - 15 policies */}
             <div className={cn(
               "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
-              monthlyData.totalEnrollments >= 15
+              monthlyData.totalPoliciesIssued >= 15
                 ? "bg-gradient-to-b from-slate-300/30 to-slate-400/10 border-slate-400/60"
                 : "bg-muted/30 border-muted-foreground/20 opacity-50"
             )}>
               <Award className={cn(
                 "h-6 w-6 mb-1",
-                monthlyData.totalEnrollments >= 15 ? "text-slate-400" : "text-muted-foreground"
+                monthlyData.totalPoliciesIssued >= 15 ? "text-slate-400" : "text-muted-foreground"
               )} />
               <span className={cn(
                 "text-[10px] font-bold",
-                monthlyData.totalEnrollments >= 15 ? "text-slate-400" : "text-muted-foreground"
+                monthlyData.totalPoliciesIssued >= 15 ? "text-slate-400" : "text-muted-foreground"
               )}>SILVER</span>
-              <span className="text-[9px] text-muted-foreground">15 Enroll</span>
+              <span className="text-[9px] text-muted-foreground">15 Policies</span>
             </div>
 
-            {/* Gold - 25 enrollments */}
+            {/* Gold - 25 policies */}
             <div className={cn(
               "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
-              monthlyData.totalEnrollments >= 25
+              monthlyData.totalPoliciesIssued >= 25
                 ? "bg-gradient-to-b from-yellow-400/30 to-yellow-500/10 border-yellow-500/60"
                 : "bg-muted/30 border-muted-foreground/20 opacity-50"
             )}>
               <Award className={cn(
                 "h-6 w-6 mb-1",
-                monthlyData.totalEnrollments >= 25 ? "text-yellow-500" : "text-muted-foreground"
+                monthlyData.totalPoliciesIssued >= 25 ? "text-yellow-500" : "text-muted-foreground"
               )} />
               <span className={cn(
                 "text-[10px] font-bold",
-                monthlyData.totalEnrollments >= 25 ? "text-yellow-500" : "text-muted-foreground"
+                monthlyData.totalPoliciesIssued >= 25 ? "text-yellow-500" : "text-muted-foreground"
               )}>GOLD</span>
-              <span className="text-[9px] text-muted-foreground">25 Enroll</span>
+              <span className="text-[9px] text-muted-foreground">25 Policies</span>
             </div>
           </div>
 
-          {/* Incentive Earned */}
+          {/* Commission Earned */}
           <div className={cn(
             "p-4 rounded-xl border-2 shadow-sm",
             monthlyData.incentiveEarned > 0 
@@ -613,7 +613,7 @@ export default function Planning() {
           )}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                Incentive Earned
+                Commission Earned
                 {monthlyData.incentiveEarned > 0 && (
                   <Sparkles className="h-4 w-4 text-success animate-pulse" />
                 )}
@@ -630,12 +630,12 @@ export default function Planning() {
             {monthlyData.incentiveEarned > 0 && (
               <div className="mt-3 pt-3 border-t border-success/30 space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Base (7 enrollments)</span>
+                  <span className="text-muted-foreground">Base (7 policies)</span>
                   <span className="font-medium">₹{monthlyData.baseIncentive.toLocaleString('en-IN')}</span>
                 </div>
                 {monthlyData.additionalIncentive > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Additional ({monthlyData.totalEnrollments - 7} × ₹250)</span>
+                    <span className="text-muted-foreground">Additional ({monthlyData.totalPoliciesIssued - 7} × ₹250)</span>
                     <span className="font-medium">₹{monthlyData.additionalIncentive.toLocaleString('en-IN')}</span>
                   </div>
                 )}
@@ -648,7 +648,7 @@ export default function Planning() {
             <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded text-xs">
               <TrendingUp className="h-3.5 w-3.5 text-primary" />
               <span>
-                <strong>{getNextTierHint()?.needed} more</strong> enrollment{getNextTierHint()!.needed > 1 ? 's' : ''} to earn {getNextTierHint()?.reward}!
+                <strong>{getNextTierHint()?.needed} more</strong> polic{getNextTierHint()!.needed > 1 ? 'ies' : 'y'} to earn {getNextTierHint()?.reward}!
               </span>
             </div>
           )}
@@ -699,57 +699,57 @@ export default function Planning() {
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Leads Row */}
+                    {/* Prospects Row */}
                     <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Leads</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Prospects</td>
                       <td className="py-1 px-2 text-center">
                         <Input
                           type="number"
                           min="0"
-                          value={formData.leads_target}
-                          onChange={(e) => setFormData(prev => ({ ...prev, leads_target: parseInt(e.target.value) || 0 }))}
+                          value={formData.prospects_target}
+                          onChange={(e) => setFormData(prev => ({ ...prev, prospects_target: parseInt(e.target.value) || 0 }))}
                           className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.leadsActual ?? 0}
+                        {plan?.prospectsActual ?? 0}
                       </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.leadsActual, plan.leadsTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.leadsActual, plan.leadsTarget).percent : 0}%
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.prospectsActual, plan.prospectsTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.prospectsActual, plan.prospectsTarget).percent : 0}%
                       </td>
                     </tr>
                     
-                    {/* Logins Row */}
+                    {/* Quotes Row */}
                     <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Logins</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Quotes</td>
                       <td className="py-1 px-2 text-center">
                         <Input
                           type="number"
                           min="0"
-                          value={formData.logins_target}
-                          onChange={(e) => setFormData(prev => ({ ...prev, logins_target: parseInt(e.target.value) || 0 }))}
+                          value={formData.quotes_target}
+                          onChange={(e) => setFormData(prev => ({ ...prev, quotes_target: parseInt(e.target.value) || 0 }))}
                           className="h-5 w-14 text-xs text-center mx-auto px-1"
                         />
                       </td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.loginsActual ?? 0}
+                        {plan?.quotesActual ?? 0}
                       </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.loginsActual, plan.loginsTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.loginsActual, plan.loginsTarget).percent : 0}%
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.quotesActual, plan.quotesTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.quotesActual, plan.quotesTarget).percent : 0}%
                       </td>
                     </tr>
                     
-                    {/* Enroll Row */}
+                    {/* Policies Row */}
                     <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Enroll</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Policies</td>
                       <td className="py-1 px-2 text-center">
                         <Input
                           type="number"
                           min="0"
-                          value={formData.enroll_target}
+                          value={formData.policies_target}
                           onChange={(e) => {
                             const newTarget = parseInt(e.target.value) || 0;
-                            setFormData(prev => ({ ...prev, enroll_target: newTarget }));
+                            setFormData(prev => ({ ...prev, policies_target: newTarget }));
                             if (newTarget > 0) {
                               setEnrollmentDialogOpen(true);
                             }
@@ -759,23 +759,23 @@ export default function Planning() {
                       </td>
                       <td className="py-1.5 px-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <span className="text-xs font-medium">{plan?.enrollActual ?? 0}</span>
-                          {plan && plan.enrollActual > 0 && (
+                          <span className="text-xs font-medium">{plan?.policiesActual ?? 0}</span>
+                          {plan && plan.policiesActual > 0 && (
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               className="h-5 w-5 p-0"
                               onClick={() => setEnrollmentDialogOpen(true)}
-                              title="View/Edit enrolled applications"
+                              title="View/Edit planned policies"
                             >
                               <FileText className="h-3 w-3 text-primary" />
                             </Button>
                           )}
                         </div>
                       </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.enrollActual, plan.enrollTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.enrollActual, plan.enrollTarget).percent : 0}%
+                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.policiesActual, plan.policiesTarget).color : 'text-muted-foreground')}>
+                        {plan ? getProgress(plan.policiesActual, plan.policiesTarget).percent : 0}%
                       </td>
                     </tr>
                   </tbody>
@@ -787,21 +787,21 @@ export default function Planning() {
                 <h4 className="text-xs font-medium text-muted-foreground">Markets to Visit</h4>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] text-muted-foreground mb-0.5 block">For Leads</label>
+                    <label className="text-[10px] text-muted-foreground mb-0.5 block">For Prospects</label>
                     <Input
                       type="text"
-                      value={formData.leads_market}
-                      onChange={(e) => setFormData(prev => ({ ...prev, leads_market: e.target.value }))}
+                      value={formData.prospects_market}
+                      onChange={(e) => setFormData(prev => ({ ...prev, prospects_market: e.target.value }))}
                       placeholder="e.g., Main Market, Sector 5"
                       className="h-6 text-xs px-2"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-muted-foreground mb-0.5 block">For Logins</label>
+                    <label className="text-[10px] text-muted-foreground mb-0.5 block">For Quotes</label>
                     <Input
                       type="text"
-                      value={formData.logins_market}
-                      onChange={(e) => setFormData(prev => ({ ...prev, logins_market: e.target.value }))}
+                      value={formData.quotes_market}
+                      onChange={(e) => setFormData(prev => ({ ...prev, quotes_market: e.target.value }))}
                       placeholder="e.g., Industrial Area, Block B"
                       className="h-6 text-xs px-2"
                     />
@@ -812,7 +812,7 @@ export default function Planning() {
               {enrolledContacts.length > 0 && (
                 <div className="mt-2 p-2 bg-primary/5 border border-primary/20 rounded">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-muted-foreground">Planned Enrollments</span>
+                    <span className="text-xs font-medium text-muted-foreground">Planned Policies</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -862,7 +862,7 @@ export default function Planning() {
           open={enrollmentDialogOpen}
           onOpenChange={setEnrollmentDialogOpen}
           dailyPlanId={plan.id}
-          enrollCount={formData.enroll_target}
+          enrollCount={formData.policies_target}
           onSave={() => {}}
         />
       )}
