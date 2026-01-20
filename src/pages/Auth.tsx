@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
@@ -19,15 +20,39 @@ const signInSchema = z.object({
   organizationId: z.string().min(1, 'Organization is required'),
 });
 
+const signUpSchema = z.object({
+  fullName: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
+  email: z.string().trim().email('Invalid email address'),
+  phone: z.string().optional().refine(
+    (val) => !val || /^[0-9]{10,15}$/.test(val.replace(/\D/g, '')),
+    'Invalid phone number'
+  ),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
+  organizationId: z.string().min(1, 'Organization is required'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, signIn } = useAuth();
+  const { user, signIn, signUp } = useAuth();
   const { setCurrentOrganization } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [loadingOrgs, setLoadingOrgs] = useState(true);
   const [organizations, setOrganizations] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('signin');
 
   const [signInData, setSignInData] = useState({ email: '', password: '', organizationId: '' });
+  const [signUpData, setSignUpData] = useState({ 
+    fullName: '', 
+    email: '', 
+    phone: '',
+    password: '', 
+    confirmPassword: '',
+    organizationId: '' 
+  });
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -105,6 +130,67 @@ export default function Auth() {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const validatedData = signUpSchema.parse(signUpData);
+      setLoading(true);
+      
+      const { error } = await signUp(validatedData.email, validatedData.password, validatedData.fullName);
+      
+      if (error) {
+        if (error.message.includes('already registered')) {
+          toast.error('This email is already registered. Please sign in.');
+        } else {
+          toast.error(error.message);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Wait a moment for the trigger to create the profile
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Get the newly created user and update their profile
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      
+      if (newUser) {
+        const updateData: { organization_id: string; phone?: string } = {
+          organization_id: validatedData.organizationId,
+        };
+        
+        if (validatedData.phone) {
+          updateData.phone = validatedData.phone.replace(/\D/g, '');
+        }
+
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('id', newUser.id);
+
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          // Don't block registration, profile can be updated later
+        }
+
+        const selectedOrg = organizations.find(org => org.id === validatedData.organizationId);
+        if (selectedOrg) setCurrentOrganization(selectedOrg);
+
+        toast.success('Account created successfully! Welcome to InSync.');
+        navigate('/', { replace: true });
+      } else {
+        // Email confirmation might be required
+        toast.success('Account created! Please check your email to verify your account.');
+        setActiveTab('signin');
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden">
       {/* Background */}
@@ -120,65 +206,168 @@ export default function Auth() {
             <img 
               src={insyncLogo} 
               alt="InSync" 
-              className="h-24 w-auto object-contain"
+              className="h-20 w-auto object-contain"
             />
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">
-            Welcome Back
+            {activeTab === 'signin' ? 'Welcome Back' : 'Create Account'}
           </CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
+          <CardDescription>
+            {activeTab === 'signin' ? 'Sign in to your account' : 'Register to get started'}
+          </CardDescription>
         </CardHeader>
         
         <CardContent>
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="signin-email">Email</Label>
-              <Input 
-                id="signin-email" 
-                type="email" 
-                placeholder="agent@company.com" 
-                value={signInData.email} 
-                onChange={(e) => setSignInData({ ...signInData, email: e.target.value })} 
-                required 
-                disabled={loading} 
-                className="focus:ring-primary/30 focus:border-primary" 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="signin-password">Password</Label>
-              <Input 
-                id="signin-password" 
-                type="password" 
-                placeholder="••••••••" 
-                value={signInData.password} 
-                onChange={(e) => setSignInData({ ...signInData, password: e.target.value })} 
-                required 
-                disabled={loading} 
-                className="focus:ring-primary/30 focus:border-primary" 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="signin-organization">Organization</Label>
-              <Select 
-                value={signInData.organizationId} 
-                onValueChange={(value) => setSignInData({ ...signInData, organizationId: value })} 
-                disabled={loading || loadingOrgs}
-              >
-                <SelectTrigger id="signin-organization">
-                  <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="w-full mt-6" disabled={loading || loadingOrgs}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
-            </Button>
-          </form>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input 
+                    id="signin-email" 
+                    type="email" 
+                    placeholder="agent@company.com" 
+                    value={signInData.email} 
+                    onChange={(e) => setSignInData({ ...signInData, email: e.target.value })} 
+                    required 
+                    disabled={loading} 
+                    className="focus:ring-primary/30 focus:border-primary" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <Input 
+                    id="signin-password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={signInData.password} 
+                    onChange={(e) => setSignInData({ ...signInData, password: e.target.value })} 
+                    required 
+                    disabled={loading} 
+                    className="focus:ring-primary/30 focus:border-primary" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-organization">Organization</Label>
+                  <Select 
+                    value={signInData.organizationId} 
+                    onValueChange={(value) => setSignInData({ ...signInData, organizationId: value })} 
+                    disabled={loading || loadingOrgs}
+                  >
+                    <SelectTrigger id="signin-organization">
+                      <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="submit" className="w-full mt-6" disabled={loading || loadingOrgs}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sign In
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="register">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Input 
+                    id="signup-name" 
+                    type="text" 
+                    placeholder="John Doe" 
+                    value={signUpData.fullName} 
+                    onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })} 
+                    required 
+                    disabled={loading} 
+                    className="focus:ring-primary/30 focus:border-primary" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input 
+                    id="signup-email" 
+                    type="email" 
+                    placeholder="john@company.com" 
+                    value={signUpData.email} 
+                    onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })} 
+                    required 
+                    disabled={loading} 
+                    className="focus:ring-primary/30 focus:border-primary" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-phone">Phone (Optional)</Label>
+                  <Input 
+                    id="signup-phone" 
+                    type="tel" 
+                    placeholder="9876543210" 
+                    value={signUpData.phone} 
+                    onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })} 
+                    disabled={loading} 
+                    className="focus:ring-primary/30 focus:border-primary" 
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input 
+                      id="signup-password" 
+                      type="password" 
+                      placeholder="••••••" 
+                      value={signUpData.password} 
+                      onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })} 
+                      required 
+                      disabled={loading} 
+                      className="focus:ring-primary/30 focus:border-primary" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm">Confirm</Label>
+                    <Input 
+                      id="signup-confirm" 
+                      type="password" 
+                      placeholder="••••••" 
+                      value={signUpData.confirmPassword} 
+                      onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })} 
+                      required 
+                      disabled={loading} 
+                      className="focus:ring-primary/30 focus:border-primary" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-organization">Organization</Label>
+                  <Select 
+                    value={signUpData.organizationId} 
+                    onValueChange={(value) => setSignUpData({ ...signUpData, organizationId: value })} 
+                    disabled={loading || loadingOrgs}
+                  >
+                    <SelectTrigger id="signup-organization">
+                      <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="submit" className="w-full mt-6" disabled={loading || loadingOrgs}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Create Account
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
         
         <CardFooter>
