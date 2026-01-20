@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -42,6 +42,9 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [loadingOrgs, setLoadingOrgs] = useState(true);
   const [organizations, setOrganizations] = useState<any[]>([]);
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('signin');
 
   const [signInData, setSignInData] = useState({ email: '', password: '', organizationId: '' });
@@ -241,16 +244,26 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-password">Password</Label>
-                  <Input 
-                    id="signin-password" 
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={signInData.password} 
-                    onChange={(e) => setSignInData({ ...signInData, password: e.target.value })} 
-                    required 
-                    disabled={loading} 
-                    className="focus:ring-primary/30 focus:border-primary" 
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="signin-password" 
+                      type={showSignInPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      value={signInData.password} 
+                      onChange={(e) => setSignInData({ ...signInData, password: e.target.value })} 
+                      required 
+                      disabled={loading} 
+                      className="focus:ring-primary/30 focus:border-primary pr-10" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignInPassword(!showSignInPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showSignInPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-organization">Organization</Label>
@@ -319,29 +332,49 @@ export default function Auth() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
-                    <Input 
-                      id="signup-password" 
-                      type="password" 
-                      placeholder="••••••" 
-                      value={signUpData.password} 
-                      onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })} 
-                      required 
-                      disabled={loading} 
-                      className="focus:ring-primary/30 focus:border-primary" 
-                    />
+                    <div className="relative">
+                      <Input 
+                        id="signup-password" 
+                        type={showSignUpPassword ? "text" : "password"} 
+                        placeholder="••••••" 
+                        value={signUpData.password} 
+                        onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })} 
+                        required 
+                        disabled={loading} 
+                        className="focus:ring-primary/30 focus:border-primary pr-10" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showSignUpPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-confirm">Confirm</Label>
-                    <Input 
-                      id="signup-confirm" 
-                      type="password" 
-                      placeholder="••••••" 
-                      value={signUpData.confirmPassword} 
-                      onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })} 
-                      required 
-                      disabled={loading} 
-                      className="focus:ring-primary/30 focus:border-primary" 
-                    />
+                    <div className="relative">
+                      <Input 
+                        id="signup-confirm" 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        placeholder="••••••" 
+                        value={signUpData.confirmPassword} 
+                        onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })} 
+                        required 
+                        disabled={loading} 
+                        className="focus:ring-primary/30 focus:border-primary pr-10" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                      >
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
