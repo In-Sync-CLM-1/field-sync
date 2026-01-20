@@ -59,9 +59,10 @@ export default function Leads() {
 
   const getStatusColor = (status?: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
-      case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
-      case 'new': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
+      case 'policy_issued': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
+      case 'quoted': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
+      case 'lead': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+      case 'proposal_submitted': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
     }
   };
@@ -70,7 +71,7 @@ export default function Leads() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Leads</h1>
+          <h1 className="text-xl font-bold tracking-tight">Prospects</h1>
           <div className="flex items-center gap-2">
             {currentOrganization && (
               <Badge variant="outline" className="gap-1 text-xs">
@@ -79,7 +80,7 @@ export default function Leads() {
               </Badge>
             )}
             <span className="text-xs text-muted-foreground">
-              {leads.length} leads
+              {leads.length} prospects
             </span>
           </div>
         </div>
@@ -103,7 +104,7 @@ export default function Leads() {
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name, lead ID, customer ID, location..."
+              placeholder="Search by name, proposal no., customer ID, location..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 h-5 text-xs"
@@ -125,13 +126,13 @@ export default function Leads() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8">
               <User className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-sm font-medium mb-1">No leads found</p>
+              <p className="text-sm font-medium mb-1">No prospects found</p>
               <p className="text-xs text-muted-foreground mb-3">
                 {searchQuery 
                   ? 'Try a different search' 
                   : !currentOrganization 
                     ? 'Select an organization'
-                    : 'Sync or add leads'}
+                    : 'Sync or add prospects'}
               </p>
               {currentOrganization && (
                 <div className="flex gap-2">
@@ -156,8 +157,8 @@ export default function Leads() {
                 <div className="flex items-start justify-between mb-1">
                   <div>
                     <CardTitle className="text-sm font-medium">{lead.name}</CardTitle>
-                    {lead.entityName && (
-                      <p className="text-xs text-muted-foreground">{lead.entityName}</p>
+                    {lead.policyTypeCategory && (
+                      <p className="text-xs text-muted-foreground">{lead.policyTypeCategory}</p>
                     )}
                   </div>
                   <div className="flex gap-1">
@@ -170,9 +171,9 @@ export default function Leads() {
                 </div>
                 
                 <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-2">
-                  {lead.leadId && (
+                  {lead.proposalNumber && (
                     <span className="flex items-center gap-1">
-                      <span className="font-medium">Lead:</span> {lead.leadId}
+                      <span className="font-medium">Prop:</span> {lead.proposalNumber}
                     </span>
                   )}
                   {lead.customerId && (
@@ -180,10 +181,10 @@ export default function Leads() {
                       <span className="font-medium">Cust:</span> {lead.customerId}
                     </span>
                   )}
-                  {lead.loanAmount && (
+                  {lead.premiumAmount && (
                     <span className="flex items-center gap-1">
                       <IndianRupee className="h-3 w-3" />
-                      {lead.loanAmount.toLocaleString()}
+                      {lead.premiumAmount.toLocaleString()}
                     </span>
                   )}
                 </div>

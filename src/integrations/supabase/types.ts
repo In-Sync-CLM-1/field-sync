@@ -107,22 +107,22 @@ export type Database = {
         Row: {
           corrected_by: string | null
           created_at: string
-          db_actual: number | null
-          db_target: number | null
-          enroll_actual: number
-          enroll_target: number
-          fi_actual: number | null
-          fi_target: number | null
+          health_insurance_actual: number | null
+          health_insurance_target: number | null
           id: string
-          leads_actual: number
-          leads_market: string | null
-          leads_target: number
-          logins_actual: number
-          logins_market: string | null
-          logins_target: number
+          life_insurance_actual: number | null
+          life_insurance_target: number | null
           organization_id: string
           original_values: Json | null
           plan_date: string
+          policies_actual: number
+          policies_target: number
+          prospects_actual: number
+          prospects_market: string | null
+          prospects_target: number
+          quotes_actual: number
+          quotes_market: string | null
+          quotes_target: number
           status: string
           updated_at: string
           user_id: string
@@ -130,22 +130,22 @@ export type Database = {
         Insert: {
           corrected_by?: string | null
           created_at?: string
-          db_actual?: number | null
-          db_target?: number | null
-          enroll_actual?: number
-          enroll_target?: number
-          fi_actual?: number | null
-          fi_target?: number | null
+          health_insurance_actual?: number | null
+          health_insurance_target?: number | null
           id?: string
-          leads_actual?: number
-          leads_market?: string | null
-          leads_target?: number
-          logins_actual?: number
-          logins_market?: string | null
-          logins_target?: number
+          life_insurance_actual?: number | null
+          life_insurance_target?: number | null
           organization_id: string
           original_values?: Json | null
           plan_date: string
+          policies_actual?: number
+          policies_target?: number
+          prospects_actual?: number
+          prospects_market?: string | null
+          prospects_target?: number
+          quotes_actual?: number
+          quotes_market?: string | null
+          quotes_target?: number
           status?: string
           updated_at?: string
           user_id: string
@@ -153,22 +153,22 @@ export type Database = {
         Update: {
           corrected_by?: string | null
           created_at?: string
-          db_actual?: number | null
-          db_target?: number | null
-          enroll_actual?: number
-          enroll_target?: number
-          fi_actual?: number | null
-          fi_target?: number | null
+          health_insurance_actual?: number | null
+          health_insurance_target?: number | null
           id?: string
-          leads_actual?: number
-          leads_market?: string | null
-          leads_target?: number
-          logins_actual?: number
-          logins_market?: string | null
-          logins_target?: number
+          life_insurance_actual?: number | null
+          life_insurance_target?: number | null
           organization_id?: string
           original_values?: Json | null
           plan_date?: string
+          policies_actual?: number
+          policies_target?: number
+          prospects_actual?: number
+          prospects_market?: string | null
+          prospects_target?: number
+          quotes_actual?: number
+          quotes_market?: string | null
+          quotes_target?: number
           status?: string
           updated_at?: string
           user_id?: string
@@ -287,18 +287,18 @@ export type Database = {
           customer_id: string | null
           customer_response: string | null
           district: string | null
-          entity_name: string | null
           follow_up_date: string | null
           id: string
           latitude: number | null
-          lead_id: string | null
           lead_source: string | null
-          loan_amount: number | null
-          loan_purpose: string | null
           longitude: number | null
           mobile_no: string | null
           name: string
           organization_id: string
+          policy_type: string | null
+          policy_type_category: string | null
+          premium_amount: number | null
+          proposal_number: string | null
           state: string | null
           status: string
           updated_at: string
@@ -314,18 +314,18 @@ export type Database = {
           customer_id?: string | null
           customer_response?: string | null
           district?: string | null
-          entity_name?: string | null
           follow_up_date?: string | null
           id?: string
           latitude?: number | null
-          lead_id?: string | null
           lead_source?: string | null
-          loan_amount?: number | null
-          loan_purpose?: string | null
           longitude?: number | null
           mobile_no?: string | null
           name: string
           organization_id: string
+          policy_type?: string | null
+          policy_type_category?: string | null
+          premium_amount?: number | null
+          proposal_number?: string | null
           state?: string | null
           status?: string
           updated_at?: string
@@ -341,18 +341,18 @@ export type Database = {
           customer_id?: string | null
           customer_response?: string | null
           district?: string | null
-          entity_name?: string | null
           follow_up_date?: string | null
           id?: string
           latitude?: number | null
-          lead_id?: string | null
           lead_source?: string | null
-          loan_amount?: number | null
-          loan_purpose?: string | null
           longitude?: number | null
           mobile_no?: string | null
           name?: string
           organization_id?: string
+          policy_type?: string | null
+          policy_type_category?: string | null
+          premium_amount?: number | null
+          proposal_number?: string | null
           state?: string | null
           status?: string
           updated_at?: string
@@ -392,27 +392,27 @@ export type Database = {
       monthly_incentive_targets: {
         Row: {
           created_at: string
-          enrollment_target: number
           id: string
           organization_id: string
+          policy_target: number
           target_month: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          enrollment_target?: number
           id?: string
           organization_id: string
+          policy_target?: number
           target_month: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          enrollment_target?: number
           id?: string
           organization_id?: string
+          policy_target?: number
           target_month?: string
           updated_at?: string
           user_id?: string
