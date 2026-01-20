@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Loader2, Eye, EyeOff, Building2, Plus } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Plus } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -464,61 +464,48 @@ export default function Auth() {
                 </div>
                 <div className="space-y-3">
                   <Label>Organization</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={!signUpData.createNewOrg ? "default" : "outline"}
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => setSignUpData({ ...signUpData, createNewOrg: false, newOrgName: '' })}
-                      disabled={loading}
-                    >
-                      <Building2 className="mr-2 h-4 w-4" />
-                      Join Existing
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={signUpData.createNewOrg ? "default" : "outline"}
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => setSignUpData({ ...signUpData, createNewOrg: true, organizationId: '' })}
-                      disabled={loading}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create New
-                    </Button>
-                  </div>
-                  
-                  {!signUpData.createNewOrg ? (
-                    <Select 
-                      value={signUpData.organizationId} 
-                      onValueChange={(value) => setSignUpData({ ...signUpData, organizationId: value })} 
-                      disabled={loading || loadingOrgs}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {organizations.map((org) => (
-                          <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input 
-                      type="text" 
-                      placeholder="Enter organization name" 
-                      value={signUpData.newOrgName} 
-                      onChange={(e) => setSignUpData({ ...signUpData, newOrgName: e.target.value })} 
-                      disabled={loading} 
-                      className="focus:ring-primary/30 focus:border-primary" 
-                    />
-                  )}
+                  <Select 
+                    value={signUpData.createNewOrg ? '__create_new__' : signUpData.organizationId} 
+                    onValueChange={(value) => {
+                      if (value === '__create_new__') {
+                        setSignUpData({ ...signUpData, createNewOrg: true, organizationId: '' });
+                      } else {
+                        setSignUpData({ ...signUpData, createNewOrg: false, organizationId: value, newOrgName: '' });
+                      }
+                    }} 
+                    disabled={loading || loadingOrgs}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select or create organization"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                      ))}
+                      <SelectItem value="__create_new__" className="text-primary font-medium">
+                        <span className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Create New Organization
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                   
                   {signUpData.createNewOrg && (
-                    <p className="text-xs text-muted-foreground">
-                      You'll be assigned as the admin of this organization.
-                    </p>
+                    <div className="space-y-2">
+                      <Input 
+                        type="text" 
+                        placeholder="Enter your organization name" 
+                        value={signUpData.newOrgName} 
+                        onChange={(e) => setSignUpData({ ...signUpData, newOrgName: e.target.value })} 
+                        disabled={loading} 
+                        className="focus:ring-primary/30 focus:border-primary" 
+                        autoFocus
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        You'll be assigned as the admin of this organization.
+                      </p>
+                    </div>
                   )}
                 </div>
                 <Button type="submit" className="w-full mt-6" disabled={loading || (!signUpData.createNewOrg && loadingOrgs)}>
