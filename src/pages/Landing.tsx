@@ -5,13 +5,26 @@ import insyncLogo from "@/assets/insync-logo-color.png";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #e9e4ff 0%, #ffffff 40%, #e8ffd4 100%)' }}>
-      {/* Dot grid pattern */}
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Vibrant gradient background */}
       <div 
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0"
         style={{
-          backgroundImage: 'radial-gradient(circle, #8B5CF6 1.5px, transparent 1.5px)',
-          backgroundSize: '48px 48px'
+          background: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 15%, #C084FC 30%, #E9D5FF 45%, #FFFFFF 55%, #ECFCCB 70%, #BEF264 85%, #A3E635 100%)'
+        }}
+      />
+      
+      {/* Animated gradient orbs */}
+      <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-violet-500/40 to-fuchsia-500/30 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-br from-lime-400/40 to-emerald-400/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-purple-400/20 to-green-300/20 rounded-full blur-3xl" />
+      
+      {/* Dot grid pattern overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-60"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #7C3AED 2px, transparent 2px)',
+          backgroundSize: '40px 40px'
         }} 
       />
 
