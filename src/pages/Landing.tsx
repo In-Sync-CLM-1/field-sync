@@ -5,40 +5,23 @@ import insyncLogo from "@/assets/insync-logo-color.png";
 
 const Landing = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Vibrant gradient background */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 15%, #C084FC 30%, #E9D5FF 45%, #FFFFFF 55%, #ECFCCB 70%, #BEF264 85%, #A3E635 100%)'
-        }}
-      />
-      
-      {/* Animated gradient orbs */}
-      <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-violet-500/40 to-fuchsia-500/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-br from-lime-400/40 to-emerald-400/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-purple-400/20 to-green-300/20 rounded-full blur-3xl" />
-      
-      {/* Dot grid pattern overlay */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-60"
-        style={{
-          backgroundImage: 'radial-gradient(circle, #7C3AED 2px, transparent 2px)',
-          backgroundSize: '40px 40px'
-        }} 
-      />
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-500 to-fuchsia-500">
+      {/* Vibrant accent shapes */}
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-bl from-lime-400 via-emerald-400/70 to-transparent" />
+      <div className="absolute bottom-0 left-0 w-2/3 h-1/2 bg-gradient-to-tr from-cyan-400/50 to-transparent" />
+      <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-yellow-400/30 rounded-full blur-3xl" />
 
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
           <img src={insyncLogo} alt="In-Sync" className="h-12 w-auto object-contain" />
           <div className="flex flex-col">
-            <span className="text-xl font-bold text-[#7C3AED]">In-Sync <span className="text-[#1a1a2e]">Field Force</span></span>
-            <span className="text-xs font-bold text-[#F97316] uppercase tracking-wider">Insurance Sales Platform</span>
+            <span className="text-xl font-bold text-white">In-Sync <span className="text-lime-300">Field Force</span></span>
+            <span className="text-xs font-bold text-yellow-300 uppercase tracking-wider">Insurance Sales Platform</span>
           </div>
         </div>
         <Link to="/auth">
-          <Button variant="outline" className="rounded-full border-2 border-[#1a1a2e] text-[#1a1a2e] hover:bg-[#1a1a2e] hover:text-white font-semibold px-6 transition-all">
+          <Button variant="outline" className="rounded-full border-2 border-white text-white hover:bg-white hover:text-purple-600 font-semibold px-6 transition-all">
             Sign In <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </Link>
@@ -47,40 +30,40 @@ const Landing = () => {
       {/* Hero Section */}
       <main className="relative z-10 flex flex-col items-center justify-center px-6 md:px-12 pt-12 md:pt-20 pb-20 text-center max-w-5xl mx-auto">
         {/* Trust badge */}
-        <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#f5f0ff] border-2 border-[#c4b5fd] mb-10">
-          <Sparkles className="h-4 w-4 text-[#7C3AED]" />
-          <span className="text-sm font-semibold text-[#7C3AED]">Trusted by 50+ Insurance Teams</span>
-          <Sparkles className="h-4 w-4 text-[#7C3AED]" />
+        <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/40 mb-10">
+          <Sparkles className="h-4 w-4 text-yellow-300" />
+          <span className="text-sm font-semibold text-white">Trusted by 50+ Insurance Teams</span>
+          <Sparkles className="h-4 w-4 text-yellow-300" />
         </div>
 
         {/* Main headline */}
         <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
-          <span className="text-[#1a1a2e]">Track Your </span>
-          <span className="text-[#7C3AED]">Field Team</span>
+          <span className="text-white">Track Your </span>
+          <span className="text-lime-300">Field Team</span>
           <br />
-          <span className="text-[#1a1a2e] relative inline-block">
+          <span className="text-white relative inline-block">
             Like Never Before
             <svg className="absolute -bottom-1 md:-bottom-2 left-0 w-full" viewBox="0 0 300 10" fill="none">
-              <path d="M2 7 Q75 2, 150 7 T298 7" stroke="#84cc16" strokeWidth="4" strokeLinecap="round" />
+              <path d="M2 7 Q75 2, 150 7 T298 7" stroke="#fde047" strokeWidth="4" strokeLinecap="round" />
             </svg>
           </span>
         </h1>
 
         {/* Subheadline */}
-        <p className="text-base md:text-xl text-[#4a4a5a] mb-10 max-w-2xl leading-relaxed">
+        <p className="text-base md:text-xl text-white/90 mb-10 max-w-2xl leading-relaxed">
           GPS-verified visits, real-time dashboards, and gamified performance tracking.{" "}
-          <span className="text-[#7C3AED] font-bold">Built for insurance sales teams.</span>
+          <span className="text-lime-300 font-bold">Built for insurance sales teams.</span>
         </p>
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mb-16">
           <Link to="/auth">
-            <Button size="lg" className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold px-8 py-6 text-lg rounded-xl shadow-lg shadow-[#7C3AED]/40 transition-all hover:scale-105 hover:shadow-xl">
+            <Button size="lg" className="bg-white text-purple-600 hover:bg-lime-300 hover:text-purple-700 font-bold px-8 py-6 text-lg rounded-xl shadow-lg shadow-black/20 transition-all hover:scale-105 hover:shadow-xl">
               Start Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
-          <Button size="lg" variant="outline" className="border-2 border-[#84cc16] text-[#4d7c0f] hover:bg-[#84cc16] hover:text-white font-bold px-8 py-6 text-lg rounded-xl transition-all hover:scale-105">
+          <Button size="lg" variant="outline" className="border-2 border-lime-300 text-lime-300 hover:bg-lime-300 hover:text-purple-700 font-bold px-8 py-6 text-lg rounded-xl transition-all hover:scale-105">
             Watch Demo
           </Button>
         </div>
@@ -95,26 +78,26 @@ const Landing = () => {
           ].map((feature, i) => (
             <div
               key={i}
-              className="flex flex-col items-center gap-3 p-5 md:p-6 rounded-2xl bg-white/80 backdrop-blur-sm border-2 border-white shadow-lg hover:shadow-xl transition-all hover:scale-105 hover:-translate-y-1"
+              className="flex flex-col items-center gap-3 p-5 md:p-6 rounded-2xl bg-white/95 backdrop-blur-sm border-2 border-white shadow-xl hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1"
             >
               <div className="p-3 rounded-xl" style={{ backgroundColor: feature.bg }}>
                 <feature.icon className="h-6 w-6" style={{ color: feature.color }} />
               </div>
-              <span className="font-bold text-[#1a1a2e] text-sm md:text-base">{feature.label}</span>
+              <span className="font-bold text-gray-800 text-sm md:text-base">{feature.label}</span>
             </div>
           ))}
         </div>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-3 gap-6 md:gap-12 w-full max-w-3xl mb-16">
+        <div className="grid grid-cols-3 gap-6 md:gap-12 w-full max-w-3xl mb-16 bg-white/10 backdrop-blur-sm rounded-2xl p-6">
           {[
             { value: "10K+", label: "Visits Tracked" },
             { value: "98%", label: "Accuracy Rate" },
             { value: "2x", label: "Productivity Boost" },
           ].map((stat, i) => (
             <div key={i} className="text-center">
-              <div className="text-3xl md:text-5xl font-black text-[#7C3AED] mb-1">{stat.value}</div>
-              <div className="text-xs md:text-sm text-[#4a4a5a] font-semibold">{stat.label}</div>
+              <div className="text-3xl md:text-5xl font-black text-lime-300 mb-1">{stat.value}</div>
+              <div className="text-xs md:text-sm text-white/80 font-semibold">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -122,18 +105,18 @@ const Landing = () => {
         {/* Bottom trust indicators */}
         <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-[#16a34a]" />
-            <span className="text-sm font-semibold text-[#4a4a5a]">Enterprise Security</span>
+            <Shield className="h-5 w-5 text-lime-300" />
+            <span className="text-sm font-semibold text-white">Enterprise Security</span>
           </div>
           <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-[#7C3AED]" />
-            <span className="text-sm font-semibold text-[#4a4a5a]">Instant Setup</span>
+            <Zap className="h-5 w-5 text-yellow-300" />
+            <span className="text-sm font-semibold text-white">Instant Setup</span>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center py-8 text-[#6b6b7b] text-sm font-medium">
+      <footer className="relative z-10 text-center py-8 text-white/70 text-sm font-medium">
         © 2024 In-Sync Field Force. All rights reserved.
       </footer>
     </div>
