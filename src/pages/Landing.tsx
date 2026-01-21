@@ -44,13 +44,13 @@ const Landing = () => {
 
         {/* Main headline with gradient text */}
         <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
-          <span className="text-white animate-fade-in inline-block">Know Exactly Where Your Team Is</span>
+          <span className="text-white animate-fade-in inline-block">Stop Guessing.</span>
           <br />
           <span 
             className="bg-gradient-to-r from-lime-300 via-emerald-300 to-cyan-300 bg-clip-text text-transparent animate-fade-in inline-block"
             style={{ animationDelay: '0.2s' }}
           >
-            — And What They're Closing
+            Start Winning.
           </span>
         </h1>
 
