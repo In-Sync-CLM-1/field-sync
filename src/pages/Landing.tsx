@@ -18,17 +18,17 @@ const Landing = () => {
       <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-yellow-400/30 rounded-full blur-3xl animate-[glow-pulse_4s_ease-in-out_infinite]" />
 
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-6 max-w-7xl mx-auto animate-fade-in">
-        <div className="flex items-center gap-3">
-          <img src={insyncLogo} alt="In-Sync" className="h-12 w-auto object-contain" />
+      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-8 max-w-7xl mx-auto animate-fade-in">
+        <div className="flex items-center gap-4">
+          <img src={insyncLogo} alt="In-Sync" className="h-16 md:h-20 w-auto object-contain" />
           <div className="flex flex-col">
-            <span className="text-xl font-bold text-white">In-Sync <span className="text-lime-300">Field Force</span></span>
-            <span className="text-xs font-bold text-yellow-300 uppercase tracking-wider">Insurance Sales Platform</span>
+            <span className="text-2xl md:text-3xl font-bold text-white">In-Sync <span className="text-lime-300">Field Force</span></span>
+            <span className="text-sm md:text-base font-bold text-yellow-300 uppercase tracking-wider">Insurance Sales Platform</span>
           </div>
         </div>
         <Link to="/auth">
-          <Button variant="outline" className="rounded-full border-2 border-white text-white hover:bg-white hover:text-purple-600 font-semibold px-6 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]">
-            Sign In <ArrowRight className="ml-2 h-4 w-4" />
+          <Button variant="outline" className="rounded-full border-2 border-white text-white hover:bg-white hover:text-purple-600 font-semibold px-6 py-3 text-base transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+            Sign In <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </Link>
       </nav>
