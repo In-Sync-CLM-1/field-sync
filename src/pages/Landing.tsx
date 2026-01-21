@@ -47,14 +47,14 @@ const Landing = () => {
 
       <div className="relative z-10">
         {/* Navigation */}
-        <nav className="flex items-center justify-between px-6 md:px-12 py-4 max-w-7xl mx-auto">
-          <div className="flex items-center gap-3">
-            <img src={insyncLogo} alt="In-Sync" className="h-12 md:h-16 w-auto object-contain" />
+        <nav className="flex items-center justify-between px-6 md:px-12 py-5 max-w-7xl mx-auto">
+          <div className="flex items-center gap-4">
+            <img src={insyncLogo} alt="In-Sync" className="h-14 md:h-20 w-auto object-contain" />
             <div className="hidden sm:flex flex-col">
-              <span className="text-lg md:text-xl font-bold text-white tracking-tight">
+              <span className="text-xl md:text-3xl font-bold text-white tracking-tight">
                 In-Sync <span className="text-lime-400">Field Force</span>
               </span>
-              <span className="text-[10px] text-slate-400 uppercase tracking-widest">
+              <span className="text-xs md:text-sm text-slate-400 uppercase tracking-widest">
                 Insurance Sales Platform
               </span>
             </div>
@@ -62,7 +62,7 @@ const Landing = () => {
           <Link to="/auth">
             <Button 
               variant="ghost" 
-              className="text-slate-300 hover:text-white hover:bg-white/10 font-medium h-9"
+              className="text-slate-300 hover:text-white hover:bg-white/10 font-medium text-base px-5"
             >
               Sign In
             </Button>
