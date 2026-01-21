@@ -1,157 +1,196 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, MapPin, BarChart3, Users, Target, Shield, Zap, Play, CheckCircle } from "lucide-react";
+import { ArrowRight, MapPin, BarChart3, Users, Shield, Clock, Target } from "lucide-react";
 import insyncLogo from "@/assets/insync-logo-color.png";
 
 const Landing = () => {
+  const features = [
+    {
+      icon: MapPin,
+      title: "GPS Visit Tracking",
+      description: "Real-time location verification for every field visit with geo-fenced check-ins."
+    },
+    {
+      icon: BarChart3,
+      title: "Performance Analytics",
+      description: "Visual dashboards showing team productivity, conversion rates, and sales trends."
+    },
+    {
+      icon: Users,
+      title: "Team Management",
+      description: "Monitor your entire sales force with role-based access and hierarchy views."
+    },
+    {
+      icon: Target,
+      title: "Daily Planning",
+      description: "Set targets, track actuals, and coach your team to hit their goals every day."
+    },
+    {
+      icon: Clock,
+      title: "Real-Time Sync",
+      description: "Offline-first architecture ensures data syncs seamlessly when back online."
+    },
+    {
+      icon: Shield,
+      title: "Secure & Reliable",
+      description: "Enterprise-grade security with role-based permissions and audit trails."
+    }
+  ];
+
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-500 to-fuchsia-500">
-      {/* Animated floating orbs */}
-      <div className="absolute top-20 left-20 w-32 h-32 bg-lime-400/30 rounded-full blur-2xl animate-[orb-float_8s_ease-in-out_infinite]" />
-      <div className="absolute bottom-40 right-32 w-48 h-48 bg-cyan-400/20 rounded-full blur-3xl animate-[orb-float_8s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
-      <div className="absolute top-1/3 right-1/3 w-24 h-24 bg-yellow-400/25 rounded-full blur-2xl animate-[float_6s_ease-in-out_infinite]" />
-      <div className="absolute top-2/3 left-1/4 w-40 h-40 bg-pink-400/20 rounded-full blur-3xl animate-[orb-float_10s_ease-in-out_infinite]" style={{ animationDelay: '4s' }} />
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
+      {/* Subtle background grid pattern */}
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none" />
       
-      {/* Vibrant accent shapes */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-bl from-lime-400 via-emerald-400/70 to-transparent opacity-80" />
-      <div className="absolute bottom-0 left-0 w-2/3 h-1/2 bg-gradient-to-tr from-cyan-400/50 to-transparent" />
-      <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-yellow-400/30 rounded-full blur-3xl animate-[glow-pulse_4s_ease-in-out_infinite]" />
+      {/* Gradient accent glow */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-lime-500/10 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-8 max-w-7xl mx-auto animate-fade-in">
-        <div className="flex items-center gap-4">
-          <img src={insyncLogo} alt="In-Sync" className="h-16 md:h-20 w-auto object-contain" />
-          <div className="flex flex-col">
-            <span className="text-2xl md:text-3xl font-bold text-white">In-Sync <span className="text-lime-300">Field Force</span></span>
-            <span className="text-sm md:text-base font-bold text-yellow-300 uppercase tracking-wider">Insurance Sales Platform</span>
+      <div className="relative z-10">
+        {/* Navigation */}
+        <nav className="flex items-center justify-between px-6 md:px-16 py-6 max-w-7xl mx-auto">
+          <div className="flex items-center gap-4">
+            <img src={insyncLogo} alt="In-Sync" className="h-14 md:h-20 w-auto object-contain" />
+            <div className="hidden sm:flex flex-col">
+              <span className="text-xl md:text-2xl font-bold text-white tracking-tight">
+                In-Sync <span className="text-lime-400">Field Force</span>
+              </span>
+              <span className="text-xs text-slate-400 uppercase tracking-widest">
+                Insurance Sales Platform
+              </span>
+            </div>
           </div>
-        </div>
-        <Link to="/auth">
-          <Button variant="outline" className="rounded-full border-2 border-white text-white hover:bg-white hover:text-purple-600 font-semibold px-6 py-3 text-base transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]">
-            Sign In <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </Link>
-      </nav>
-
-      {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center px-6 md:px-12 pt-12 md:pt-20 pb-20 text-center max-w-5xl mx-auto">
-        {/* Trust badge with shimmer */}
-        <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/20 backdrop-blur-md border-2 border-lime-400/40 mb-10 animate-fade-in hover:bg-white/30 transition-all cursor-default group">
-          <Sparkles className="h-4 w-4 text-lime-300 animate-[glow-pulse_2s_ease-in-out_infinite]" />
-          <span className="text-sm font-semibold text-white">Helping 50+ teams close 2x more policies</span>
-          <Sparkles className="h-4 w-4 text-lime-300 animate-[glow-pulse_2s_ease-in-out_infinite]" style={{ animationDelay: '0.5s' }} />
-        </div>
-
-        {/* Main headline with gradient text */}
-        <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
-          <span className="text-white animate-fade-in inline-block">Stop Guessing.</span>
-          <br />
-          <span 
-            className="bg-gradient-to-r from-lime-300 via-emerald-300 to-cyan-300 bg-clip-text text-transparent animate-fade-in inline-block"
-            style={{ animationDelay: '0.2s' }}
-          >
-            Start Winning.
-          </span>
-        </h1>
-
-        {/* Subheadline - outcome focused */}
-        <p 
-          className="text-base md:text-xl text-white/90 mb-10 max-w-2xl leading-relaxed animate-fade-in"
-          style={{ animationDelay: '0.4s' }}
-        >
-          Finally know which visits lead to sales, which reps need coaching, and where your team really is —{" "}
-          <span className="text-lime-300 font-bold">all in real-time.</span>
-        </p>
-
-        {/* CTA Buttons with glow effects */}
-        <div 
-          className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in"
-          style={{ animationDelay: '0.6s' }}
-        >
-          <Link to="/auth" className="flex flex-col items-center">
+          <Link to="/auth">
             <Button 
-              size="lg" 
-              className="bg-lime-400 text-purple-900 hover:bg-lime-300 font-bold px-8 py-6 text-lg rounded-xl shadow-[0_0_30px_rgba(163,230,53,0.5)] hover:shadow-[0_0_50px_rgba(163,230,53,0.7)] transition-all duration-300 hover:scale-105 animate-[fab-breathe_3s_ease-in-out_infinite] group"
+              variant="ghost" 
+              className="text-slate-300 hover:text-white hover:bg-white/10 font-medium"
             >
-              Start Free — No Card Required
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              Sign In
             </Button>
           </Link>
-          <Button 
-            size="lg" 
-            variant="outline" 
-            className="border-2 border-lime-300/80 text-lime-300 hover:bg-lime-300/20 font-bold px-8 py-6 text-lg rounded-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm hover:border-lime-300 hover:shadow-[0_0_20px_rgba(163,230,53,0.3)]"
-          >
-            <Play className="mr-2 h-5 w-5" />
-            See It In Action
-          </Button>
-        </div>
+        </nav>
 
-        {/* Feature Grid with staggered entrance */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full max-w-4xl mb-16">
-          {[
-            { icon: MapPin, label: "Proof of Every Visit", color: "#7C3AED", bg: "#f3e8ff" },
-            { icon: BarChart3, label: "Know What's Working", color: "#16a34a", bg: "#dcfce7" },
-            { icon: Users, label: "Coach Top Performers", color: "#db2777", bg: "#fce7f3" },
-            { icon: Target, label: "Hit Targets Faster", color: "#0891b2", bg: "#cffafe" },
-          ].map((feature, i) => (
-            <div
-              key={i}
-              className="flex flex-col items-center gap-3 p-5 md:p-6 rounded-2xl bg-white/95 backdrop-blur-md border-2 border-white shadow-xl hover:shadow-[0_10px_40px_rgba(139,92,246,0.3)] transition-all duration-300 hover:scale-105 hover:-translate-y-1 animate-fade-in group cursor-default"
-              style={{ animationDelay: `${0.8 + i * 0.1}s` }}
-            >
-              <div className="p-3 rounded-xl transition-transform duration-300 group-hover:scale-110" style={{ backgroundColor: feature.bg }}>
-                <feature.icon className="h-6 w-6" style={{ color: feature.color }} />
+        {/* Hero Section */}
+        <section className="px-6 md:px-16 py-16 md:py-24 max-w-7xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-lime-500/10 border border-lime-500/20 rounded-full text-lime-400 text-sm font-medium">
+              <span className="w-2 h-2 bg-lime-400 rounded-full animate-pulse" />
+              Built for Insurance Field Teams
+            </div>
+
+            {/* Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
+              Stop Guessing.
+              <br />
+              <span className="text-lime-400">Start Winning.</span>
+            </h1>
+
+            {/* Subheadline */}
+            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              Track every field visit in real-time, monitor team performance, and close more policies with data-driven insights.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+              <Link to="/auth">
+                <Button 
+                  size="lg"
+                  className="bg-lime-500 hover:bg-lime-400 text-slate-950 font-bold text-lg px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(163,230,53,0.4)]"
+                >
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white font-medium text-lg px-8 py-6 rounded-full"
+              >
+                See How It Works
+              </Button>
+            </div>
+
+            {/* Trust indicator */}
+            <p className="text-sm text-slate-500 pt-4">
+              No credit card required • Setup in 5 minutes • Cancel anytime
+            </p>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="px-6 md:px-16 py-16 md:py-24 max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">
+              Everything You Need to Manage Field Sales
+            </h2>
+            <p className="text-slate-400 max-w-xl mx-auto">
+              One platform to track, analyze, and optimize your entire field force operation.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feature, index) => (
+              <div 
+                key={index}
+                className="group p-6 bg-slate-900/50 border border-slate-800 rounded-2xl hover:border-lime-500/30 hover:bg-slate-900/80 transition-all duration-300"
+              >
+                <div className="w-12 h-12 bg-lime-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
+                  <feature.icon className="w-6 h-6 text-lime-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              <span className="font-bold text-gray-800 text-sm md:text-base">{feature.label}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
 
-        {/* Stats Section with gradient values */}
-        <div 
-          className="grid grid-cols-3 gap-6 md:gap-12 w-full max-w-3xl mb-16 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 animate-fade-in"
-          style={{ animationDelay: '1.2s' }}
-        >
-          {[
-            { value: "10,247", label: "Visits Verified This Month" },
-            { value: "98%", label: "GPS Accuracy" },
-            { value: "2x", label: "More Client Meetings" },
-          ].map((stat, i) => (
-            <div key={i} className="text-center group cursor-default">
-              <div className="text-3xl md:text-5xl font-black bg-gradient-to-r from-lime-300 via-emerald-300 to-cyan-300 bg-clip-text text-transparent mb-1 transition-transform duration-300 group-hover:scale-110">
-                {stat.value}
-              </div>
-              <div className="text-xs md:text-sm text-white/80 font-semibold">{stat.label}</div>
+        {/* Final CTA Section */}
+        <section className="px-6 md:px-16 py-16 md:py-24 max-w-7xl mx-auto">
+          <div className="relative bg-gradient-to-r from-lime-500/10 to-emerald-500/10 border border-lime-500/20 rounded-3xl p-8 md:p-16 text-center overflow-hidden">
+            {/* Background glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-lime-500/5 to-transparent pointer-events-none" />
+            
+            <div className="relative z-10">
+              <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">
+                Ready to Transform Your Field Sales?
+              </h2>
+              <p className="text-slate-400 max-w-xl mx-auto mb-8">
+                Join insurance teams who've increased their field productivity by up to 40%.
+              </p>
+              <Link to="/auth">
+                <Button 
+                  size="lg"
+                  className="bg-lime-500 hover:bg-lime-400 text-slate-950 font-bold text-lg px-10 py-6 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(163,230,53,0.4)]"
+                >
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
-          ))}
-        </div>
+          </div>
+        </section>
 
-        {/* Bottom trust indicators */}
-        <div 
-          className="flex flex-wrap items-center justify-center gap-4 md:gap-8 animate-fade-in"
-          style={{ animationDelay: '1.4s' }}
-        >
-          {[
-            { icon: Shield, label: "Bank-Grade Security", color: "text-lime-300" },
-            { icon: Zap, label: "Instant Setup", color: "text-yellow-300" },
-            { icon: CheckCircle, label: "No Training Required", color: "text-cyan-300" },
-          ].map((item, i) => (
-            <div 
-              key={i}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300 cursor-default group"
-            >
-              <item.icon className={`h-5 w-5 ${item.color} group-hover:scale-110 transition-transform`} />
-              <span className="text-sm font-semibold text-white">{item.label}</span>
+        {/* Footer */}
+        <footer className="px-6 md:px-16 py-8 max-w-7xl mx-auto border-t border-slate-800">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <img src={insyncLogo} alt="In-Sync" className="h-8 w-auto object-contain" />
+              <span className="text-slate-400 text-sm">
+                © {new Date().getFullYear()} In-Sync Field Force
+              </span>
             </div>
-          ))}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="relative z-10 text-center py-8 text-white/70 text-sm font-medium animate-fade-in" style={{ animationDelay: '1.6s' }}>
-        © 2024 In-Sync Field Force. All rights reserved.
-      </footer>
+            <div className="flex items-center gap-6 text-sm text-slate-500">
+              <a href="#" className="hover:text-white transition-colors">Privacy</a>
+              <a href="#" className="hover:text-white transition-colors">Terms</a>
+              <a href="#" className="hover:text-white transition-colors">Contact</a>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };
