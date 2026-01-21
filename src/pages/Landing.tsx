@@ -95,9 +95,9 @@ const Landing = () => {
               <Link to="/auth">
                 <Button 
                   size="lg"
-                  className="bg-lime-400 hover:bg-lime-300 text-slate-950 font-bold px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(163,230,53,0.5),0_0_60px_rgba(163,230,53,0.3)] hover:shadow-[0_0_50px_rgba(163,230,53,0.7),0_0_80px_rgba(163,230,53,0.4)] animate-pulse border-2 border-lime-300"
+                  className="bg-lime-400 hover:bg-lime-300 text-slate-950 font-bold px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(163,230,53,0.4)] hover:shadow-[0_0_30px_rgba(163,230,53,0.5)] ring-2 ring-lime-300/50"
                 >
-                  🚀 Start Free Trial
+                  Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
