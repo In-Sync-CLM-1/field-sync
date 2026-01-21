@@ -80,9 +80,9 @@ const Landing = () => {
 
             {/* Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-[1.1]">
-              Stop Guessing.
+              Your Field.
               <br />
-              <span className="text-lime-400">Start Winning.</span>
+              <span className="text-lime-400">Your Control.</span>
             </h1>
 
             {/* Subheadline */}
