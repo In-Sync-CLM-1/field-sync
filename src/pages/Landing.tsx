@@ -1,191 +1,216 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MapPin, BarChart3, Users, Shield, Clock, Target } from "lucide-react";
+import { MapPin, BarChart3, Users, Target, Clock, Shield, Check, ArrowRight } from "lucide-react";
 import insyncLogo from "@/assets/insync-logo-color.png";
 
 const Landing = () => {
+  const navigate = useNavigate();
+
   const features = [
     {
       icon: MapPin,
       title: "GPS Visit Tracking",
-      description: "Real-time location verification for every field visit."
+      description: "Track field visits in real-time with precise GPS location logging and geofencing."
     },
     {
       icon: BarChart3,
       title: "Performance Analytics",
-      description: "Visual dashboards showing team productivity and trends."
+      description: "Comprehensive dashboards and reports to measure and improve team performance."
     },
     {
       icon: Users,
       title: "Team Management",
-      description: "Monitor your sales force with role-based access."
+      description: "Efficiently manage your field team with role-based access and hierarchy controls."
     },
     {
       icon: Target,
       title: "Daily Planning",
-      description: "Set targets and coach your team to hit goals."
+      description: "Set daily targets, plan visits, and track progress towards your goals."
     },
     {
       icon: Clock,
       title: "Real-Time Sync",
-      description: "Offline-first with seamless data synchronization."
+      description: "Instant data synchronization across all devices, even in low connectivity areas."
     },
     {
       icon: Shield,
       title: "Secure & Reliable",
-      description: "Enterprise-grade security and audit trails."
+      description: "Enterprise-grade security with encrypted data and 99.9% uptime guarantee."
     }
   ];
 
+  const pricingBenefits = [
+    "14-day free trial",
+    "All features included",
+    "Unlimited team members",
+    "Cancel anytime"
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
-      {/* Subtle background grid pattern */}
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none" />
-      
-      {/* Gradient accent glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-lime-500/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+      {/* Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {/* Grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(132, 204, 22, 0.3) 1px, transparent 1px),
+                             linear-gradient(90deg, rgba(132, 204, 22, 0.3) 1px, transparent 1px)`,
+            backgroundSize: '60px 60px'
+          }}
+        />
+        {/* Lime glow at top */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-lime-500/10 rounded-full blur-[120px]" />
+      </div>
 
       <div className="relative z-10">
         {/* Navigation */}
-        <nav className="flex items-center justify-between px-6 md:px-12 py-5 max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <img src={insyncLogo} alt="In-Sync" className="h-14 md:h-20 w-auto object-contain" />
-            <div className="hidden sm:flex flex-col">
-              <span className="text-xl md:text-3xl font-bold text-white tracking-tight">
-                In-Sync <span className="text-lime-400">Field Force</span>
-              </span>
-              <span className="text-xs md:text-sm text-slate-400 uppercase tracking-widest">
-                Insurance Sales Platform
-              </span>
+        <nav className="px-6 md:px-12 py-6 flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center gap-3">
+            <img 
+              src={insyncLogo} 
+              alt="In-Sync Field Force" 
+              className="h-14 md:h-20 w-auto"
+            />
+            <div className="hidden sm:block">
+              <span className="text-xl md:text-2xl font-bold text-white">In-Sync</span>
+              <span className="text-xl md:text-2xl font-bold text-lime-400"> Field Force</span>
             </div>
           </div>
-          <Link to="/auth">
-            <Button 
-              variant="ghost" 
-              className="text-slate-300 hover:text-white hover:bg-white/10 font-medium text-base px-5"
-            >
-              Sign In
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/auth")}
+            className="text-slate-300 hover:text-white hover:bg-slate-800/50"
+          >
+            Sign In
+          </Button>
         </nav>
 
         {/* Hero Section */}
-        <section className="px-6 md:px-12 py-8 md:py-12 max-w-7xl mx-auto text-center">
-          <div className="max-w-4xl mx-auto space-y-5">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-lime-500/10 border border-lime-500/20 rounded-full text-lime-400 text-xs font-medium">
-              <span className="w-1.5 h-1.5 bg-lime-400 rounded-full animate-pulse" />
-              Built for Insurance Field Teams
-            </div>
-
-            {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05]">
-              Your Field.
-              <br />
-              <span className="text-lime-400">Your Control.</span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-base md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed">
-              Track field visits in real-time, monitor team performance, and close more policies.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link to="/auth">
-                <Button 
-                  size="lg"
-                  className="bg-lime-400 hover:bg-lime-300 text-slate-950 font-bold px-8 py-6 rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(163,230,53,0.4)] hover:shadow-[0_0_30px_rgba(163,230,53,0.5)] ring-2 ring-lime-300/50"
-                >
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white font-medium px-6 py-5 rounded-full"
-              >
-                See How It Works
-              </Button>
-            </div>
-
-            {/* Trust indicator */}
-            <p className="text-xs text-slate-500">
-              No credit card required • Setup in 5 minutes • Cancel anytime
-            </p>
+        <section className="px-6 md:px-12 py-16 md:py-24 max-w-7xl mx-auto text-center">
+          {/* Trial Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-lime-500/10 border border-lime-500/30 mb-8">
+            <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse" />
+            <span className="text-lime-400 font-medium text-sm">14-Day Free Trial</span>
           </div>
+
+          {/* Headline */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6">
+            Your Field.{" "}
+            <span className="text-lime-400">Your Control.</span>
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10">
+            Track visits, boost performance, close more policies with real-time field sales management built for insurance teams.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+            <Button 
+              onClick={() => navigate("/auth")}
+              className="bg-lime-500 hover:bg-lime-400 text-slate-950 font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-lime-500/25 hover:shadow-lime-500/40 transition-all"
+            >
+              Start 14-Day Free Trial
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white px-8 py-6 text-lg rounded-xl"
+            >
+              See How It Works
+            </Button>
+          </div>
+
+          {/* Trust Text */}
+          <p className="text-sm text-slate-500">
+            ₹99/user/month after trial · No credit card required
+          </p>
         </section>
 
         {/* Features Section */}
-        <section className="px-6 md:px-12 py-8 md:py-12 max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
-              Everything You Need to Manage Field Sales
-            </h2>
-            <p className="text-slate-400 text-sm max-w-lg mx-auto">
-              One platform to track, analyze, and optimize your entire field force.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <section id="features" className="px-6 md:px-12 py-16 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="group p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-lime-500/30 hover:bg-slate-900/80 transition-all duration-300"
+                className="group p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-lime-500/50 transition-all duration-300"
               >
-                <div className="w-10 h-10 bg-lime-500/10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-lime-500/20 transition-colors">
-                  <feature.icon className="w-5 h-5 text-lime-400" />
+                <div className="w-12 h-12 rounded-xl bg-lime-500/10 flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
+                  <feature.icon className="h-6 w-6 text-lime-400" />
                 </div>
-                <h3 className="text-sm font-semibold text-white mb-1">
-                  {feature.title}
-                </h3>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  {feature.description}
-                </p>
+                <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                <p className="text-slate-400">{feature.description}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Final CTA Section */}
-        <section className="px-6 md:px-12 py-8 md:py-12 max-w-7xl mx-auto">
-          <div className="relative bg-gradient-to-r from-lime-500/10 to-emerald-500/10 border border-lime-500/20 rounded-2xl p-6 md:p-10 text-center overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-lime-500/5 to-transparent pointer-events-none" />
-            
-            <div className="relative z-10">
-              <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
-                Ready to Transform Your Field Sales?
-              </h2>
-              <p className="text-slate-400 text-sm max-w-md mx-auto mb-5">
-                Join teams who've increased field productivity by up to 40%.
-              </p>
-              <Link to="/auth">
-                <Button 
-                  size="lg"
-                  className="bg-lime-500 hover:bg-lime-400 text-slate-950 font-bold px-8 py-5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(163,230,53,0.4)]"
-                >
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+        {/* Pricing Section */}
+        <section className="px-6 md:px-12 py-16 max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-slate-400">
+              One plan, all features, no hidden fees
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto">
+            <div className="p-8 rounded-3xl bg-gradient-to-b from-slate-900 to-slate-900/50 border border-lime-500/30 shadow-xl shadow-lime-500/5">
+              {/* Price */}
+              <div className="text-center mb-8">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl md:text-6xl font-black text-lime-400">₹99</span>
+                  <span className="text-slate-400 text-lg">/user/month</span>
+                </div>
+              </div>
+
+              {/* Benefits */}
+              <ul className="space-y-4 mb-8">
+                {pricingBenefits.map((benefit, index) => (
+                  <li key={index} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-lime-500/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="h-3 w-3 text-lime-400" />
+                    </div>
+                    <span className="text-slate-300">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* CTA */}
+              <Button 
+                onClick={() => navigate("/auth")}
+                className="w-full bg-lime-500 hover:bg-lime-400 text-slate-950 font-semibold py-6 text-lg rounded-xl shadow-lg shadow-lime-500/25 hover:shadow-lime-500/40 transition-all"
+              >
+                Start 14-Day Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
             </div>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="px-6 md:px-12 py-6 max-w-7xl mx-auto border-t border-slate-800">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <img src={insyncLogo} alt="In-Sync" className="h-6 w-auto object-contain" />
-              <span className="text-slate-400 text-xs">
-                © {new Date().getFullYear()} In-Sync Field Force
+        <footer className="px-6 md:px-12 py-8 border-t border-slate-800">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <img 
+                src={insyncLogo} 
+                alt="In-Sync Field Force" 
+                className="h-8 w-auto"
+              />
+              <span className="text-slate-400 text-sm">
+                © 2025 In-Sync Field Force
               </span>
             </div>
-            <div className="flex items-center gap-5 text-xs text-slate-500">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Contact</a>
+            <div className="flex items-center gap-6 text-sm text-slate-500">
+              <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-slate-300 transition-colors">Contact</a>
             </div>
           </div>
         </footer>
