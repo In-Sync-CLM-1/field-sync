@@ -85,7 +85,7 @@ export default function Visits() {
           <h1 className="text-xl font-bold tracking-tight">Visits</h1>
           <p className="text-sm text-muted-foreground">Manage field visits</p>
         </div>
-        <Button size="icon" onClick={() => navigate('/visits/new')}>
+        <Button size="icon" onClick={() => navigate('/dashboard/visits/new')}>
           <Plus className="w-4 h-4" />
         </Button>
       </div>
@@ -121,7 +121,7 @@ export default function Visits() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <p className="text-muted-foreground mb-3 text-sm">No visits found</p>
-                <Button size="sm" onClick={() => navigate('/visits/new')}>
+                <Button size="sm" onClick={() => navigate('/dashboard/visits/new')}>
                   <Plus className="w-4 h-4 mr-1" />
                   Create First Visit
                 </Button>
@@ -132,7 +132,7 @@ export default function Visits() {
               <Card
                 key={visit.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/visits/${visit.id}`)}
+                onClick={() => navigate(`/dashboard/visits/${visit.id}`)}
               >
                 <CardContent className="p-3">
                   <div className="flex items-start justify-between mb-1">

@@ -55,16 +55,16 @@ export function AppSidebar() {
   }, [user]);
 
   const dashboards = [
-    { icon: Home, label: 'My Dashboard', path: '/', roles: ['all'] },
-    { icon: ClipboardList, label: 'Daily Plan', path: '/planning', roles: ['all'] },
-    { icon: ClipboardList, label: 'Branch', path: '/planning/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: ClipboardList, label: 'Admin', path: '/planning/overview', roles: ['admin', 'super_admin', 'platform_admin'] },
-    { icon: LayoutDashboard, label: 'Team', path: '/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: BarChart3, label: 'Branch Analytics', path: '/analytics/branch', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: Globe, label: 'Territory', path: '/territory', roles: ['all'] },
-    { icon: Award, label: 'Performance', path: '/performance', roles: ['admin', 'super_admin', 'platform_admin'] },
-    { icon: Users, label: 'Users', path: '/users', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: Home, label: 'My Dashboard', path: '/dashboard', roles: ['all'] },
+    { icon: ClipboardList, label: 'Daily Plan', path: '/dashboard/planning', roles: ['all'] },
+    { icon: ClipboardList, label: 'Branch', path: '/dashboard/planning/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: ClipboardList, label: 'Admin', path: '/dashboard/planning/overview', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: LayoutDashboard, label: 'Team', path: '/dashboard/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: BarChart3, label: 'Branch Analytics', path: '/dashboard/analytics/branch', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: Globe, label: 'Territory', path: '/dashboard/territory', roles: ['all'] },
+    { icon: Award, label: 'Performance', path: '/dashboard/performance', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: Users, label: 'Users', path: '/dashboard/users', roles: ['admin', 'super_admin', 'platform_admin'] },
   ].filter(d => d.roles.includes('all') || d.roles.includes(userRole));
 
   const currentPath = location.pathname;

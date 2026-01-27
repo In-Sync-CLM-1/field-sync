@@ -16,28 +16,28 @@ export default function Dashboard() {
       icon: MapPin,
       label: 'Start Visit',
       description: 'Check in to a customer location',
-      action: () => navigate('/visits/new'),
+      action: () => navigate('/dashboard/visits/new'),
       variant: 'default' as const,
     },
     {
       icon: Calendar,
       label: 'View Visits',
       description: 'See all your visits',
-      action: () => navigate('/visits'),
+      action: () => navigate('/dashboard/visits'),
       variant: 'outline' as const,
     },
     {
       icon: ClipboardList,
       label: 'Daily Planning',
       description: 'Manage daily plans',
-      action: () => navigate('/planning'),
+      action: () => navigate('/dashboard/planning'),
       variant: 'outline' as const,
     },
     {
       icon: MapPin,
       label: 'Visit Map',
       description: 'View visits on map',
-      action: () => navigate('/territory'),
+      action: () => navigate('/dashboard/territory'),
       variant: 'outline' as const,
     },
   ];
@@ -131,7 +131,7 @@ export default function Dashboard() {
         <CardContent>
           <div className="text-center py-4 text-muted-foreground">
             <p className="text-sm">View all your visits in the Visits section</p>
-            <Button variant="default" size="sm" className="mt-2" onClick={() => navigate('/visits')}>
+            <Button variant="default" size="sm" className="mt-2" onClick={() => navigate('/dashboard/visits')}>
               Go to Visits
             </Button>
           </div>
