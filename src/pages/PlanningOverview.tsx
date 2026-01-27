@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CalendarIcon, ChevronDown, ChevronRight, Building2, Users, Cloud, CloudOff, Edit2, Trash2, Save, X } from 'lucide-react';
+import { CalendarIcon, ChevronDown, ChevronRight, Building2, Users, Cloud, CloudOff, Edit2, Trash2, Save, X, ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -51,6 +52,7 @@ interface EditValues {
 }
 
 export default function PlanningOverview() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [expandedManagers, setExpandedManagers] = useState<Set<string>>(new Set());
@@ -244,6 +246,10 @@ export default function PlanningOverview() {
       {/* Compact Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/planning')} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Planning</span>
+          </Button>
           <Building2 className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold">Planning Overview</h1>
           <span className="text-xs text-muted-foreground">({plans?.length || 0} plans)</span>

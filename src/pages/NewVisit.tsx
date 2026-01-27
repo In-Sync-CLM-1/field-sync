@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, MapPin, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, MapPin, Loader2, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -182,7 +182,13 @@ export default function NewVisit() {
   return (
     <div className="container py-6 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">New Visit</h1>
+        <div className="flex items-center gap-3 mb-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/visits')} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Visits</span>
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">New Visit</h1>
+        </div>
         <p className="text-muted-foreground">Select lead and check in</p>
       </div>
 
