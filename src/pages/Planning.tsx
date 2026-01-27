@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award, FileText, Users, Trophy } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award, FileText, Users, Trophy, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ import { db } from '@/lib/db';
 import confetti from 'canvas-confetti';
 
 export default function Planning() {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const planDate = format(selectedDate, 'yyyy-MM-dd');
   
@@ -249,6 +251,10 @@ export default function Planning() {
         {/* Manager Header */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
             <Users className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-bold">Branch Planning</h1>
           </div>

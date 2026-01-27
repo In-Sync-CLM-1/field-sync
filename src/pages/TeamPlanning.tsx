@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CalendarIcon, Users, Edit2, Save, X, Cloud, CloudOff } from 'lucide-react';
+import { CalendarIcon, Users, Edit2, Save, X, Cloud, CloudOff, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ import {
 import { DailyPlanLocal } from '@/lib/db';
 
 export default function TeamPlanning() {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, number>>({});
@@ -140,6 +142,10 @@ export default function TeamPlanning() {
       {/* Compact Header Row */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/planning')} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Planning</span>
+          </Button>
           <Users className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold">Team Planning</h1>
           <span className="text-xs text-muted-foreground">({teamPlans?.length || 0} plans)</span>

@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, MapPin, Route } from 'lucide-react';
+import { CalendarIcon, MapPin, Route, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ interface TeamMember {
 }
 
 export default function TerritoryMap() {
+  const navigate = useNavigate();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
@@ -527,10 +529,16 @@ export default function TerritoryMap() {
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <div className="p-3 border-b bg-background">
-        <h1 className="text-xl font-bold mb-2 flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
-          Visit Map
-        </h1>
+        <div className="flex items-center gap-3 mb-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Button>
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            Visit Map
+          </h1>
+        </div>
         
         <div className="flex flex-wrap gap-1.5 items-center">
           {/* Date From Filter */}

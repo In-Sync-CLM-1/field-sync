@@ -1,11 +1,14 @@
+import { useNavigate } from 'react-router-dom';
 import { usePerformanceData } from '@/hooks/useDashboardData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Trophy, TrendingUp, TrendingDown, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 
 export default function PerformanceBoard() {
+  const navigate = useNavigate();
   const { data: performanceData } = usePerformanceData();
 
   if (!performanceData) {
@@ -20,9 +23,15 @@ export default function PerformanceBoard() {
 
   return (
     <div className="p-4 space-y-3">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight">Performance Board</h1>
-        <p className="text-xs text-muted-foreground">Leaderboard and rankings</p>
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
+          <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">Dashboard</span>
+        </Button>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">Performance Board</h1>
+          <p className="text-xs text-muted-foreground">Leaderboard and rankings</p>
+        </div>
       </div>
 
       {/* Top 3 Podium - Compact */}

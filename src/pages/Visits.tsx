@@ -7,7 +7,7 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Clock } from 'lucide-react';
+import { Plus, Clock, ArrowLeft } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -81,9 +81,15 @@ export default function Visits() {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div className="flex items-center justify-between mb-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Visits</h1>
-          <p className="text-sm text-muted-foreground">Manage field visits</p>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">Visits</h1>
+            <p className="text-sm text-muted-foreground">Manage field visits</p>
+          </div>
         </div>
         <Button size="icon" onClick={() => navigate('/dashboard/visits/new')}>
           <Plus className="w-4 h-4" />

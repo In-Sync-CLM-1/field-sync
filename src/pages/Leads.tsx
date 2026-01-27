@@ -17,6 +17,7 @@ import {
   Building2,
   IndianRupee,
   Calendar,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   Pagination,
@@ -70,18 +71,24 @@ export default function Leads() {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Prospects</h1>
-          <div className="flex items-center gap-2">
-            {currentOrganization && (
-              <Badge variant="outline" className="gap-1 text-xs">
-                <Building2 className="h-3 w-3" />
-                {currentOrganization.name}
-              </Badge>
-            )}
-            <span className="text-xs text-muted-foreground">
-              {leads.length} prospects
-            </span>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">Prospects</h1>
+            <div className="flex items-center gap-2">
+              {currentOrganization && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <Building2 className="h-3 w-3" />
+                  {currentOrganization.name}
+                </Badge>
+              )}
+              <span className="text-xs text-muted-foreground">
+                {leads.length} prospects
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
