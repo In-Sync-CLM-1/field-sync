@@ -70,7 +70,7 @@ export default function VisitDetail() {
       },
       {
         onSuccess: () => {
-          navigate('/visits');
+          navigate('/dashboard/visits');
         },
       }
     );
@@ -99,7 +99,7 @@ export default function VisitDetail() {
   if (!visit) {
     return (
       <div className="container py-6">
-        <Button variant="ghost" onClick={() => navigate('/visits')}>
+        <Button variant="ghost" onClick={() => navigate('/dashboard/visits')}>
           <ArrowLeft />
           Back to Visits
         </Button>
@@ -123,7 +123,7 @@ export default function VisitDetail() {
   return (
     <div className="container py-6 max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate('/visits')}>
+        <Button variant="ghost" onClick={() => navigate('/dashboard/visits')}>
           <ArrowLeft />
           Back
         </Button>

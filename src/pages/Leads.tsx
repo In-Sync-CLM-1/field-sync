@@ -151,7 +151,7 @@ export default function Leads() {
             <Card
               key={lead.id}
               className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => navigate(`/leads/${lead.id}`)}
+              onClick={() => navigate(`/dashboard/leads/${lead.id}`)}
             >
               <CardContent className="p-3">
                 <div className="flex items-start justify-between mb-1">

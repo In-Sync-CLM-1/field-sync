@@ -51,7 +51,7 @@ export default function LeadDetail() {
   };
 
   const handleStartVisit = () => {
-    navigate(`/visits/new?leadId=${id}`);
+    navigate(`/dashboard/visits/new?leadId=${id}`);
   };
 
   const getStatusColor = (status?: string) => {
@@ -75,7 +75,7 @@ export default function LeadDetail() {
   if (!lead) {
     return (
       <div className="container py-6">
-        <Button variant="ghost" onClick={() => navigate('/leads')}>
+        <Button variant="ghost" onClick={() => navigate('/dashboard/leads')}>
           <ArrowLeft />
           Back to Prospects
         </Button>
@@ -94,7 +94,7 @@ export default function LeadDetail() {
   return (
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate('/leads')}>
+        <Button variant="ghost" onClick={() => navigate('/dashboard/leads')}>
           <ArrowLeft />
           Back
         </Button>

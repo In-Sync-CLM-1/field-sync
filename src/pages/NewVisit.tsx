@@ -173,7 +173,7 @@ export default function NewVisit() {
       },
       {
         onSuccess: (visit) => {
-          navigate(`/visits/${visit.id}`);
+          navigate(`/dashboard/visits/${visit.id}`);
         },
       }
     );
@@ -307,7 +307,7 @@ export default function NewVisit() {
           Start Visit
         </Button>
         <Button
-          onClick={() => navigate('/visits')}
+          onClick={() => navigate('/dashboard/visits')}
           variant="outline"
           size="lg"
         >

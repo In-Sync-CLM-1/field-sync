@@ -64,10 +64,10 @@ export default function Layout() {
   }, [user]);
 
   const navItems = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: Users, label: 'Leads', path: '/leads' },
-    { icon: MapPin, label: 'Visits', path: '/visits' },
-    { icon: Map, label: 'Map', path: '/visits/map' },
+    { icon: Home, label: 'Home', path: '/dashboard' },
+    { icon: Users, label: 'Leads', path: '/dashboard/leads' },
+    { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
+    { icon: Map, label: 'Map', path: '/dashboard/visits/map' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -126,7 +126,7 @@ export default function Layout() {
                 <DropdownMenuSeparator />
                 {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link to="/sync-monitoring" className="cursor-pointer hover:bg-primary/10 hover:text-primary">
+                    <Link to="/dashboard/sync-monitoring" className="cursor-pointer hover:bg-primary/10 hover:text-primary">
                       <Activity className="mr-2 h-4 w-4" />
                       <span>Sync Monitoring</span>
                     </Link>
