@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { MapPin, BarChart3, Users, Target, Clock, Shield, Check, ArrowRight } from "lucide-react";
 import insyncLogo from "@/assets/insync-logo-color.png";
+import landingBg from "@/assets/landing-bg.jpg";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -50,6 +51,14 @@ const Landing = () => {
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
       {/* Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${landingBg})` }}
+        />
+        {/* Overlay to blend with existing theme */}
+        <div className="absolute inset-0 bg-slate-950/40" />
+        
         {/* Grid pattern */}
         <div 
           className="absolute inset-0 opacity-[0.02]"
