@@ -46,29 +46,60 @@ const Landing = () => {
     "Cancel anytime"
   ];
 
-  // Brand teal color: #01B8AA
-  const brandTeal = {
-    bg: "bg-[#01B8AA]",
-    bgHover: "hover:bg-[#00a89b]",
-    text: "text-[#01B8AA]",
-    border: "border-[#01B8AA]",
-    shadow: "shadow-[#01B8AA]/25",
-    shadowHover: "hover:shadow-[#01B8AA]/40",
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
       {/* Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {/* Grid pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.02]"
           style={{
-            backgroundImage: `linear-gradient(rgba(1, 184, 170, 0.3) 1px, transparent 1px),
-                             linear-gradient(90deg, rgba(1, 184, 170, 0.3) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px'
+            backgroundImage: `linear-gradient(rgba(1, 184, 170, 0.5) 1px, transparent 1px),
+                             linear-gradient(90deg, rgba(1, 184, 170, 0.5) 1px, transparent 1px)`,
+            backgroundSize: '80px 80px'
           }}
         />
+        
+        {/* Floating gradient orbs */}
+        {/* Primary teal glow - top center */}
+        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#01B8AA]/20 rounded-full blur-[150px] animate-pulse" />
+        
+        {/* Light blue orb - top right */}
+        <div 
+          className="absolute top-[100px] right-[-100px] w-[400px] h-[400px] bg-[#8AD4EB]/15 rounded-full blur-[120px]"
+          style={{ animation: 'float 8s ease-in-out infinite' }}
+        />
+        
+        {/* Purple orb - left side */}
+        <div 
+          className="absolute top-[400px] left-[-150px] w-[350px] h-[350px] bg-[#A66999]/10 rounded-full blur-[100px]"
+          style={{ animation: 'float 10s ease-in-out infinite reverse' }}
+        />
+        
+        {/* Gold accent - bottom right */}
+        <div 
+          className="absolute bottom-[200px] right-[10%] w-[300px] h-[300px] bg-[#F2C80F]/8 rounded-full blur-[100px]"
+          style={{ animation: 'float 12s ease-in-out infinite' }}
+        />
+        
+        {/* Teal accent - bottom left */}
+        <div 
+          className="absolute bottom-[-100px] left-[20%] w-[400px] h-[400px] bg-[#01B8AA]/10 rounded-full blur-[130px]"
+          style={{ animation: 'float 9s ease-in-out infinite reverse' }}
+        />
+        
+        {/* Small accent orbs for depth */}
+        <div className="absolute top-[60%] right-[30%] w-[150px] h-[150px] bg-[#4AC5BB]/10 rounded-full blur-[60px]" />
+        <div className="absolute top-[30%] left-[15%] w-[100px] h-[100px] bg-[#8AD4EB]/8 rounded-full blur-[50px]" />
+        
+        {/* Subtle noise texture overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
+          }}
+        />
+        
         {/* Teal glow at top */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#01B8AA]/10 rounded-full blur-[120px]" />
       </div>

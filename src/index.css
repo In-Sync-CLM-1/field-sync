@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Floating animation for background orbs */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  33% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  66% {
+    transform: translateY(10px) translateX(-15px);
+  }
+}
+
 /* 
   Electric Violet + Lime Design System
   Gaming-inspired with neon glows and power-up effects
