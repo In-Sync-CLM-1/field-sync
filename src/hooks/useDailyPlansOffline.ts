@@ -599,6 +599,63 @@ export function useCorrectPlanOffline() {
   });
 }
 
+// Delete plan mutation - OFFLINE FIRST (for admins)
+export function useDeletePlanOffline() {
+  const queryClient = useQueryClient();
+  const isOnline = useOnlineStatus();
+
+  return useMutation({
+    mutationFn: async (input: { id: string; odataId?: string }) => {
+      const { id, odataId } = input;
+      const now = new Date();
+
+      // Delete from IndexedDB
+      await db.dailyPlans.delete(id);
+
+      // Add to sync queue for server deletion
+      if (odataId) {
+        await db.syncQueue.put({
+          id: `sync_delete_${id}`,
+          type: 'daily_plan',
+          entityId: id,
+          action: 'delete',
+          data: { odataId },
+          priority: 1,
+          retryCount: 0,
+          maxRetries: 5,
+          createdAt: now,
+        });
+
+        // Try to sync immediately if online
+        if (isOnline) {
+          try {
+            const { error } = await supabase
+              .from('daily_plans')
+              .delete()
+              .eq('id', odataId);
+
+            if (!error) {
+              await db.syncQueue.delete(`sync_delete_${id}`);
+            }
+          } catch (err) {
+            console.log('[DailyPlans] Will sync delete later:', err);
+          }
+        }
+      }
+
+      return { id };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['daily-plan'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-plans'] });
+      toast.success(isOnline ? 'Plan deleted' : 'Plan deleted locally (will sync when online)');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to delete plan: ' + error.message);
+    },
+  });
+}
+
 // Utility to sync pending plans when coming back online
 export async function syncPendingDailyPlans() {
   const pendingItems = await db.syncQueue
@@ -608,6 +665,31 @@ export async function syncPendingDailyPlans() {
 
   for (const item of pendingItems) {
     try {
+      // Handle delete action
+      if (item.action === 'delete') {
+        const odataId = (item.data as any)?.odataId;
+        if (odataId) {
+          const { error } = await supabase
+            .from('daily_plans')
+            .delete()
+            .eq('id', odataId);
+
+          if (!error) {
+            await db.syncQueue.delete(item.id);
+          } else {
+            await db.syncQueue.update(item.id, {
+              retryCount: item.retryCount + 1,
+              lastAttemptAt: new Date(),
+              error: error.message,
+            });
+          }
+        } else {
+          // No server ID, just remove from queue
+          await db.syncQueue.delete(item.id);
+        }
+        continue;
+      }
+
       const plan = await db.dailyPlans.get(item.entityId);
       if (!plan) {
         await db.syncQueue.delete(item.id);
