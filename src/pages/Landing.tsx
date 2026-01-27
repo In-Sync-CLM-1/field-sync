@@ -46,6 +46,16 @@ const Landing = () => {
     "Cancel anytime"
   ];
 
+  // Brand teal color: #01B8AA
+  const brandTeal = {
+    bg: "bg-[#01B8AA]",
+    bgHover: "hover:bg-[#00a89b]",
+    text: "text-[#01B8AA]",
+    border: "border-[#01B8AA]",
+    shadow: "shadow-[#01B8AA]/25",
+    shadowHover: "hover:shadow-[#01B8AA]/40",
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Background Elements */}
@@ -54,13 +64,13 @@ const Landing = () => {
         <div 
           className="absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage: `linear-gradient(rgba(132, 204, 22, 0.3) 1px, transparent 1px),
-                             linear-gradient(90deg, rgba(132, 204, 22, 0.3) 1px, transparent 1px)`,
+            backgroundImage: `linear-gradient(rgba(1, 184, 170, 0.3) 1px, transparent 1px),
+                             linear-gradient(90deg, rgba(1, 184, 170, 0.3) 1px, transparent 1px)`,
             backgroundSize: '60px 60px'
           }}
         />
-        {/* Lime glow at top */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-lime-500/10 rounded-full blur-[120px]" />
+        {/* Teal glow at top */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#01B8AA]/10 rounded-full blur-[120px]" />
       </div>
 
       <div className="relative z-10">
@@ -74,7 +84,7 @@ const Landing = () => {
             />
             <div className="hidden sm:block">
               <span className="text-xl md:text-2xl font-bold text-white">In-Sync</span>
-              <span className="text-xl md:text-2xl font-bold text-lime-400"> Field Force</span>
+              <span className="text-xl md:text-2xl font-bold text-[#01B8AA]"> Field Force</span>
             </div>
           </div>
           <Button 
@@ -89,15 +99,15 @@ const Landing = () => {
         {/* Hero Section */}
         <section className="px-6 md:px-12 py-16 md:py-24 max-w-7xl mx-auto text-center">
           {/* Trial Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-lime-500/10 border border-lime-500/30 mb-8">
-            <span className="w-2 h-2 rounded-full bg-lime-400 animate-pulse" />
-            <span className="text-lime-400 font-medium text-sm">14-Day Free Trial</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#01B8AA]/10 border border-[#01B8AA]/30 mb-8">
+            <span className="w-2 h-2 rounded-full bg-[#01B8AA] animate-pulse" />
+            <span className="text-[#01B8AA] font-medium text-sm">14-Day Free Trial</span>
           </div>
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6">
             Your Field.{" "}
-            <span className="text-lime-400">Your Control.</span>
+            <span className="text-[#01B8AA]">Your Control.</span>
           </h1>
 
           {/* Subheadline */}
@@ -109,7 +119,7 @@ const Landing = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <Button 
               onClick={() => navigate("/auth")}
-              className="bg-lime-500 hover:bg-lime-400 text-slate-950 font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-lime-500/25 hover:shadow-lime-500/40 transition-all"
+              className="bg-[#01B8AA] hover:bg-[#00a89b] text-slate-950 font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-[#01B8AA]/25 hover:shadow-[#01B8AA]/40 transition-all"
             >
               Start 14-Day Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -137,10 +147,10 @@ const Landing = () => {
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="group p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-lime-500/50 transition-all duration-300"
+                className="group p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-[#01B8AA]/50 transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-xl bg-lime-500/10 flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
-                  <feature.icon className="h-6 w-6 text-lime-400" />
+                <div className="w-12 h-12 rounded-xl bg-[#01B8AA]/10 flex items-center justify-center mb-4 group-hover:bg-[#01B8AA]/20 transition-colors">
+                  <feature.icon className="h-6 w-6 text-[#01B8AA]" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
                 <p className="text-slate-400">{feature.description}</p>
@@ -161,11 +171,11 @@ const Landing = () => {
           </div>
 
           <div className="max-w-md mx-auto">
-            <div className="p-8 rounded-3xl bg-gradient-to-b from-slate-900 to-slate-900/50 border border-lime-500/30 shadow-xl shadow-lime-500/5">
+            <div className="p-8 rounded-3xl bg-gradient-to-b from-slate-900 to-slate-900/50 border border-[#01B8AA]/30 shadow-xl shadow-[#01B8AA]/5">
               {/* Price */}
               <div className="text-center mb-8">
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl md:text-6xl font-black text-lime-400">₹99</span>
+                  <span className="text-5xl md:text-6xl font-black text-[#01B8AA]">₹99</span>
                   <span className="text-slate-400 text-lg">/user/month</span>
                 </div>
               </div>
@@ -174,8 +184,8 @@ const Landing = () => {
               <ul className="space-y-4 mb-8">
                 {pricingBenefits.map((benefit, index) => (
                   <li key={index} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-lime-500/20 flex items-center justify-center flex-shrink-0">
-                      <Check className="h-3 w-3 text-lime-400" />
+                    <div className="w-5 h-5 rounded-full bg-[#01B8AA]/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="h-3 w-3 text-[#01B8AA]" />
                     </div>
                     <span className="text-slate-300">{benefit}</span>
                   </li>
@@ -185,7 +195,7 @@ const Landing = () => {
               {/* CTA */}
               <Button 
                 onClick={() => navigate("/auth")}
-                className="w-full bg-lime-500 hover:bg-lime-400 text-slate-950 font-semibold py-6 text-lg rounded-xl shadow-lg shadow-lime-500/25 hover:shadow-lime-500/40 transition-all"
+                className="w-full bg-[#01B8AA] hover:bg-[#00a89b] text-slate-950 font-semibold py-6 text-lg rounded-xl shadow-lg shadow-[#01B8AA]/25 hover:shadow-[#01B8AA]/40 transition-all"
               >
                 Start 14-Day Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
