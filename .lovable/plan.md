@@ -1,144 +1,83 @@
 
-# Add Admin Edit and Delete Actions to Planning Overview
+# Add Back Navigation Buttons to Dashboard Pages
 
-## Overview
-Add edit and delete functionality to the Planning Overview page, allowing administrators to manage any agent's daily plan. This extends the existing read-only view with administrative capabilities.
+## Problem
+Currently, when navigating to pages like Visits, Leads, Planning, or Territory Map, there's no easy way to go back to the Dashboard. Users can only use the sidebar menu or bottom navigation bar to return home.
 
-## Current State
-- **Planning Overview** (`/dashboard/planning/overview`) displays all organization plans in a read-only table
-- **Team Planning** (`/dashboard/planning/team`) has edit (correct) functionality for managers
-- **Delete functionality** does not exist anywhere in the planning system
-- Admin roles are checked using `has_role` RPC calls for `admin`, `super_admin`, and `platform_admin`
+## Solution
+Add a back/home button to the header section of all main pages that allows quick navigation back to the Dashboard.
 
-## Changes Required
+## Pages to Update
 
-### 1. Create Delete Plan Mutation
-**File:** `src/hooks/useDailyPlansOffline.ts`
+| Page | File | Current Header | Change |
+|------|------|----------------|--------|
+| Visits | `src/pages/Visits.tsx` | Title only | Add back button |
+| Leads | `src/pages/Leads.tsx` | Title + org badge | Add back button |
+| Planning | `src/pages/Planning.tsx` | Title only | Add back button |
+| New Visit | `src/pages/NewVisit.tsx` | No header | Add header with back button |
+| Territory Map | `src/pages/TerritoryMap.tsx` | Filter controls only | Add back button |
+| Team Planning | `src/pages/TeamPlanning.tsx` | Title only | Add back button |
+| Planning Overview | `src/pages/PlanningOverview.tsx` | Title + filters | Add back button |
+| Performance Board | `src/pages/PerformanceBoard.tsx` | Title only | Add back button |
 
-Add a new `useDeletePlanOffline` hook that:
-- Deletes the plan from local IndexedDB
-- Adds a delete action to the sync queue
-- Attempts immediate sync to Supabase if online
-- Shows appropriate success/offline toast messages
+## Implementation Details
 
-### 2. Update Planning Overview Page
-**File:** `src/pages/PlanningOverview.tsx`
-
-Add the following functionality:
-- Import additional icons (Edit2, Trash2, Save, X) and components
-- Add admin role check state and useEffect
-- Add edit mode state management (editing plan ID, edit values)
-- Add delete confirmation dialog
-- Add "Actions" column to the table header
-- Add inline edit inputs for Prospects, Quotes, Policies when editing
-- Add action buttons (Edit, Delete, Save, Cancel) visible only for admins
-- Use the existing `useCorrectPlanOffline` for editing (same as TeamPlanning)
-- Use the new `useDeletePlanOffline` for deletion
-
-### 3. UI/UX Details
-
-**Edit Functionality:**
-- Click edit icon → row switches to inline input mode
-- Shows numeric inputs for Prospects, Quotes, Policies targets
-- Save and Cancel buttons appear
-- Uses the "correct" pattern to track who made changes
-
-**Delete Functionality:**
-- Click trash icon → confirmation dialog appears
-- Dialog shows plan details (agent name, date, targets)
-- Confirm deletes the plan; Cancel closes dialog
-- Immediate deletion from local store + queued sync
-
----
-
-## Technical Implementation
-
-### New Hook: useDeletePlanOffline
+### Pattern to Use
+Follow the existing pattern from `LeadDetail.tsx` and `VisitDetail.tsx`:
 
 ```text
-Location: src/hooks/useDailyPlansOffline.ts
-
-Function signature:
-- useDeletePlanOffline()
-- Returns mutation that accepts { id: string, odataId?: string }
-
-Logic:
-1. Delete from IndexedDB (db.dailyPlans.delete)
-2. Add to sync queue with action: 'delete'
-3. If online and has odataId, call supabase.from('daily_plans').delete()
-4. If sync succeeds, remove from sync queue
-5. Show toast message
+<Button variant="ghost" onClick={() => navigate('/dashboard')}>
+  <ArrowLeft className="mr-2 h-4 w-4" />
+  Dashboard
+</Button>
 ```
 
-### Update syncPendingDailyPlans
+### For Each Page
 
-```text
-Location: src/hooks/useDailyPlansOffline.ts
+**1. Visits.tsx** (lines 83-91)
+- Add ArrowLeft icon import
+- Add back button before the "Visits" title
 
-Add handling for delete action:
-- Check if item.action === 'delete'
-- Call supabase.from('daily_plans').delete().eq('id', odataId)
-- Remove from sync queue on success
-```
+**2. Leads.tsx** (lines 72-99)
+- Add ArrowLeft icon import  
+- Add back button in the header row
 
-### Planning Overview Changes
+**3. Planning.tsx** (lines 246-263 for manager view, lines 500+ for agent view)
+- Add ArrowLeft icon import
+- Add back button in both manager and agent views
 
-```text
-Location: src/pages/PlanningOverview.tsx
+**4. NewVisit.tsx**
+- Add a header section with back button → `/dashboard/visits`
+- Currently has no header at all
 
-State additions:
-- isAdmin: boolean (check user roles on mount)
-- editingPlanId: string | null
-- editValues: { prospects_target, quotes_target, policies_target }
-- deleteDialogOpen: boolean
-- planToDelete: DailyPlanLocal | null
+**5. TerritoryMap.tsx**
+- Add back button at top of page
+- Navigate to `/dashboard`
 
-New imports:
-- Edit2, Trash2, Save, X from lucide-react
-- Input from @/components/ui/input
-- AlertDialog components from @/components/ui/alert-dialog
-- useCorrectPlanOffline, useDeletePlanOffline from hooks
+**6. TeamPlanning.tsx**
+- Add back button to header
+- Navigate to `/dashboard/planning`
 
-Table modifications:
-- Add "Actions" column header (only visible if isAdmin)
-- For each plan row, add action buttons in Actions cell
-- When editing, show Input components instead of static values
-- Show Edit/Delete buttons or Save/Cancel buttons based on editingPlanId
-```
+**7. PlanningOverview.tsx**
+- Add back button to header
+- Navigate to `/dashboard/planning`
 
----
+**8. PerformanceBoard.tsx**
+- Add back button to header
+- Navigate to `/dashboard`
+
+## Visual Design
+- Use `variant="ghost"` for subtle appearance
+- Use `size="sm"` for compact size
+- Include ArrowLeft icon with label "Dashboard" or just icon on mobile
+- Position at the start of the header row
 
 ## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/hooks/useDailyPlansOffline.ts` | Add `useDeletePlanOffline` hook, update `syncPendingDailyPlans` |
-| `src/pages/PlanningOverview.tsx` | Add admin check, edit/delete UI, confirmation dialog |
-
----
-
-## Security Considerations
-- Admin role check happens client-side for UI visibility
-- Backend RLS policies on `daily_plans` table should already enforce proper access
-- The correct/update mutations check user authentication
-- Delete operations will fail server-side if RLS denies access
-
----
-
-## User Flow
-
-### Editing a Plan
-1. Admin navigates to Planning Overview
-2. Clicks edit icon on a plan row
-3. Inline inputs appear for targets
-4. Admin modifies values and clicks Save
-5. Plan is updated locally and synced (or queued if offline)
-6. Row returns to display mode with updated values
-
-### Deleting a Plan
-1. Admin clicks trash icon on a plan row
-2. Confirmation dialog appears showing plan details
-3. Admin clicks "Delete" to confirm
-4. Plan is removed from local store
-5. Sync queue item created for server deletion
-6. Table updates to remove the row
+1. `src/pages/Visits.tsx`
+2. `src/pages/Leads.tsx`
+3. `src/pages/Planning.tsx`
+4. `src/pages/NewVisit.tsx`
+5. `src/pages/TerritoryMap.tsx`
+6. `src/pages/TeamPlanning.tsx`
+7. `src/pages/PlanningOverview.tsx`
+8. `src/pages/PerformanceBoard.tsx`
