@@ -1,183 +1,117 @@
 
-# New Landing Page - Complete Rebuild
 
-## Overview
-Create a brand new one-page landing page from scratch that showcases In-Sync Field Force with all specified features, pricing, and trial information.
+# Fix 404 Errors - Navigation Route Prefix Issue
+
+## Problem Identified
+
+The 404 errors are **not caused by edge functions** - those are deployed and working correctly. The issue is that **all navigation routes are missing the required `/dashboard` prefix**.
+
+When you navigate within the app (clicking buttons, links, or programmatic navigation), the routes used don't include `/dashboard`, causing the 404 page to appear.
+
+**Example of the issue:**
+- Clicking "Start Visit" navigates to `/visits/new` 
+- But the correct route is `/dashboard/visits/new`
+- Since `/visits/new` doesn't exist, you see a 404 error
 
 ---
 
-## Brand Elements to Include
-- **Logo**: `insync-logo-color.png`
-- **Colors**: Slate-950 (dark background), Lime-400 (accent)
-- **Pricing**: ₹99/user/month
-- **Trial**: 14-day free trial
+## Files That Need Updates
+
+### 1. Navigation Components
+
+| File | Issue |
+|------|-------|
+| `src/components/AppSidebar.tsx` | Sidebar navigation paths missing `/dashboard` prefix |
+| `src/components/Layout.tsx` | Bottom navigation and dropdown links missing prefix |
+
+### 2. Page Components with Navigation
+
+| File | Lines Affected | Navigation Calls |
+|------|----------------|------------------|
+| `src/pages/Dashboard.tsx` | Lines 19, 26, 134 | "Start Visit", "View Visits" buttons |
+| `src/pages/Leads.tsx` | Line 154 | Lead card clicks |
+| `src/pages/LeadDetail.tsx` | Lines 54, 78, 97 | Back button, "Start Visit" button |
+| `src/pages/Visits.tsx` | Lines 88, 124, 135 | "New Visit" button, visit card clicks |
+| `src/pages/VisitDetail.tsx` | Lines 73, 102, 126 | Success redirects, back buttons |
+| `src/pages/NewVisit.tsx` | Lines 176, 310 | Success redirect, cancel button |
 
 ---
 
-## Page Structure
+## Solution
 
+Add `/dashboard` prefix to all navigation paths throughout the application.
+
+### Changes Summary
+
+**AppSidebar.tsx** - Update navItems paths:
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│  NAVIGATION BAR                                             │
-│  [Logo + In-Sync Field Force]              [Sign In Button] │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  HERO SECTION                                               │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  "14-Day Free Trial" Badge                          │   │
-│  │                                                     │   │
-│  │  Your Field. Your Control.                         │   │
-│  │                                                     │   │
-│  │  Track visits, boost performance, close more       │   │
-│  │  policies with real-time field sales management.   │   │
-│  │                                                     │   │
-│  │  [Start 14-Day Free Trial]   [See How It Works]    │   │
-│  │                                                     │   │
-│  │  ₹99/user/month after trial · No credit card       │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  FEATURES SECTION (6 Feature Cards)                        │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ GPS Visit    │  │ Performance  │  │ Team         │     │
-│  │ Tracking     │  │ Analytics    │  │ Management   │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │ Daily        │  │ Real-Time    │  │ Secure &     │     │
-│  │ Planning     │  │ Sync         │  │ Reliable     │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  PRICING SECTION                                            │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                                                     │   │
-│  │  Simple, Transparent Pricing                        │   │
-│  │                                                     │   │
-│  │  ┌───────────────────────────────────────┐         │   │
-│  │  │  ₹99 /user /month                     │         │   │
-│  │  │                                       │         │   │
-│  │  │  ✓ 14-day free trial                  │         │   │
-│  │  │  ✓ All features included              │         │   │
-│  │  │  ✓ Unlimited team members             │         │   │
-│  │  │  ✓ Cancel anytime                     │         │   │
-│  │  │                                       │         │   │
-│  │  │  [Start 14-Day Free Trial →]          │         │   │
-│  │  └───────────────────────────────────────┘         │   │
-│  │                                                     │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│  FOOTER                                                     │
-│  [Logo] © 2025 In-Sync Field Force | Privacy | Terms        │
-└─────────────────────────────────────────────────────────────┘
+Before: { path: '/' }          → After: { path: '/dashboard' }
+Before: { path: '/planning' }  → After: { path: '/dashboard/planning' }
+Before: { path: '/users' }     → After: { path: '/dashboard/users' }
+... (all paths)
+```
+
+**Layout.tsx** - Update bottom nav and dropdown:
+```text
+Before: { path: '/' }          → After: { path: '/dashboard' }
+Before: { path: '/leads' }     → After: { path: '/dashboard/leads' }
+Before: { path: '/visits' }    → After: { path: '/dashboard/visits' }
+Before: <Link to="/sync-monitoring">  → After: <Link to="/dashboard/sync-monitoring">
+```
+
+**Dashboard.tsx** - Update quick actions:
+```text
+Before: navigate('/visits/new')  → After: navigate('/dashboard/visits/new')
+Before: navigate('/visits')      → After: navigate('/dashboard/visits')
+```
+
+**Leads.tsx** - Update card click:
+```text
+Before: navigate(`/leads/${lead.id}`)  → After: navigate(`/dashboard/leads/${lead.id}`)
+```
+
+**LeadDetail.tsx** - Update navigation:
+```text
+Before: navigate(`/visits/new?leadId=${id}`)  → After: navigate(`/dashboard/visits/new?leadId=${id}`)
+Before: navigate('/leads')                     → After: navigate('/dashboard/leads')
+```
+
+**Visits.tsx** - Update navigation:
+```text
+Before: navigate('/visits/new')           → After: navigate('/dashboard/visits/new')
+Before: navigate(`/visits/${visit.id}`)   → After: navigate(`/dashboard/visits/${visit.id}`)
+```
+
+**VisitDetail.tsx** - Update redirects:
+```text
+Before: navigate('/visits')  → After: navigate('/dashboard/visits')
+```
+
+**NewVisit.tsx** - Update redirects:
+```text
+Before: navigate(`/visits/${visit.id}`)  → After: navigate(`/dashboard/visits/${visit.id}`)
+Before: navigate('/visits')              → After: navigate('/dashboard/visits')
 ```
 
 ---
 
-## Technical Implementation
+## Implementation Order
 
-### File Changes
-| File | Action |
-|------|--------|
-| `src/pages/Landing.tsx` | Replace entirely with new design |
-
-### Design Specifications
-
-**Background**
-- Dark gradient: `slate-950 → slate-900 → slate-950`
-- Subtle grid pattern overlay
-- Lime accent glow at top
-
-**Navigation**
-- Logo (h-14 mobile, h-20 desktop)
-- Brand name with lime accent
-- Ghost-style Sign In button
-
-**Hero Section**
-- Badge: "14-Day Free Trial" with lime accent
-- Headline: Large, bold, lime-accented
-- Subheadline: Slate-400 text
-- Two CTA buttons (primary lime, secondary outline)
-- Trust text with pricing teaser
-
-**Features Grid**
-- 6 cards in 2x3 (mobile) or 3x2 (desktop) layout
-- Each card: icon, title, description
-- Hover effects with lime border glow
-
-**Pricing Section**
-- Centered card with lime border accent
-- Large ₹99 price display
-- Checkmark list of benefits
-- CTA button
-
-**Footer**
-- Logo, copyright, navigation links
-
-### The 6 Features
-1. **GPS Visit Tracking** - MapPin icon
-2. **Performance Analytics** - BarChart3 icon
-3. **Team Management** - Users icon
-4. **Daily Planning** - Target icon
-5. **Real-Time Sync** - Clock icon
-6. **Secure & Reliable** - Shield icon
+1. **Update AppSidebar.tsx** - Fix main sidebar navigation
+2. **Update Layout.tsx** - Fix bottom nav bar and dropdown menu
+3. **Update Dashboard.tsx** - Fix quick action buttons
+4. **Update Leads.tsx** - Fix lead card navigation
+5. **Update LeadDetail.tsx** - Fix back/action buttons
+6. **Update Visits.tsx** - Fix visit navigation
+7. **Update VisitDetail.tsx** - Fix success redirects
+8. **Update NewVisit.tsx** - Fix success/cancel navigation
 
 ---
 
-## Code Structure
+## Technical Notes
 
-The new component will be structured as:
+- All routes within the protected area are nested under `/dashboard` in `src/App.tsx`
+- The `isActive` function in Layout.tsx also needs updating to check paths correctly
+- This is a systematic find-and-replace across 8 files
+- No database or edge function changes required
 
-```tsx
-const Landing = () => {
-  const features = [...]; // 6 features array
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950...">
-      {/* Background elements */}
-      
-      <div className="relative z-10">
-        {/* Navigation */}
-        <nav>...</nav>
-        
-        {/* Hero Section */}
-        <section>...</section>
-        
-        {/* Features Section */}
-        <section>...</section>
-        
-        {/* Pricing Section */}
-        <section>...</section>
-        
-        {/* Footer */}
-        <footer>...</footer>
-      </div>
-    </div>
-  );
-};
-```
-
----
-
-## Key Differences from Current Page
-
-| Aspect | Current | New |
-|--------|---------|-----|
-| Trial messaging | "Start Free Trial" | "Start 14-Day Free Trial" |
-| Pricing display | Not shown prominently | Dedicated section with ₹99/user/month |
-| Hero trust text | Generic | Includes pricing + trial duration |
-| Pricing section | None | Full pricing card with benefits |
-| Overall focus | Feature-heavy | Balanced features + pricing |
-
----
-
-## Summary
-This creates a fresh, focused one-page landing that clearly communicates:
-- The 14-day free trial offer
-- ₹99/user/month pricing
-- All 6 key features
-- Clear call-to-action throughout
-
-The design maintains the dark slate-950/lime-400 brand aesthetic while presenting the information in a cleaner, more sales-focused layout.
