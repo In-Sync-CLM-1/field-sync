@@ -1,117 +1,144 @@
 
+# Add Admin Edit and Delete Actions to Planning Overview
 
-# Fix 404 Errors - Navigation Route Prefix Issue
+## Overview
+Add edit and delete functionality to the Planning Overview page, allowing administrators to manage any agent's daily plan. This extends the existing read-only view with administrative capabilities.
 
-## Problem Identified
+## Current State
+- **Planning Overview** (`/dashboard/planning/overview`) displays all organization plans in a read-only table
+- **Team Planning** (`/dashboard/planning/team`) has edit (correct) functionality for managers
+- **Delete functionality** does not exist anywhere in the planning system
+- Admin roles are checked using `has_role` RPC calls for `admin`, `super_admin`, and `platform_admin`
 
-The 404 errors are **not caused by edge functions** - those are deployed and working correctly. The issue is that **all navigation routes are missing the required `/dashboard` prefix**.
+## Changes Required
 
-When you navigate within the app (clicking buttons, links, or programmatic navigation), the routes used don't include `/dashboard`, causing the 404 page to appear.
+### 1. Create Delete Plan Mutation
+**File:** `src/hooks/useDailyPlansOffline.ts`
 
-**Example of the issue:**
-- Clicking "Start Visit" navigates to `/visits/new` 
-- But the correct route is `/dashboard/visits/new`
-- Since `/visits/new` doesn't exist, you see a 404 error
+Add a new `useDeletePlanOffline` hook that:
+- Deletes the plan from local IndexedDB
+- Adds a delete action to the sync queue
+- Attempts immediate sync to Supabase if online
+- Shows appropriate success/offline toast messages
 
----
+### 2. Update Planning Overview Page
+**File:** `src/pages/PlanningOverview.tsx`
 
-## Files That Need Updates
+Add the following functionality:
+- Import additional icons (Edit2, Trash2, Save, X) and components
+- Add admin role check state and useEffect
+- Add edit mode state management (editing plan ID, edit values)
+- Add delete confirmation dialog
+- Add "Actions" column to the table header
+- Add inline edit inputs for Prospects, Quotes, Policies when editing
+- Add action buttons (Edit, Delete, Save, Cancel) visible only for admins
+- Use the existing `useCorrectPlanOffline` for editing (same as TeamPlanning)
+- Use the new `useDeletePlanOffline` for deletion
 
-### 1. Navigation Components
+### 3. UI/UX Details
 
-| File | Issue |
-|------|-------|
-| `src/components/AppSidebar.tsx` | Sidebar navigation paths missing `/dashboard` prefix |
-| `src/components/Layout.tsx` | Bottom navigation and dropdown links missing prefix |
+**Edit Functionality:**
+- Click edit icon → row switches to inline input mode
+- Shows numeric inputs for Prospects, Quotes, Policies targets
+- Save and Cancel buttons appear
+- Uses the "correct" pattern to track who made changes
 
-### 2. Page Components with Navigation
-
-| File | Lines Affected | Navigation Calls |
-|------|----------------|------------------|
-| `src/pages/Dashboard.tsx` | Lines 19, 26, 134 | "Start Visit", "View Visits" buttons |
-| `src/pages/Leads.tsx` | Line 154 | Lead card clicks |
-| `src/pages/LeadDetail.tsx` | Lines 54, 78, 97 | Back button, "Start Visit" button |
-| `src/pages/Visits.tsx` | Lines 88, 124, 135 | "New Visit" button, visit card clicks |
-| `src/pages/VisitDetail.tsx` | Lines 73, 102, 126 | Success redirects, back buttons |
-| `src/pages/NewVisit.tsx` | Lines 176, 310 | Success redirect, cancel button |
-
----
-
-## Solution
-
-Add `/dashboard` prefix to all navigation paths throughout the application.
-
-### Changes Summary
-
-**AppSidebar.tsx** - Update navItems paths:
-```text
-Before: { path: '/' }          → After: { path: '/dashboard' }
-Before: { path: '/planning' }  → After: { path: '/dashboard/planning' }
-Before: { path: '/users' }     → After: { path: '/dashboard/users' }
-... (all paths)
-```
-
-**Layout.tsx** - Update bottom nav and dropdown:
-```text
-Before: { path: '/' }          → After: { path: '/dashboard' }
-Before: { path: '/leads' }     → After: { path: '/dashboard/leads' }
-Before: { path: '/visits' }    → After: { path: '/dashboard/visits' }
-Before: <Link to="/sync-monitoring">  → After: <Link to="/dashboard/sync-monitoring">
-```
-
-**Dashboard.tsx** - Update quick actions:
-```text
-Before: navigate('/visits/new')  → After: navigate('/dashboard/visits/new')
-Before: navigate('/visits')      → After: navigate('/dashboard/visits')
-```
-
-**Leads.tsx** - Update card click:
-```text
-Before: navigate(`/leads/${lead.id}`)  → After: navigate(`/dashboard/leads/${lead.id}`)
-```
-
-**LeadDetail.tsx** - Update navigation:
-```text
-Before: navigate(`/visits/new?leadId=${id}`)  → After: navigate(`/dashboard/visits/new?leadId=${id}`)
-Before: navigate('/leads')                     → After: navigate('/dashboard/leads')
-```
-
-**Visits.tsx** - Update navigation:
-```text
-Before: navigate('/visits/new')           → After: navigate('/dashboard/visits/new')
-Before: navigate(`/visits/${visit.id}`)   → After: navigate(`/dashboard/visits/${visit.id}`)
-```
-
-**VisitDetail.tsx** - Update redirects:
-```text
-Before: navigate('/visits')  → After: navigate('/dashboard/visits')
-```
-
-**NewVisit.tsx** - Update redirects:
-```text
-Before: navigate(`/visits/${visit.id}`)  → After: navigate(`/dashboard/visits/${visit.id}`)
-Before: navigate('/visits')              → After: navigate('/dashboard/visits')
-```
+**Delete Functionality:**
+- Click trash icon → confirmation dialog appears
+- Dialog shows plan details (agent name, date, targets)
+- Confirm deletes the plan; Cancel closes dialog
+- Immediate deletion from local store + queued sync
 
 ---
 
-## Implementation Order
+## Technical Implementation
 
-1. **Update AppSidebar.tsx** - Fix main sidebar navigation
-2. **Update Layout.tsx** - Fix bottom nav bar and dropdown menu
-3. **Update Dashboard.tsx** - Fix quick action buttons
-4. **Update Leads.tsx** - Fix lead card navigation
-5. **Update LeadDetail.tsx** - Fix back/action buttons
-6. **Update Visits.tsx** - Fix visit navigation
-7. **Update VisitDetail.tsx** - Fix success redirects
-8. **Update NewVisit.tsx** - Fix success/cancel navigation
+### New Hook: useDeletePlanOffline
+
+```text
+Location: src/hooks/useDailyPlansOffline.ts
+
+Function signature:
+- useDeletePlanOffline()
+- Returns mutation that accepts { id: string, odataId?: string }
+
+Logic:
+1. Delete from IndexedDB (db.dailyPlans.delete)
+2. Add to sync queue with action: 'delete'
+3. If online and has odataId, call supabase.from('daily_plans').delete()
+4. If sync succeeds, remove from sync queue
+5. Show toast message
+```
+
+### Update syncPendingDailyPlans
+
+```text
+Location: src/hooks/useDailyPlansOffline.ts
+
+Add handling for delete action:
+- Check if item.action === 'delete'
+- Call supabase.from('daily_plans').delete().eq('id', odataId)
+- Remove from sync queue on success
+```
+
+### Planning Overview Changes
+
+```text
+Location: src/pages/PlanningOverview.tsx
+
+State additions:
+- isAdmin: boolean (check user roles on mount)
+- editingPlanId: string | null
+- editValues: { prospects_target, quotes_target, policies_target }
+- deleteDialogOpen: boolean
+- planToDelete: DailyPlanLocal | null
+
+New imports:
+- Edit2, Trash2, Save, X from lucide-react
+- Input from @/components/ui/input
+- AlertDialog components from @/components/ui/alert-dialog
+- useCorrectPlanOffline, useDeletePlanOffline from hooks
+
+Table modifications:
+- Add "Actions" column header (only visible if isAdmin)
+- For each plan row, add action buttons in Actions cell
+- When editing, show Input components instead of static values
+- Show Edit/Delete buttons or Save/Cancel buttons based on editingPlanId
+```
 
 ---
 
-## Technical Notes
+## Files to Modify
 
-- All routes within the protected area are nested under `/dashboard` in `src/App.tsx`
-- The `isActive` function in Layout.tsx also needs updating to check paths correctly
-- This is a systematic find-and-replace across 8 files
-- No database or edge function changes required
+| File | Changes |
+|------|---------|
+| `src/hooks/useDailyPlansOffline.ts` | Add `useDeletePlanOffline` hook, update `syncPendingDailyPlans` |
+| `src/pages/PlanningOverview.tsx` | Add admin check, edit/delete UI, confirmation dialog |
 
+---
+
+## Security Considerations
+- Admin role check happens client-side for UI visibility
+- Backend RLS policies on `daily_plans` table should already enforce proper access
+- The correct/update mutations check user authentication
+- Delete operations will fail server-side if RLS denies access
+
+---
+
+## User Flow
+
+### Editing a Plan
+1. Admin navigates to Planning Overview
+2. Clicks edit icon on a plan row
+3. Inline inputs appear for targets
+4. Admin modifies values and clicks Save
+5. Plan is updated locally and synced (or queued if offline)
+6. Row returns to display mode with updated values
+
+### Deleting a Plan
+1. Admin clicks trash icon on a plan row
+2. Confirmation dialog appears showing plan details
+3. Admin clicks "Delete" to confirm
+4. Plan is removed from local store
+5. Sync queue item created for server deletion
+6. Table updates to remove the row
