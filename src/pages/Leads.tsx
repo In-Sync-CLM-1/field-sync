@@ -60,48 +60,51 @@ export default function Leads() {
 
   const getStatusColor = (status?: string) => {
     switch (status) {
-      case 'policy_issued': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
-      case 'quoted': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
-      case 'lead': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
-      case 'proposal_submitted': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
+      case 'policy_issued': return 'status-badge-success';
+      case 'quoted': return 'status-badge-info';
+      case 'lead': return 'status-badge-primary';
+      case 'proposal_submitted': return 'status-badge-warning';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Prospects</h1>
-            <div className="flex items-center gap-2">
-              {currentOrganization && (
-                <Badge variant="outline" className="gap-1 text-xs">
-                  <Building2 className="h-3 w-3" />
-                  {currentOrganization.name}
-                </Badge>
-              )}
-              <span className="text-xs text-muted-foreground">
-                {leads.length} prospects
-              </span>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3 page-gradient min-h-screen">
+      {/* Hero Header */}
+      <div className="hero-gradient">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1 hover:bg-primary/10">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight gradient-text-primary">Prospects</h1>
+              <div className="flex items-center gap-2">
+                {currentOrganization && (
+                  <Badge className="status-badge-primary gap-1 text-xs">
+                    <Building2 className="h-3 w-3" />
+                    {currentOrganization.name}
+                  </Badge>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {leads.length} prospects
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <LeadsUpload />
-          <Button 
-            onClick={syncFromDatabase} 
-            disabled={syncing || !currentOrganization}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing' : 'Sync'}
-          </Button>
+          <div className="flex gap-2">
+            <LeadsUpload />
+            <Button 
+              onClick={syncFromDatabase} 
+              disabled={syncing || !currentOrganization}
+              className="btn-outline-info"
+              size="sm"
+            >
+              <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Syncing' : 'Sync'}
+            </Button>
+          </div>
         </div>
       </div>
 

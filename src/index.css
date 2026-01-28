@@ -588,3 +588,254 @@
     transform: translate(-15px, 5px) scale(1.05);
   }
 }
+
+/* ============================================
+   UI Enhancement Utilities
+   ============================================ */
+
+@layer components {
+  /* Page Gradient Backgrounds */
+  .page-gradient {
+    @apply relative;
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+  }
+
+  .page-gradient::before {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    background: radial-gradient(ellipse at top right, hsl(var(--primary) / 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom left, hsl(var(--accent) / 0.05) 0%, transparent 50%);
+  }
+
+  /* Header Gradient Bar */
+  .header-gradient-bar {
+    @apply absolute top-0 left-0 right-0 h-1;
+    background: linear-gradient(90deg, 
+      hsl(var(--primary)) 0%, 
+      hsl(var(--neon-pink)) 25%, 
+      hsl(var(--neon-cyan)) 50%, 
+      hsl(var(--accent)) 75%, 
+      hsl(var(--primary)) 100%
+    );
+    background-size: 200% 100%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  /* Icon Circle Containers */
+  .icon-circle {
+    @apply flex items-center justify-center rounded-full p-2 transition-all duration-200;
+  }
+
+  .icon-circle-primary {
+    @apply bg-primary/15 text-primary;
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.2);
+  }
+
+  .icon-circle-accent {
+    @apply bg-accent/15 text-accent;
+    box-shadow: 0 0 15px hsl(var(--accent) / 0.2);
+  }
+
+  .icon-circle-info {
+    @apply bg-info/15 text-info;
+    box-shadow: 0 0 15px hsl(var(--info) / 0.2);
+  }
+
+  .icon-circle-warning {
+    @apply bg-warning/15 text-warning;
+    box-shadow: 0 0 15px hsl(var(--warning) / 0.2);
+  }
+
+  .icon-circle-success {
+    @apply bg-success/15 text-success;
+    box-shadow: 0 0 15px hsl(var(--success) / 0.2);
+  }
+
+  .icon-circle-destructive {
+    @apply bg-destructive/15 text-destructive;
+    box-shadow: 0 0 15px hsl(var(--destructive) / 0.2);
+  }
+
+  /* Card Accent Colors */
+  .card-accent-primary {
+    @apply border-l-4 border-l-primary;
+  }
+
+  .card-accent-accent {
+    @apply border-l-4 border-l-accent;
+  }
+
+  .card-accent-info {
+    @apply border-l-4 border-l-info;
+  }
+
+  .card-accent-warning {
+    @apply border-l-4 border-l-warning;
+  }
+
+  .card-accent-success {
+    @apply border-l-4 border-l-success;
+  }
+
+  /* Gradient Text */
+  .gradient-text-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-accent {
+    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--neon-cyan)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Enhanced Status Badges */
+  .status-badge-success {
+    @apply bg-success/15 text-success border border-success/30;
+  }
+
+  .status-badge-warning {
+    @apply bg-warning/15 text-warning border border-warning/30;
+  }
+
+  .status-badge-info {
+    @apply bg-info/15 text-info border border-info/30;
+  }
+
+  .status-badge-primary {
+    @apply bg-primary/15 text-primary border border-primary/30;
+  }
+
+  /* Gradient Progress Bar */
+  .progress-gradient {
+    @apply relative overflow-hidden;
+  }
+
+  .progress-gradient::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  }
+
+  /* Elevated Card */
+  .card-elevated {
+    @apply shadow-lg;
+    box-shadow: var(--shadow-lg), 0 0 0 1px hsl(var(--border) / 0.5);
+  }
+
+  .card-elevated:hover {
+    @apply shadow-xl;
+    box-shadow: var(--shadow-xl), 0 0 0 1px hsl(var(--primary) / 0.2);
+  }
+
+  /* Glass Card Enhanced */
+  .card-glass {
+    @apply bg-card/80 backdrop-blur-md border-border/30;
+    box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.05),
+                0 4px 12px hsl(var(--primary) / 0.08);
+  }
+
+  /* Quick Action Button Styles */
+  .btn-gradient-primary {
+    @apply relative overflow-hidden transition-all duration-200;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%);
+  }
+
+  .btn-gradient-primary:hover {
+    box-shadow: 0 4px 20px hsl(var(--primary) / 0.4);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline-accent {
+    @apply border-2 border-accent/50 text-accent hover:bg-accent/10 hover:border-accent transition-all duration-200;
+  }
+
+  .btn-outline-info {
+    @apply border-2 border-info/50 text-info hover:bg-info/10 hover:border-info transition-all duration-200;
+  }
+
+  .btn-outline-warning {
+    @apply border-2 border-warning/50 text-warning hover:bg-warning/10 hover:border-warning transition-all duration-200;
+  }
+
+  /* Rank Badges */
+  .rank-gold {
+    background: linear-gradient(135deg, #fde047 0%, #eab308 50%, #ca8a04 100%);
+    @apply text-yellow-900;
+    box-shadow: 0 2px 8px hsl(43 96% 56% / 0.4);
+  }
+
+  .rank-silver {
+    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 50%, #64748b 100%);
+    @apply text-slate-900;
+    box-shadow: 0 2px 8px hsl(215 20% 65% / 0.4);
+  }
+
+  .rank-bronze {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 50%, #b45309 100%);
+    @apply text-amber-900;
+    box-shadow: 0 2px 8px hsl(43 96% 56% / 0.3);
+  }
+
+  /* Welcome Hero Section */
+  .hero-gradient {
+    @apply relative overflow-hidden rounded-xl p-4;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--neon-pink) / 0.05) 50%, hsl(var(--accent) / 0.1) 100%);
+    border: 1px solid hsl(var(--primary) / 0.2);
+  }
+
+  .hero-gradient::before {
+    content: '';
+    @apply absolute -top-1/2 -right-1/2 w-full h-full;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.1) 0%, transparent 70%);
+    animation: float 8s ease-in-out infinite;
+  }
+
+  /* Metric Card Enhancements */
+  .metric-card-primary {
+    @apply relative overflow-hidden;
+    border-top: 3px solid hsl(var(--primary));
+  }
+
+  .metric-card-primary::before {
+    content: '';
+    @apply absolute top-0 right-0 w-20 h-20 opacity-10;
+    background: radial-gradient(circle at top right, hsl(var(--primary)) 0%, transparent 70%);
+  }
+
+  .metric-card-info {
+    @apply relative overflow-hidden;
+    border-top: 3px solid hsl(var(--info));
+  }
+
+  .metric-card-info::before {
+    content: '';
+    @apply absolute top-0 right-0 w-20 h-20 opacity-10;
+    background: radial-gradient(circle at top right, hsl(var(--info)) 0%, transparent 70%);
+  }
+
+  .metric-card-warning {
+    @apply relative overflow-hidden;
+    border-top: 3px solid hsl(var(--warning));
+  }
+
+  .metric-card-warning::before {
+    content: '';
+    @apply absolute top-0 right-0 w-20 h-20 opacity-10;
+    background: radial-gradient(circle at top right, hsl(var(--warning)) 0%, transparent 70%);
+  }
+
+  .metric-card-accent {
+    @apply relative overflow-hidden;
+    border-top: 3px solid hsl(var(--accent));
+  }
+
+  .metric-card-accent::before {
+    content: '';
+    @apply absolute top-0 right-0 w-20 h-20 opacity-10;
+    background: radial-gradient(circle at top right, hsl(var(--accent)) 0%, transparent 70%);
+  }
+}
