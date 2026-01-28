@@ -41,7 +41,7 @@ export default function Visits() {
   const getStatusBadge = (visit: any) => {
     const isCompleted = !!visit.check_out_time;
     return (
-      <Badge variant={isCompleted ? 'default' : 'secondary'}>
+      <Badge className={isCompleted ? 'status-badge-success' : 'status-badge-warning'}>
         {isCompleted ? 'COMPLETED' : 'IN PROGRESS'}
       </Badge>
     );
@@ -79,21 +79,24 @@ export default function Visits() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </Button>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Visits</h1>
-            <p className="text-sm text-muted-foreground">Manage field visits</p>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 page-gradient min-h-screen">
+      {/* Hero Header */}
+      <div className="hero-gradient mb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1 hover:bg-primary/10">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight gradient-text-primary">Visits</h1>
+              <p className="text-xs text-muted-foreground">Manage field visits</p>
+            </div>
           </div>
+          <Button size="icon" onClick={() => navigate('/dashboard/visits/new')} className="btn-gradient-primary text-primary-foreground">
+            <Plus className="w-4 h-4" />
+          </Button>
         </div>
-        <Button size="icon" onClick={() => navigate('/dashboard/visits/new')}>
-          <Plus className="w-4 h-4" />
-        </Button>
       </div>
 
       <div className="flex gap-2 mb-3">

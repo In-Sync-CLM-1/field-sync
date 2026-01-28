@@ -247,24 +247,28 @@ export default function Planning() {
   // Render Manager View
   if (isManager && !isLoadingManager) {
     return (
-      <div className="p-4 space-y-3">
-        {/* Manager Header */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </Button>
-            <Users className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-bold">Branch Planning</h1>
-          </div>
-          
-          <div className="flex items-center gap-1">
-            {!isOnline && (
-              <Badge variant="outline" className="text-xs h-5 bg-muted text-muted-foreground">
-                <CloudOff className="h-3 w-3 mr-1" />Offline
-              </Badge>
-            )}
+      <div className="p-4 space-y-4 page-gradient min-h-screen">
+        {/* Manager Header - Enhanced */}
+        <div className="hero-gradient">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1 hover:bg-primary/10">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Button>
+              <div className="icon-circle icon-circle-primary h-8 w-8">
+                <Users className="h-4 w-4" />
+              </div>
+              <h1 className="text-xl font-bold gradient-text-primary">Branch Planning</h1>
+            </div>
+            
+            <div className="flex items-center gap-1">
+              {!isOnline && (
+                <Badge className="status-badge-warning text-xs h-5">
+                  <CloudOff className="h-3 w-3 mr-1" />Offline
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
@@ -475,22 +479,30 @@ export default function Planning() {
 
   // Regular Agent View (existing code)
   return (
-    <div className="p-4 space-y-3">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">Daily Planning</h1>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          {plan && getStatusBadge(plan.status)}
-          {plan && getSyncBadge(plan.syncStatus)}
-          {!isOnline && (
-            <Badge variant="outline" className="text-xs h-5 bg-muted text-muted-foreground">
-              <CloudOff className="h-3 w-3 mr-1" />Offline
-            </Badge>
-          )}
+    <div className="p-4 space-y-4 page-gradient min-h-screen">
+      {/* Enhanced Header */}
+      <div className="hero-gradient">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1 hover:bg-primary/10">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+            <div className="icon-circle icon-circle-primary h-8 w-8">
+              <Target className="h-4 w-4" />
+            </div>
+            <h1 className="text-xl font-bold gradient-text-primary">Daily Planning</h1>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            {plan && getStatusBadge(plan.status)}
+            {plan && getSyncBadge(plan.syncStatus)}
+            {!isOnline && (
+              <Badge className="status-badge-warning text-xs h-5">
+                <CloudOff className="h-3 w-3 mr-1" />Offline
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
