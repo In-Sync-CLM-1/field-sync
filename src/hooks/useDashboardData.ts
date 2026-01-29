@@ -2,6 +2,29 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { startOfToday, startOfWeek, endOfWeek, subWeeks, subDays, format, differenceInMinutes } from 'date-fns';
+import { useState } from 'react';
+
+export type VisitFilter = 'today' | 'this_week' | 'pending' | 'completed';
+
+export interface ScheduledVisit {
+  customerId: string;
+  customerName: string;
+  purpose?: string;
+  location?: string;
+  scheduledTime?: string;
+}
+
+export interface RecentVisit {
+  id: string;
+  customerId: string;
+  customerName: string;
+  purpose?: string;
+  checkInTime: string;
+  checkOutTime?: string;
+  duration?: number;
+  location?: string;
+  isCompleted: boolean;
+}
 
 export function useMyStats() {
   const { user, currentOrganization } = useAuthStore();
@@ -366,4 +389,171 @@ export function useTeamStats() {
     },
     enabled: !!currentOrganization,
   });
+}
+
+export function useRecentVisits() {
+  const { user, currentOrganization } = useAuthStore();
+  const [filter, setFilter] = useState<VisitFilter>('today');
+
+  const todayStart = startOfToday();
+  const todayString = format(todayStart, 'yyyy-MM-dd');
+  const now = new Date();
+  const thisWeekStart = startOfWeek(now);
+  const thisWeekEnd = endOfWeek(now);
+
+  // Fetch scheduled visits from plan_enrollments for today
+  const { data: scheduledVisits, isLoading: isLoadingScheduled } = useQuery({
+    queryKey: ['scheduled-visits', user?.id, currentOrganization?.id, todayString],
+    queryFn: async () => {
+      if (!user || !currentOrganization) return [];
+
+      // Get today's daily plan
+      const { data: todayPlan } = await supabase
+        .from('daily_plans')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('plan_date', todayString)
+        .single();
+
+      if (!todayPlan) return [];
+
+      // Get plan enrollments with customer data
+      const { data: enrollments } = await supabase
+        .from('plan_enrollments')
+        .select(`
+          id,
+          customer_id,
+          notes,
+          enrolled_at,
+          leads:customer_id (
+            id,
+            name,
+            village_city,
+            district,
+            policy_type
+          )
+        `)
+        .eq('daily_plan_id', todayPlan.id);
+
+      if (!enrollments) return [];
+
+      // Get today's visits to filter out already visited
+      const { data: todayVisits } = await supabase
+        .from('visits')
+        .select('customer_id')
+        .eq('user_id', user.id)
+        .gte('check_in_time', todayStart.toISOString());
+
+      const visitedCustomerIds = new Set(todayVisits?.map(v => v.customer_id) || []);
+
+      // Map to scheduled visits, filtering out already visited
+      const scheduled: ScheduledVisit[] = enrollments
+        .filter(e => !visitedCustomerIds.has(e.customer_id))
+        .map((enrollment, index) => {
+          const lead = enrollment.leads as unknown as { id: string; name: string; village_city?: string; district?: string; policy_type?: string } | null;
+          return {
+            customerId: enrollment.customer_id,
+            customerName: lead?.name || 'Unknown Customer',
+            purpose: enrollment.notes || lead?.policy_type || 'Scheduled Visit',
+            location: lead?.village_city || lead?.district || undefined,
+            scheduledTime: format(new Date(todayStart.getTime() + (9 + index) * 60 * 60 * 1000), 'hh:mm a'), // Estimate times starting 9 AM
+          };
+        });
+
+      return scheduled;
+    },
+    enabled: !!user && !!currentOrganization,
+  });
+
+  // Fetch recent visits based on filter
+  const { data: recentVisits, isLoading: isLoadingRecent } = useQuery({
+    queryKey: ['recent-visits', user?.id, currentOrganization?.id, filter],
+    queryFn: async () => {
+      if (!user || !currentOrganization) return [];
+
+      let query = supabase
+        .from('visits')
+        .select(`
+          id,
+          customer_id,
+          check_in_time,
+          check_out_time,
+          notes,
+          leads:customer_id (
+            id,
+            name,
+            village_city,
+            district,
+            policy_type
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('check_in_time', { ascending: false })
+        .limit(10);
+
+      // Apply filter conditions
+      if (filter === 'today') {
+        query = query.gte('check_in_time', todayStart.toISOString());
+      } else if (filter === 'this_week') {
+        query = query
+          .gte('check_in_time', thisWeekStart.toISOString())
+          .lte('check_in_time', thisWeekEnd.toISOString());
+      } else if (filter === 'pending') {
+        query = query.is('check_out_time', null);
+      } else if (filter === 'completed') {
+        query = query.not('check_out_time', 'is', null);
+      }
+
+      const { data: visits } = await query;
+
+      if (!visits) return [];
+
+      const mapped: RecentVisit[] = visits.map(visit => {
+        const lead = visit.leads as unknown as { id: string; name: string; village_city?: string; district?: string; policy_type?: string } | null;
+        const checkIn = new Date(visit.check_in_time);
+        const checkOut = visit.check_out_time ? new Date(visit.check_out_time) : null;
+        const duration = checkOut ? differenceInMinutes(checkOut, checkIn) : undefined;
+
+        return {
+          id: visit.id,
+          customerId: visit.customer_id,
+          customerName: lead?.name || 'Unknown Customer',
+          purpose: visit.notes || lead?.policy_type || 'Visit',
+          checkInTime: visit.check_in_time,
+          checkOutTime: visit.check_out_time || undefined,
+          duration,
+          location: lead?.village_city || lead?.district || undefined,
+          isCompleted: !!visit.check_out_time,
+        };
+      });
+
+      return mapped;
+    },
+    enabled: !!user && !!currentOrganization,
+  });
+
+  // Count of today's visits for context switching
+  const { data: todayVisitsCount } = useQuery({
+    queryKey: ['today-visits-count', user?.id, todayString],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count } = await supabase
+        .from('visits')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('check_in_time', todayStart.toISOString());
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+
+  return {
+    scheduledVisits: scheduledVisits || [],
+    recentVisits: recentVisits || [],
+    filter,
+    setFilter,
+    isLoading: isLoadingScheduled || isLoadingRecent,
+    hasNoVisitsToday: (todayVisitsCount || 0) === 0,
+    hasSchedule: (scheduledVisits?.length || 0) > 0,
+  };
 }

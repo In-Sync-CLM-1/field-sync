@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer, FileText, ChevronRight } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
+import { RecentVisitsSection } from '@/components/dashboard/RecentVisitsSection';
 import { useNavigate } from 'react-router-dom';
 
 type StatusColor = 'success' | 'warning' | 'danger' | 'neutral';
@@ -304,27 +305,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Activity - more compact */}
-      <Card className="animate-fade-in card-glass" style={{ animationDelay: '500ms' }}>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-primary" />
-            Recent Visits
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6 text-muted-foreground">
-            <div className="icon-circle icon-circle-primary mx-auto mb-3 h-12 w-12">
-              <MapPin className="h-6 w-6" />
-            </div>
-            <p className="text-sm font-medium mb-1">View all your visits</p>
-            <p className="text-xs text-muted-foreground mb-3">Track your field activity and check-ins</p>
-            <Button className="btn-gradient-primary text-primary-foreground" size="sm" onClick={() => navigate('/dashboard/visits')}>
-              Go to Visits
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Recent Visits Section */}
+      <RecentVisitsSection />
     </div>
   );
 }
