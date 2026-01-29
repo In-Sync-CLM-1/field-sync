@@ -31,6 +31,7 @@ import PlanningOverview from "./pages/PlanningOverview";
 import BranchAnalytics from "./pages/BranchAnalytics";
 import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,11 @@ const App = () => (
               <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/onboarding" element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              } />
               
               {/* Protected routes */}
               <Route

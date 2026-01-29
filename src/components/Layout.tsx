@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
+import { TrialBanner } from '@/components/TrialBanner';
+import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { Home, Users, MapPin, Map, LogOut, User, Activity, RefreshCw } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import inSyncLogo from '@/assets/in-sync-logo.png';
@@ -26,6 +28,7 @@ export default function Layout() {
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const pendingCount = useLiveQuery(
     async () => {
@@ -83,6 +86,9 @@ export default function Layout() {
         <AppSidebar />
         
         <div className="flex flex-1 flex-col min-w-0">
+          {/* Trial Banner */}
+          <TrialBanner onUpgrade={() => setShowUpgradeDialog(true)} />
+          
           {/* Header with gradient accent line */}
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative">
             {/* Multi-color gradient accent bar */}
@@ -187,6 +193,9 @@ export default function Layout() {
           </nav>
         </div>
       </div>
+      
+      {/* Upgrade Dialog */}
+      <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
     </SidebarProvider>
   );
 }
