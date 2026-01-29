@@ -9,29 +9,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, Building2 } from 'lucide-react';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore, Organization } from '@/store/authStore';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { applyOrganizationBranding } from '@/utils/branding';
-
-interface Organization {
-  id: string;
-  name: string;
-  code: string | null;
-  slug: string | null;
-  description: string | null;
-  is_active: boolean;
-  logo_url: string | null;
-  primary_color: string | null;
-  settings: any;
-  usage_limits: any;
-  subscription_active: boolean;
-  services_enabled: any;
-  max_automation_emails_per_day: number | null;
-  apollo_config: any;
-  created_at: string;
-  updated_at: string;
-}
 
 interface OrganizationSelectorProps {
   open: boolean;

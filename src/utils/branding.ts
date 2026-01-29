@@ -1,6 +1,4 @@
-import type { Database } from '@/integrations/supabase/types';
-
-type Organization = Database['public']['Tables']['organizations']['Row'];
+import type { Organization } from '@/store/authStore';
 
 /**
  * Apply organization branding to the app

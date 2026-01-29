@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { User, Session } from '@supabase/supabase-js';
 
-interface Organization {
+export interface Organization {
   id: string;
   name: string;
   code: string | null;
@@ -12,12 +12,21 @@ interface Organization {
   primary_color: string | null;
   settings: any;
   usage_limits: any;
-  subscription_active: boolean;
+  subscription_active: boolean | null;
   services_enabled: any;
   max_automation_emails_per_day: number | null;
   apollo_config: any;
   created_at: string;
   updated_at: string;
+  // Subscription fields
+  trial_ends_at: string | null;
+  subscription_status: 'trial' | 'active' | 'past_due' | 'cancelled' | 'expired' | null;
+  razorpay_customer_id: string | null;
+  razorpay_subscription_id: string | null;
+  billing_email: string | null;
+  billing_address: any;
+  user_count: number | null;
+  current_plan_id: string | null;
 }
 
 interface AuthStore {

@@ -1,25 +1,6 @@
 import { createContext, useContext, useEffect, ReactNode } from 'react';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore, Organization } from '@/store/authStore';
 import { applyOrganizationBranding } from '@/utils/branding';
-
-interface Organization {
-  id: string;
-  name: string;
-  code: string | null;
-  slug: string | null;
-  description: string | null;
-  is_active: boolean;
-  logo_url: string | null;
-  primary_color: string | null;
-  settings: any;
-  usage_limits: any;
-  subscription_active: boolean;
-  services_enabled: any;
-  max_automation_emails_per_day: number | null;
-  apollo_config: any;
-  created_at: string;
-  updated_at: string;
-}
 
 interface OrganizationContextType {
   currentOrganization: Organization | null;
