@@ -1,184 +1,241 @@
 
-# Enhanced Dashboard Metrics Plan
+# Dashboard Enhancement Plan: New Metrics & Consistent Card Sizing
 
 ## Overview
-Transform the current simple metric cards into rich, interactive cards with progress indicators, detailed breakdowns, color-coded status indicators, and click-to-expand functionality.
+Add three new metric cards (Pending Visits, Overdue Follow-ups, Average Visit Duration) to the dashboard and ensure all 7 cards have consistent sizing, padding, and typography.
 
 ## Current State
-The Dashboard shows four basic metric cards:
-- **Visits Today**: Shows just a number (e.g., "0")
-- **This Week**: Shows a number (e.g., "3") with comparison to last week
-- **Active Visits**: Shows count of visits without checkout
-- **Total Leads**: Shows total count only
+The Dashboard displays 4 metric cards in a responsive grid:
+- Visits Today (with progress bar)
+- This Week
+- Active Visits
+- Total Prospects
 
-## Proposed Changes
+Current issues:
+- Only 4 metrics tracked
+- Cards have variable content heights due to optional progress bars and secondary text
+- No dedicated metrics for pending visits, overdue follow-ups, or visit duration
 
-### Visual Mockup (New Design)
-```text
-+-------------------------------------------+
-| VISITS TODAY                        [📍]  |
-| 0 of 5 planned                            |
-| [████████████████░░░░░░░░░░░░░░░░░] 0%    |
-| ↑ 15% vs last week                        |
-+-------------------------------------------+
-
-+-------------------------------------------+
-| THIS WEEK                           [📈]  |
-| 3 completed | 12 planned                  |
-| ↑ 20% from last week                      |
-+-------------------------------------------+
-
-+-------------------------------------------+
-| ACTIVE VISITS                       [📅]  |
-| 1 in progress                             |
-| Started 45 mins ago                       |
-+-------------------------------------------+
-
-+-------------------------------------------+
-| TOTAL PROSPECTS                     [👥]  |
-| 101 open leads                            |
-| 23 need follow-up today                   |
-+-------------------------------------------+
-```
-
----
-
-## Files to Modify
-
-### 1. `src/hooks/useDashboardData.ts` - Enhanced Data Hook
-
-Add new data points to the `useMyStats` hook:
-
-| New Field | Description | Query |
-|-----------|-------------|-------|
-| `plannedVisitsToday` | From daily_plans table | Query today's plan for prospects_target |
-| `plannedVisitsWeek` | Week's planned visits | Sum of prospects_target for this week |
-| `activeVisitStartTime` | Oldest active visit check-in | Query visits without checkout, get oldest |
-| `openLeadsCount` | Leads with status = 'lead' | Count leads with open status |
-| `followUpToday` | Leads with follow_up_date = today | Count leads needing follow-up today |
-| `weeklyTrend` | Percentage change week over week | Calculate from existing data |
-
-### 2. `src/components/dashboard/MetricCard.tsx` - Enhanced Component
-
-Add new props to support rich content:
-
-| New Prop | Type | Purpose |
-|----------|------|---------|
-| `progress` | number (0-100) | Show progress bar when provided |
-| `primaryText` | string | Main display text (e.g., "0 of 5 planned") |
-| `secondaryText` | string | Additional info (e.g., "Started 45 mins ago") |
-| `status` | 'success' \| 'warning' \| 'danger' | Color-code the card border/accent |
-| `onClick` | function | Make card clickable to navigate |
-
-### 3. `src/pages/Dashboard.tsx` - Apply New Features
-
-Update the stats array to use enhanced data:
+## New Metrics to Add
 
 | Metric | Primary Text | Secondary Text | Status Logic |
 |--------|--------------|----------------|--------------|
-| Visits Today | "X of Y planned" | Progress bar | Green: ≥80%, Yellow: 40-79%, Red: <40% |
-| This Week | "X completed \| Y planned" | Trend arrow | Green: on track, Yellow: behind |
-| Active Visits | "X in progress" | "Started N mins ago" | Yellow if >2 hours |
-| Total Prospects | "X open leads" | "Y need follow-up today" | Red if follow-ups > 10 |
+| **Pending Visits** | "X visits pending today" | "Y completed so far" | Green: 0 pending, Yellow: 1-3, Red: >3 |
+| **Overdue Follow-ups** | "X overdue" | "Last Y days" | Green: 0, Yellow: 1-5, Red: >5 |
+| **Avg Visit Duration** | "X mins" | "Based on last 30 days" | Neutral (no status needed) |
+
+## Grid Layout Change
+```text
+Current (4 cards):
++--------+--------+--------+--------+
+| Today  | Week   | Active | Leads  |
++--------+--------+--------+--------+
+
+New (7 cards - 2 rows on desktop, stacked on mobile):
++--------+--------+--------+--------+
+| Today  | Week   | Active | Leads  |
++--------+--------+--------+--------+
+|Pending |Overdue | Avg    |        |
+|Visits  |FollowUp|Duration|        |
++--------+--------+--------+--------+
+```
+
+Mobile view: 2 columns, cards stack naturally
 
 ---
 
-## Detailed Implementation
+## Technical Implementation
 
-### Data Hook Changes (`useDashboardData.ts`)
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/hooks/useDashboardData.ts` | Add 3 new data points to useMyStats |
+| `src/components/dashboard/MetricCard.tsx` | Add fixed height class, consistent padding |
+| `src/pages/Dashboard.tsx` | Add 3 new metric cards to stats array |
+
+---
+
+## Detailed Changes
+
+### 1. Data Hook Updates (`useDashboardData.ts`)
 
 New queries to add:
 
-**Planned visits from daily_plans:**
+**Pending visits today:**
 ```text
-Query daily_plans for current user + today's date
-Get prospects_target as plannedVisitsToday
+pendingVisitsToday = plannedVisitsToday - visitsToday (minimum 0)
 ```
 
-**Active visit duration:**
+**Overdue follow-ups:**
 ```text
-Query visits where check_out_time IS NULL
-Get oldest check_in_time
-Calculate minutes since start
+Query leads where:
+- follow_up_date < today
+- status NOT IN ('enrolled', 'converted', 'closed')
+Count as overdueFollowUps
 ```
 
-**Follow-up leads:**
+**Average visit duration:**
 ```text
-Query leads where follow_up_date = today
-AND status IN ('lead', 'contacted', 'follow_up')
-Count as followUpToday
+Query visits from last 30 days with check_out_time
+Calculate average (check_out - check_in) in minutes
+Return as avgVisitDuration
 ```
 
-**Open leads:**
-```text
-Query leads where status NOT IN ('enrolled', 'converted', 'closed')
-Count as openLeadsCount
-```
+New fields returned:
+- `pendingVisitsToday: number` (calculated)
+- `overdueFollowUps: number` (queried)
+- `avgVisitDuration: number` (calculated)
 
-### MetricCard Enhancement
+### 2. MetricCard Component (`MetricCard.tsx`)
 
-New component structure:
+Add consistent sizing:
+- Fixed minimum height: `min-h-[140px]`
+- Consistent padding: `p-4` (changed from `p-3`)
+- Standardized text sizes:
+  - Title: `text-xs` (uppercase, tracking-wide)
+  - Primary value: `text-xl` (changed from `text-2xl` for fit)
+  - Secondary text: `text-xs`
+  - Progress label: `text-[10px]`
+
+Updated component structure:
 ```text
-<Card onClick={onClick} className={statusBorderClass}>
-  <Title + Icon>
-  
-  <Primary Value with optional progress>
-    "0 of 5 planned"
-    [Progress Bar - optional]
-  
-  <Secondary Info>
-    "↑ 15% vs last week" (with trend arrow)
-  
-  <Additional Context - optional>
-    "23 need follow-up today"
+<Card className="p-4 min-h-[140px] flex flex-col">
+  <Header: Title + Icon (fixed height)>
+  <Primary Value (flex-grow to center content)>
+  <Footer: Progress/Trend/Secondary (fixed at bottom)>
 </Card>
 ```
 
-### Status Color Logic
+### 3. Dashboard Updates (`Dashboard.tsx`)
 
-| Condition | Color | Visual |
-|-----------|-------|--------|
-| On track (≥80% completion) | Green | Green border accent |
-| Needs attention (40-79%) | Yellow/Gold | Gold border accent |
-| Urgent (<40% or overdue) | Red | Red border accent |
+Add status helper functions:
+```typescript
+function getPendingStatus(pending: number): StatusColor {
+  if (pending === 0) return 'success';
+  if (pending <= 3) return 'warning';
+  return 'danger';
+}
 
-### Click Navigation
+function getOverdueStatus(overdue: number): StatusColor {
+  if (overdue === 0) return 'success';
+  if (overdue <= 5) return 'warning';
+  return 'danger';
+}
+```
 
-| Card | Navigates To |
-|------|--------------|
-| Visits Today | `/dashboard/visits` |
-| This Week | `/dashboard/visits` with week filter |
-| Active Visits | `/dashboard/visits?status=active` |
-| Total Prospects | `/dashboard/leads` |
+Add 3 new stats to the array:
+```typescript
+{
+  label: 'Pending Visits',
+  value: myStats?.pendingVisitsToday || 0,
+  primaryText: `${myStats?.pendingVisitsToday || 0} pending today`,
+  secondaryText: `${myStats?.visitsToday || 0} completed`,
+  icon: Clock,
+  accentColor: 'info',
+  status: getPendingStatus(myStats?.pendingVisitsToday || 0),
+  onClick: () => navigate('/dashboard/visits'),
+},
+{
+  label: 'Overdue Follow-ups',
+  value: myStats?.overdueFollowUps || 0,
+  primaryText: `${myStats?.overdueFollowUps || 0} overdue`,
+  secondaryText: 'Need immediate attention',
+  icon: AlertTriangle,
+  accentColor: 'destructive',
+  status: getOverdueStatus(myStats?.overdueFollowUps || 0),
+  onClick: () => navigate('/dashboard/leads?filter=overdue'),
+},
+{
+  label: 'Avg Duration',
+  value: myStats?.avgVisitDuration || 0,
+  primaryText: `${myStats?.avgVisitDuration || 0} mins`,
+  secondaryText: 'Last 30 days average',
+  icon: Timer,
+  accentColor: 'success',
+  status: 'neutral',
+  onClick: () => navigate('/dashboard/visits'),
+}
+```
+
+---
+
+## Card Consistency Improvements
+
+### Padding & Spacing
+| Element | Current | New |
+|---------|---------|-----|
+| Card padding | `p-3` | `p-4` |
+| Header margin | `mb-2` | `mb-3` |
+| Icon size | `h-8 w-8` | `h-8 w-8` (unchanged) |
+| Value font | `text-2xl` | `text-xl` |
+
+### Fixed Height Structure
+```text
+Card (min-h-[140px], flex flex-col)
+├── Header Row (flex-shrink-0)
+│   ├── Title (text-xs uppercase)
+│   └── Icon (h-8 w-8)
+├── Content Area (flex-1)
+│   └── Primary Text (text-xl font-bold)
+└── Footer Area (flex-shrink-0)
+    ├── Progress Bar (optional)
+    ├── Trend Arrow + Change Text
+    └── Secondary Text
+```
 
 ---
 
 ## Summary of Changes
 
-| File | Action | Changes |
-|------|--------|---------|
-| `src/hooks/useDashboardData.ts` | Modify | Add 6 new data fields to useMyStats |
-| `src/components/dashboard/MetricCard.tsx` | Modify | Add progress bar, status colors, click handler, rich text display |
-| `src/pages/Dashboard.tsx` | Modify | Update stats configuration with new props and navigation |
+| File | Action | Description |
+|------|--------|-------------|
+| `src/hooks/useDashboardData.ts` | Modify | Add overdueFollowUps query, avgVisitDuration calculation, pendingVisitsToday calculation |
+| `src/components/dashboard/MetricCard.tsx` | Modify | Add min-height, adjust padding, use flex layout for consistent height |
+| `src/pages/Dashboard.tsx` | Modify | Add 3 new stats, import Timer and AlertTriangle icons, add status functions |
 
 ---
 
-## Technical Notes
+## Visual Preview
 
-### Progress Bar Styling
-- Use the existing `<Progress>` component from `@/components/ui/progress`
-- Style with brand colors: Teal for progress fill
-- Compact height (h-1.5) to fit in metric cards
+### Desktop (7 cards, 4-column grid)
+```text
+┌────────────────┬────────────────┬────────────────┬────────────────┐
+│ VISITS TODAY   │ THIS WEEK      │ ACTIVE VISITS  │ TOTAL PROSPECTS│
+│ 2 of 5 planned │ 8 completed    │ 1 in progress  │ 45 open leads  │
+│ [████░░░] 40%  │ 15 planned     │ Started 23m    │ 5 follow-up    │
+│ ↑ 15% vs week  │ ↑ vs last week │                │                │
+├────────────────┼────────────────┼────────────────┼────────────────┤
+│ PENDING VISITS │ OVERDUE        │ AVG DURATION   │                │
+│ 3 pending today│ 2 overdue      │ 28 mins        │                │
+│ 2 completed    │ Need attention │ Last 30 days   │                │
+└────────────────┴────────────────┴────────────────┴────────────────┘
+```
 
-### Trend Arrows
-- Use lucide icons: `TrendingUp`, `TrendingDown`, `Minus`
-- Color: Green for up, Red for down, Gray for neutral
+### Mobile (2-column grid, cards stack)
+```text
+┌──────────┬──────────┐
+│ TODAY    │ WEEK     │
+│ 2 of 5   │ 8 done   │
+├──────────┼──────────┤
+│ ACTIVE   │ PROSPECTS│
+│ 1 active │ 45 open  │
+├──────────┼──────────┤
+│ PENDING  │ OVERDUE  │
+│ 3 left   │ 2 urgent │
+├──────────┼──────────┤
+│ DURATION │          │
+│ 28 mins  │          │
+└──────────┴──────────┘
+```
 
-### Mobile Responsiveness
-- Cards remain in 2-column grid on mobile
-- Text truncates gracefully
-- Progress bar scales to card width
+---
 
-### Real-Time Updates
-- Hook already uses React Query with auto-refetch
-- Dashboard will update when user returns from other pages
+## Color Coding Summary
+
+| Status | Color | Used For |
+|--------|-------|----------|
+| **Success (Green)** | `ring-success/30` | ≥80% completion, 0 overdue, 0 pending |
+| **Warning (Yellow)** | `ring-warning/30` | 40-79% completion, 1-5 overdue, 1-3 pending |
+| **Danger (Red)** | `ring-destructive/30` | <40% completion, >5 overdue, >3 pending |
+| **Neutral** | No ring | Informational cards like Avg Duration |
