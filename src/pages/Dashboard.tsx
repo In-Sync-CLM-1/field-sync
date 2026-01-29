@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer } from 'lucide-react';
+import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer, FileText, ChevronRight } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { useNavigate } from 'react-router-dom';
@@ -60,39 +60,68 @@ function formatMinutes(minutes: number): string {
   return `${hours}h ${mins}m ago`;
 }
 
+// Get time-based primary action
+function getPrimaryAction(hour: number, visitsToday: number) {
+  if (hour < 10) {
+    return {
+      icon: MapPin,
+      label: 'Start First Visit',
+      description: 'Begin your day with a customer visit',
+      action: '/dashboard/visits/new',
+    };
+  } else if (hour < 17) {
+    return {
+      icon: ChevronRight,
+      label: visitsToday > 0 ? 'Next Visit' : 'Start Visit',
+      description: 'Continue with your planned visits',
+      action: '/dashboard/visits/new',
+    };
+  } else {
+    return {
+      icon: FileText,
+      label: 'Complete Day Report',
+      description: 'Wrap up your daily activities',
+      action: '/dashboard/planning',
+    };
+  }
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const myStats = useMyStats();
 
-  const quickActions = [
-    {
-      icon: MapPin,
-      label: 'Start Visit',
-      description: 'Check in to a customer location',
-      action: () => navigate('/dashboard/visits/new'),
-      className: 'btn-gradient-primary text-primary-foreground',
-    },
+  const currentHour = new Date().getHours();
+  const primaryAction = getPrimaryAction(currentHour, myStats?.visitsToday || 0);
+
+  const secondaryActions = [
     {
       icon: Calendar,
-      label: 'View Visits',
-      description: 'See all your visits',
+      label: 'View All Visits',
+      description: 'See your visit history',
       action: () => navigate('/dashboard/visits'),
-      className: 'btn-outline-info',
+      priority: 2,
     },
     {
       icon: ClipboardList,
       label: 'Daily Planning',
       description: 'Manage daily plans',
       action: () => navigate('/dashboard/planning'),
-      className: 'btn-outline-accent',
+      priority: 3,
     },
     {
       icon: MapPin,
-      label: 'Visit Map',
+      label: 'Territory Map',
       description: 'View visits on map',
       action: () => navigate('/dashboard/territory'),
-      className: 'btn-outline-warning',
+      priority: 4,
+    },
+    {
+      icon: Users,
+      label: 'View Leads',
+      description: 'Manage your prospects',
+      action: () => navigate('/dashboard/leads'),
+      priority: 5,
     },
   ];
 
@@ -236,25 +265,39 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Quick Actions - grid layout */}
+      {/* Quick Actions - Priority layout with time-based primary action */}
       <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
         <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           Quick Actions
         </h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {quickActions.map((action, index) => {
+        
+        {/* Primary Action - Larger, prominent button */}
+        <Button
+          size="lg"
+          className="w-full mb-3 h-14 text-base font-semibold bg-gradient-to-r from-primary via-primary to-info hover:from-primary/90 hover:via-primary/90 hover:to-info/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02]"
+          onClick={() => navigate(primaryAction.action)}
+        >
+          <primaryAction.icon className="h-5 w-5 mr-2" />
+          {primaryAction.label}
+          <span className="ml-2 text-xs opacity-80 hidden sm:inline">— {primaryAction.description}</span>
+        </Button>
+
+        {/* Secondary Actions - Smaller buttons in grid */}
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {secondaryActions.map((action, index) => {
             const Icon = action.icon;
             return (
               <Button
                 key={action.label}
+                variant="outline"
                 size="sm"
-                className={`gap-2 h-10 font-medium ${action.className}`}
+                className="h-11 flex flex-col items-center justify-center gap-0.5 py-2 hover:bg-muted/50 transition-colors"
                 onClick={action.action}
                 style={{ animationDelay: `${400 + index * 50}ms` }}
               >
-                <Icon className="h-4 w-4" />
-                {action.label}
+                <Icon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium">{action.label}</span>
               </Button>
             );
           })}
