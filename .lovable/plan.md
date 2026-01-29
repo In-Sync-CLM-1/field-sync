@@ -1,46 +1,62 @@
 
-# Dashboard Enhancement Plan: New Metrics & Consistent Card Sizing
+# Enhanced Recent Visits Section Plan
 
 ## Overview
-Add three new metric cards (Pending Visits, Overdue Follow-ups, Average Visit Duration) to the dashboard and ensure all 7 cards have consistent sizing, padding, and typography.
+Transform the static "Recent Visits" card on the Dashboard into a dynamic, context-aware section that shows either upcoming scheduled visits (when no visits exist today) or completed visits with action buttons. Add filter tabs for easy navigation.
 
 ## Current State
-The Dashboard displays 4 metric cards in a responsive grid:
-- Visits Today (with progress bar)
-- This Week
-- Active Visits
-- Total Prospects
+The Recent Visits section currently displays:
+- A static icon with placeholder text
+- A single "Go to Visits" button
+- No actual visit data shown
 
-Current issues:
-- Only 4 metrics tracked
-- Cards have variable content heights due to optional progress bars and secondary text
-- No dedicated metrics for pending visits, overdue follow-ups, or visit duration
+## Proposed Changes
 
-## New Metrics to Add
+### Visual Mockup
 
-| Metric | Primary Text | Secondary Text | Status Logic |
-|--------|--------------|----------------|--------------|
-| **Pending Visits** | "X visits pending today" | "Y completed so far" | Green: 0 pending, Yellow: 1-3, Red: >3 |
-| **Overdue Follow-ups** | "X overdue" | "Last Y days" | Green: 0, Yellow: 1-5, Red: >5 |
-| **Avg Visit Duration** | "X mins" | "Based on last 30 days" | Neutral (no status needed) |
-
-## Grid Layout Change
+**When No Visits Today (Show Schedule):**
 ```text
-Current (4 cards):
-+--------+--------+--------+--------+
-| Today  | Week   | Active | Leads  |
-+--------+--------+--------+--------+
-
-New (7 cards - 2 rows on desktop, stacked on mobile):
-+--------+--------+--------+--------+
-| Today  | Week   | Active | Leads  |
-+--------+--------+--------+--------+
-|Pending |Overdue | Avg    |        |
-|Visits  |FollowUp|Duration|        |
-+--------+--------+--------+--------+
+┌─────────────────────────────────────────────────────┐
+│ Today's Schedule                                 📅 │
+├─────────────────────────────────────────────────────┤
+│ [Today] [This Week] [Pending] [Completed]          │
+├─────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────┐    │
+│ │ 09:00 AM  •  Ramesh Kumar                   │    │
+│ │ Quote Presentation  •  Vijayawada           │    │
+│ └─────────────────────────────────────────────┘    │
+│ ┌─────────────────────────────────────────────┐    │
+│ │ 11:30 AM  •  Sita Devi                      │    │
+│ │ Follow-up  •  Guntur                        │    │
+│ └─────────────────────────────────────────────┘    │
+│ ┌─────────────────────────────────────────────┐    │
+│ │ 02:00 PM  •  Venkat Rao                     │    │
+│ │ Document Collection  •  Tenali              │    │
+│ └─────────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────────┤
+│ [        ▶ Start First Visit         ]             │
+└─────────────────────────────────────────────────────┘
 ```
 
-Mobile view: 2 columns, cards stack naturally
+**When Visits Completed (Show History):**
+```text
+┌─────────────────────────────────────────────────────┐
+│ Recent Visits                                    📅 │
+├─────────────────────────────────────────────────────┤
+│ [Today] [This Week] [Pending] [Completed]          │
+├─────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────┐    │
+│ │ ✓ Ramesh Kumar              Completed 10:45 │    │
+│ │   Quote Presentation  •  45 mins            │    │
+│ │   [View Details]  [Add Follow-up]           │    │
+│ └─────────────────────────────────────────────┘    │
+│ ┌─────────────────────────────────────────────┐    │
+│ │ ⏱ Sita Devi                    In Progress │    │
+│ │   Follow-up  •  Started 23 mins ago         │    │
+│ │   [View Details]                            │    │
+│ └─────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -50,139 +66,171 @@ Mobile view: 2 columns, cards stack naturally
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useDashboardData.ts` | Add 3 new data points to useMyStats |
-| `src/components/dashboard/MetricCard.tsx` | Add fixed height class, consistent padding |
-| `src/pages/Dashboard.tsx` | Add 3 new metric cards to stats array |
+| `src/hooks/useDashboardData.ts` | Add new hook `useRecentVisits` to fetch visits with filters and scheduled customers |
+| `src/pages/Dashboard.tsx` | Replace static Recent Visits card with dynamic component |
+
+### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/dashboard/RecentVisitsSection.tsx` | New component for the enhanced visits section |
 
 ---
 
-## Detailed Changes
+## Detailed Implementation
 
-### 1. Data Hook Updates (`useDashboardData.ts`)
+### 1. New Hook: `useRecentVisits` (in useDashboardData.ts)
 
-New queries to add:
+Add a new query hook to fetch:
 
-**Pending visits today:**
+**Scheduled visits (from plan_enrollments + customers):**
 ```text
-pendingVisitsToday = plannedVisitsToday - visitsToday (minimum 0)
+Query plan_enrollments for today's plan
+Join with customers to get name, city, etc.
+Filter out customers already visited today
+Return as scheduledVisits[]
 ```
 
-**Overdue follow-ups:**
+**Recent/Completed visits:**
 ```text
-Query leads where:
-- follow_up_date < today
-- status NOT IN ('enrolled', 'converted', 'closed')
-Count as overdueFollowUps
+Query visits table with filters:
+- "today": check_in_time >= today start
+- "this_week": check_in_time within current week
+- "pending": check_out_time IS NULL
+- "completed": check_out_time IS NOT NULL
+
+Join with leads for customer name, location
+Order by check_in_time descending
+Limit to 10 items
 ```
 
-**Average visit duration:**
-```text
-Query visits from last 30 days with check_out_time
-Calculate average (check_out - check_in) in minutes
-Return as avgVisitDuration
+Return structure:
+```typescript
+{
+  scheduledVisits: Array<{
+    customerId: string;
+    customerName: string;
+    purpose?: string;
+    location?: string;
+    scheduledTime?: string;
+  }>;
+  recentVisits: Array<{
+    id: string;
+    customerName: string;
+    purpose?: string;
+    checkInTime: string;
+    checkOutTime?: string;
+    duration?: number;
+    location?: string;
+  }>;
+  activeFilter: 'today' | 'this_week' | 'pending' | 'completed';
+}
 ```
 
-New fields returned:
-- `pendingVisitsToday: number` (calculated)
-- `overdueFollowUps: number` (queried)
-- `avgVisitDuration: number` (calculated)
+### 2. New Component: `RecentVisitsSection.tsx`
 
-### 2. MetricCard Component (`MetricCard.tsx`)
-
-Add consistent sizing:
-- Fixed minimum height: `min-h-[140px]`
-- Consistent padding: `p-4` (changed from `p-3`)
-- Standardized text sizes:
-  - Title: `text-xs` (uppercase, tracking-wide)
-  - Primary value: `text-xl` (changed from `text-2xl` for fit)
-  - Secondary text: `text-xs`
-  - Progress label: `text-[10px]`
-
-Updated component structure:
+Component structure:
 ```text
-<Card className="p-4 min-h-[140px] flex flex-col">
-  <Header: Title + Icon (fixed height)>
-  <Primary Value (flex-grow to center content)>
-  <Footer: Progress/Trend/Secondary (fixed at bottom)>
+<Card>
+  <CardHeader>
+    <Title: "Today's Schedule" or "Recent Visits" based on context>
+    <Icon: Calendar>
+  </CardHeader>
+  
+  <FilterTabs>
+    - Today (default)
+    - This Week
+    - Pending
+    - Completed
+  </FilterTabs>
+  
+  <CardContent>
+    {hasNoVisitsToday && hasSchedule ? (
+      <ScheduleList>
+        {scheduledVisits.map(visit => (
+          <ScheduleItem>
+            <Time badge>
+            <CustomerName>
+            <Purpose>
+            <Location>
+          </ScheduleItem>
+        ))}
+        <Button "Start First Visit" />
+      </ScheduleList>
+    ) : (
+      <VisitsList>
+        {recentVisits.map(visit => (
+          <VisitItem>
+            <StatusIcon: ✓ or ⏱>
+            <CustomerName>
+            <CompletedTime or "In Progress">
+            <Purpose>
+            <Duration>
+            <ActionButtons>
+              - View Details
+              - Add Follow-up (for completed)
+            </ActionButtons>
+          </VisitItem>
+        ))}
+      </VisitsList>
+    )}
+    
+    {isEmpty && <EmptyState />}
+  </CardContent>
 </Card>
 ```
 
-### 3. Dashboard Updates (`Dashboard.tsx`)
+### 3. Dashboard Integration
 
-Add status helper functions:
+Replace the static Recent Visits card:
 ```typescript
-function getPendingStatus(pending: number): StatusColor {
-  if (pending === 0) return 'success';
-  if (pending <= 3) return 'warning';
-  return 'danger';
-}
+// Before
+<Card className="animate-fade-in card-glass">
+  <CardHeader>
+    <CardTitle>Recent Visits</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {/* Static placeholder */}
+  </CardContent>
+</Card>
 
-function getOverdueStatus(overdue: number): StatusColor {
-  if (overdue === 0) return 'success';
-  if (overdue <= 5) return 'warning';
-  return 'danger';
-}
-```
-
-Add 3 new stats to the array:
-```typescript
-{
-  label: 'Pending Visits',
-  value: myStats?.pendingVisitsToday || 0,
-  primaryText: `${myStats?.pendingVisitsToday || 0} pending today`,
-  secondaryText: `${myStats?.visitsToday || 0} completed`,
-  icon: Clock,
-  accentColor: 'info',
-  status: getPendingStatus(myStats?.pendingVisitsToday || 0),
-  onClick: () => navigate('/dashboard/visits'),
-},
-{
-  label: 'Overdue Follow-ups',
-  value: myStats?.overdueFollowUps || 0,
-  primaryText: `${myStats?.overdueFollowUps || 0} overdue`,
-  secondaryText: 'Need immediate attention',
-  icon: AlertTriangle,
-  accentColor: 'destructive',
-  status: getOverdueStatus(myStats?.overdueFollowUps || 0),
-  onClick: () => navigate('/dashboard/leads?filter=overdue'),
-},
-{
-  label: 'Avg Duration',
-  value: myStats?.avgVisitDuration || 0,
-  primaryText: `${myStats?.avgVisitDuration || 0} mins`,
-  secondaryText: 'Last 30 days average',
-  icon: Timer,
-  accentColor: 'success',
-  status: 'neutral',
-  onClick: () => navigate('/dashboard/visits'),
-}
+// After
+<RecentVisitsSection />
 ```
 
 ---
 
-## Card Consistency Improvements
+## Filter Button Behavior
 
-### Padding & Spacing
-| Element | Current | New |
-|---------|---------|-----|
-| Card padding | `p-3` | `p-4` |
-| Header margin | `mb-2` | `mb-3` |
-| Icon size | `h-8 w-8` | `h-8 w-8` (unchanged) |
-| Value font | `text-2xl` | `text-xl` |
+| Filter | Query | Display |
+|--------|-------|---------|
+| **Today** | `check_in_time >= today` | Shows today's visits + schedule if empty |
+| **This Week** | `check_in_time within week bounds` | All visits this week |
+| **Pending** | `check_out_time IS NULL` | In-progress visits only |
+| **Completed** | `check_out_time IS NOT NULL` | Completed visits only |
 
-### Fixed Height Structure
-```text
-Card (min-h-[140px], flex flex-col)
-├── Header Row (flex-shrink-0)
-│   ├── Title (text-xs uppercase)
-│   └── Icon (h-8 w-8)
-├── Content Area (flex-1)
-│   └── Primary Text (text-xl font-bold)
-└── Footer Area (flex-shrink-0)
-    ├── Progress Bar (optional)
-    ├── Trend Arrow + Change Text
-    └── Secondary Text
-```
+---
+
+## Visit Item Display
+
+### For Scheduled (Upcoming) Visits:
+| Element | Source | Style |
+|---------|--------|-------|
+| Time | Estimated from schedule or "TBD" | Badge, primary color |
+| Customer Name | customers.name | Bold, text-sm |
+| Purpose | plan_enrollments.notes or default | Text-xs, muted |
+| Location | customers.city | Text-xs, muted |
+
+### For Completed Visits:
+| Element | Source | Style |
+|---------|--------|-------|
+| Status Icon | Based on check_out_time | ✓ green or ⏱ yellow |
+| Customer Name | leads.name | Bold, text-sm |
+| Completed Time | format(check_out_time) | Text-xs |
+| Purpose | visits.notes or category | Text-xs, muted |
+| Duration | check_out - check_in | Badge |
+| View Details Button | Navigate to /dashboard/visits/:id | Outline, small |
+| Add Follow-up Button | Navigate to /dashboard/leads/:id/follow-up | Outline, small |
 
 ---
 
@@ -190,52 +238,26 @@ Card (min-h-[140px], flex flex-col)
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/hooks/useDashboardData.ts` | Modify | Add overdueFollowUps query, avgVisitDuration calculation, pendingVisitsToday calculation |
-| `src/components/dashboard/MetricCard.tsx` | Modify | Add min-height, adjust padding, use flex layout for consistent height |
-| `src/pages/Dashboard.tsx` | Modify | Add 3 new stats, import Timer and AlertTriangle icons, add status functions |
+| `src/hooks/useDashboardData.ts` | Modify | Add `useRecentVisits` hook with filter support and scheduled visits query |
+| `src/components/dashboard/RecentVisitsSection.tsx` | Create | New component with filter tabs, schedule view, and completed visits list |
+| `src/pages/Dashboard.tsx` | Modify | Import and use `RecentVisitsSection` component |
 
 ---
 
-## Visual Preview
+## Color Coding
 
-### Desktop (7 cards, 4-column grid)
-```text
-┌────────────────┬────────────────┬────────────────┬────────────────┐
-│ VISITS TODAY   │ THIS WEEK      │ ACTIVE VISITS  │ TOTAL PROSPECTS│
-│ 2 of 5 planned │ 8 completed    │ 1 in progress  │ 45 open leads  │
-│ [████░░░] 40%  │ 15 planned     │ Started 23m    │ 5 follow-up    │
-│ ↑ 15% vs week  │ ↑ vs last week │                │                │
-├────────────────┼────────────────┼────────────────┼────────────────┤
-│ PENDING VISITS │ OVERDUE        │ AVG DURATION   │                │
-│ 3 pending today│ 2 overdue      │ 28 mins        │                │
-│ 2 completed    │ Need attention │ Last 30 days   │                │
-└────────────────┴────────────────┴────────────────┴────────────────┘
-```
-
-### Mobile (2-column grid, cards stack)
-```text
-┌──────────┬──────────┐
-│ TODAY    │ WEEK     │
-│ 2 of 5   │ 8 done   │
-├──────────┼──────────┤
-│ ACTIVE   │ PROSPECTS│
-│ 1 active │ 45 open  │
-├──────────┼──────────┤
-│ PENDING  │ OVERDUE  │
-│ 3 left   │ 2 urgent │
-├──────────┼──────────┤
-│ DURATION │          │
-│ 28 mins  │          │
-└──────────┴──────────┘
-```
+| State | Visual |
+|-------|--------|
+| Scheduled visit | Neutral card with time badge in primary |
+| Completed visit | Green check icon, success accent |
+| In-progress visit | Yellow clock icon, warning accent |
+| Overdue/late visit | Red border accent |
 
 ---
 
-## Color Coding Summary
+## Mobile Considerations
 
-| Status | Color | Used For |
-|--------|-------|----------|
-| **Success (Green)** | `ring-success/30` | ≥80% completion, 0 overdue, 0 pending |
-| **Warning (Yellow)** | `ring-warning/30` | 40-79% completion, 1-5 overdue, 1-3 pending |
-| **Danger (Red)** | `ring-destructive/30` | <40% completion, >5 overdue, >3 pending |
-| **Neutral** | No ring | Informational cards like Avg Duration |
+- Filter buttons scroll horizontally if needed
+- Visit cards stack vertically
+- Action buttons are full-width on mobile
+- Time badges are compact
