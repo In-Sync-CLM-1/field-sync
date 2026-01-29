@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users, ClipboardList, LogOut } from 'lucide-react';
+import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users, ClipboardList, LogOut, CreditCard } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -65,6 +65,7 @@ export function AppSidebar() {
     { icon: Globe, label: 'Territory', path: '/dashboard/territory', roles: ['all'] },
     { icon: Award, label: 'Performance', path: '/dashboard/performance', roles: ['admin', 'super_admin', 'platform_admin'] },
     { icon: Users, label: 'Users', path: '/dashboard/users', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: CreditCard, label: 'Subscription', path: '/dashboard/subscription', roles: ['admin', 'super_admin', 'platform_admin'] },
   ].filter(d => d.roles.includes('all') || d.roles.includes(userRole));
 
   const currentPath = location.pathname;
