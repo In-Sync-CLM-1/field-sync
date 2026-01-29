@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock } from 'lucide-react';
+import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +35,18 @@ function getFollowUpStatus(count: number): StatusColor {
   if (count > 10) return 'danger';
   if (count > 5) return 'warning';
   return 'neutral';
+}
+
+function getPendingStatus(pending: number): StatusColor {
+  if (pending === 0) return 'success';
+  if (pending <= 3) return 'warning';
+  return 'danger';
+}
+
+function getOverdueStatus(overdue: number): StatusColor {
+  if (overdue === 0) return 'success';
+  if (overdue <= 5) return 'warning';
+  return 'danger';
 }
 
 function formatMinutes(minutes: number): string {
@@ -102,6 +114,12 @@ export default function Dashboard() {
   // Follow-up status
   const followUpStatus = getFollowUpStatus(myStats?.followUpToday || 0);
 
+  // Pending visits status
+  const pendingStatus = getPendingStatus(myStats?.pendingVisitsToday || 0);
+
+  // Overdue follow-ups status
+  const overdueStatus = getOverdueStatus(myStats?.overdueFollowUps || 0);
+
   const stats = [
     { 
       label: 'Visits Today', 
@@ -146,6 +164,36 @@ export default function Dashboard() {
       accentColor: 'accent' as const,
       status: followUpStatus,
       onClick: () => navigate('/dashboard/leads'),
+    },
+    { 
+      label: 'Pending Visits', 
+      value: myStats?.pendingVisitsToday || 0,
+      primaryText: `${myStats?.pendingVisitsToday || 0} pending today`,
+      secondaryText: `${myStats?.visitsToday || 0} completed so far`,
+      icon: Clock,
+      accentColor: 'info' as const,
+      status: pendingStatus,
+      onClick: () => navigate('/dashboard/visits'),
+    },
+    { 
+      label: 'Overdue Follow-ups', 
+      value: myStats?.overdueFollowUps || 0,
+      primaryText: `${myStats?.overdueFollowUps || 0} overdue`,
+      secondaryText: 'Need immediate attention',
+      icon: AlertTriangle,
+      accentColor: 'destructive' as const,
+      status: overdueStatus,
+      onClick: () => navigate('/dashboard/leads?filter=overdue'),
+    },
+    { 
+      label: 'Avg Duration', 
+      value: myStats?.avgVisitDuration || 0,
+      primaryText: `${myStats?.avgVisitDuration || 0} mins`,
+      secondaryText: 'Last 30 days average',
+      icon: Timer,
+      accentColor: 'success' as const,
+      status: 'neutral' as StatusColor,
+      onClick: () => navigate('/dashboard/visits'),
     },
   ];
 

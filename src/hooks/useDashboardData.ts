@@ -98,6 +98,37 @@ export function useMyStats() {
         .eq('organization_id', currentOrganization.id)
         .eq('follow_up_date', todayString);
 
+      // Get overdue follow-ups (follow_up_date < today and not closed)
+      const { count: overdueFollowUps } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', currentOrganization.id)
+        .lt('follow_up_date', todayString)
+        .not('status', 'in', '("enrolled","converted","closed")');
+
+      // Get visits from last 30 days with checkout for avg duration
+      const thirtyDaysAgo = subDays(now, 30);
+      const { data: completedVisits } = await supabase
+        .from('visits')
+        .select('check_in_time, check_out_time')
+        .eq('user_id', user.id)
+        .gte('check_in_time', thirtyDaysAgo.toISOString())
+        .not('check_out_time', 'is', null);
+
+      // Calculate average visit duration in minutes
+      let avgVisitDuration = 0;
+      if (completedVisits && completedVisits.length > 0) {
+        const totalMinutes = completedVisits.reduce((sum, visit) => {
+          const checkIn = new Date(visit.check_in_time);
+          const checkOut = new Date(visit.check_out_time!);
+          return sum + differenceInMinutes(checkOut, checkIn);
+        }, 0);
+        avgVisitDuration = Math.round(totalMinutes / completedVisits.length);
+      }
+
+      // Calculate pending visits today (planned - completed)
+      const pendingVisitsToday = Math.max(0, plannedVisitsToday - (visitsToday || 0));
+
       // Calculate weekly trend percentage
       const weeklyTrend = visitsLastWeek && visitsLastWeek > 0
         ? Math.round(((visitsThisWeek || 0) - visitsLastWeek) / visitsLastWeek * 100)
@@ -115,6 +146,9 @@ export function useMyStats() {
         plannedVisitsToday,
         plannedVisitsWeek,
         weeklyTrend,
+        pendingVisitsToday,
+        overdueFollowUps: overdueFollowUps || 0,
+        avgVisitDuration,
         pendingSync: 0,
         formsCompleted: 0,
         photosCaptured: 0,
