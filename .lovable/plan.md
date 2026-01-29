@@ -1,64 +1,56 @@
 
-# Enhanced Recent Visits Section Plan
+# Add "Add New Lead" Button Plan
 
 ## Overview
-Transform the static "Recent Visits" card on the Dashboard into a dynamic, context-aware section that shows either upcoming scheduled visits (when no visits exist today) or completed visits with action buttons. Add filter tabs for easy navigation.
+Add a prominent "Add New Lead" button to both the New Visit page and the Leads page, making it easy for users to quickly add new leads/prospects without navigating away.
 
 ## Current State
-The Recent Visits section currently displays:
-- A static icon with placeholder text
-- A single "Go to Visits" button
-- No actual visit data shown
+
+### New Visit Page (`NewVisit.tsx`)
+- Has a lead selector dropdown
+- No option to add a new lead if the desired prospect doesn't exist
+- Users must navigate away to add leads
+
+### Leads Page (`Leads.tsx`)
+- Header has "LeadsUpload" and "Sync" buttons
+- No direct "Add New Lead" button visible
+- Users can only bulk upload via CSV
 
 ## Proposed Changes
 
-### Visual Mockup
+### 1. Leads Page - Add Prominent Button
 
-**When No Visits Today (Show Schedule):**
+**Location:** Next to the existing "LeadsUpload" and "Sync" buttons in the header
+
+**Design:**
+- Primary gradient button (most prominent)
+- Plus icon with "Add Lead" text
+- Positioned first (leftmost) as it's the primary action
+
 ```text
-┌─────────────────────────────────────────────────────┐
-│ Today's Schedule                                 📅 │
-├─────────────────────────────────────────────────────┤
-│ [Today] [This Week] [Pending] [Completed]          │
-├─────────────────────────────────────────────────────┤
-│ ┌─────────────────────────────────────────────┐    │
-│ │ 09:00 AM  •  Ramesh Kumar                   │    │
-│ │ Quote Presentation  •  Vijayawada           │    │
-│ └─────────────────────────────────────────────┘    │
-│ ┌─────────────────────────────────────────────┐    │
-│ │ 11:30 AM  •  Sita Devi                      │    │
-│ │ Follow-up  •  Guntur                        │    │
-│ └─────────────────────────────────────────────┘    │
-│ ┌─────────────────────────────────────────────┐    │
-│ │ 02:00 PM  •  Venkat Rao                     │    │
-│ │ Document Collection  •  Tenali              │    │
-│ └─────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────┤
-│ [        ▶ Start First Visit         ]             │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ ← Dashboard    Prospects                                │
+│                [+ Add Lead] [Upload] [Sync]             │
+└─────────────────────────────────────────────────────────┘
 ```
 
-**When Visits Completed (Show History):**
-```text
-┌─────────────────────────────────────────────────────┐
-│ Recent Visits                                    📅 │
-├─────────────────────────────────────────────────────┤
-│ [Today] [This Week] [Pending] [Completed]          │
-├─────────────────────────────────────────────────────┤
-│ ┌─────────────────────────────────────────────┐    │
-│ │ ✓ Ramesh Kumar              Completed 10:45 │    │
-│ │   Quote Presentation  •  45 mins            │    │
-│ │   [View Details]  [Add Follow-up]           │    │
-│ └─────────────────────────────────────────────┘    │
-│ ┌─────────────────────────────────────────────┐    │
-│ │ ⏱ Sita Devi                    In Progress │    │
-│ │   Follow-up  •  Started 23 mins ago         │    │
-│ │   [View Details]                            │    │
-│ └─────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────┘
-```
+### 2. New Visit Page - Add Quick Action
 
----
+**Location:** Below the lead selector dropdown
+
+**Design:**
+- Link-style or outline button
+- Plus icon with "Add New Lead" text
+- Helpful text explaining the option
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ Lead *                                                  │
+│ [Select lead...                              ▼]         │
+│                                                         │
+│ Can't find the lead? [+ Add New Lead]                   │
+└─────────────────────────────────────────────────────────┘
+```
 
 ## Technical Implementation
 
@@ -66,198 +58,123 @@ The Recent Visits section currently displays:
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useDashboardData.ts` | Add new hook `useRecentVisits` to fetch visits with filters and scheduled customers |
-| `src/pages/Dashboard.tsx` | Replace static Recent Visits card with dynamic component |
+| `src/pages/Leads.tsx` | Add "Add Lead" button in header |
+| `src/pages/NewVisit.tsx` | Add "Add New Lead" link below lead selector |
 
-### Files to Create
+### Detailed Changes
 
-| File | Purpose |
-|------|---------|
-| `src/components/dashboard/RecentVisitsSection.tsx` | New component for the enhanced visits section |
+#### 1. Leads.tsx Changes
 
----
-
-## Detailed Implementation
-
-### 1. New Hook: `useRecentVisits` (in useDashboardData.ts)
-
-Add a new query hook to fetch:
-
-**Scheduled visits (from plan_enrollments + customers):**
-```text
-Query plan_enrollments for today's plan
-Join with customers to get name, city, etc.
-Filter out customers already visited today
-Return as scheduledVisits[]
-```
-
-**Recent/Completed visits:**
-```text
-Query visits table with filters:
-- "today": check_in_time >= today start
-- "this_week": check_in_time within current week
-- "pending": check_out_time IS NULL
-- "completed": check_out_time IS NOT NULL
-
-Join with leads for customer name, location
-Order by check_in_time descending
-Limit to 10 items
-```
-
-Return structure:
+**Add import:**
 ```typescript
-{
-  scheduledVisits: Array<{
-    customerId: string;
-    customerName: string;
-    purpose?: string;
-    location?: string;
-    scheduledTime?: string;
-  }>;
-  recentVisits: Array<{
-    id: string;
-    customerName: string;
-    purpose?: string;
-    checkInTime: string;
-    checkOutTime?: string;
-    duration?: number;
-    location?: string;
-  }>;
-  activeFilter: 'today' | 'this_week' | 'pending' | 'completed';
-}
+import { Plus } from 'lucide-react';
 ```
 
-### 2. New Component: `RecentVisitsSection.tsx`
-
-Component structure:
-```text
-<Card>
-  <CardHeader>
-    <Title: "Today's Schedule" or "Recent Visits" based on context>
-    <Icon: Calendar>
-  </CardHeader>
-  
-  <FilterTabs>
-    - Today (default)
-    - This Week
-    - Pending
-    - Completed
-  </FilterTabs>
-  
-  <CardContent>
-    {hasNoVisitsToday && hasSchedule ? (
-      <ScheduleList>
-        {scheduledVisits.map(visit => (
-          <ScheduleItem>
-            <Time badge>
-            <CustomerName>
-            <Purpose>
-            <Location>
-          </ScheduleItem>
-        ))}
-        <Button "Start First Visit" />
-      </ScheduleList>
-    ) : (
-      <VisitsList>
-        {recentVisits.map(visit => (
-          <VisitItem>
-            <StatusIcon: ✓ or ⏱>
-            <CustomerName>
-            <CompletedTime or "In Progress">
-            <Purpose>
-            <Duration>
-            <ActionButtons>
-              - View Details
-              - Add Follow-up (for completed)
-            </ActionButtons>
-          </VisitItem>
-        ))}
-      </VisitsList>
-    )}
-    
-    {isEmpty && <EmptyState />}
-  </CardContent>
-</Card>
-```
-
-### 3. Dashboard Integration
-
-Replace the static Recent Visits card:
+**Modify header buttons section (around line 96-107):**
 ```typescript
-// Before
-<Card className="animate-fade-in card-glass">
-  <CardHeader>
-    <CardTitle>Recent Visits</CardTitle>
-  </CardHeader>
-  <CardContent>
-    {/* Static placeholder */}
-  </CardContent>
-</Card>
-
-// After
-<RecentVisitsSection />
+<div className="flex gap-2">
+  <Button 
+    onClick={() => navigate('/dashboard/leads/new')}
+    className="btn-gradient-primary text-primary-foreground"
+    size="sm"
+  >
+    <Plus className="h-3 w-3 mr-1" />
+    Add Lead
+  </Button>
+  <LeadsUpload />
+  <Button 
+    onClick={syncFromDatabase} 
+    disabled={syncing || !currentOrganization}
+    className="btn-outline-info"
+    size="sm"
+  >
+    <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+    {syncing ? 'Syncing' : 'Sync'}
+  </Button>
+</div>
 ```
 
----
+**Also update empty state (around line 148-155):**
+```typescript
+<div className="flex gap-2">
+  <Button 
+    onClick={() => navigate('/dashboard/leads/new')}
+    className="btn-gradient-primary text-primary-foreground"
+    size="sm"
+  >
+    <Plus className="h-3 w-3 mr-1" />
+    Add Lead
+  </Button>
+  <Button onClick={syncFromDatabase} disabled={syncing} variant="outline" size="sm">
+    <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+    Sync
+  </Button>
+  <LeadsUpload />
+</div>
+```
 
-## Filter Button Behavior
+#### 2. NewVisit.tsx Changes
 
-| Filter | Query | Display |
-|--------|-------|---------|
-| **Today** | `check_in_time >= today` | Shows today's visits + schedule if empty |
-| **This Week** | `check_in_time within week bounds` | All visits this week |
-| **Pending** | `check_out_time IS NULL` | In-progress visits only |
-| **Completed** | `check_out_time IS NOT NULL` | Completed visits only |
+**Add import:**
+```typescript
+import { Plus } from 'lucide-react';
+```
 
----
+**Add below the Popover (after line 258, before the lead location status):**
+```typescript
+{/* Add New Lead Option */}
+<div className="flex items-center gap-2 text-sm">
+  <span className="text-muted-foreground">Can't find the prospect?</span>
+  <Button
+    variant="link"
+    size="sm"
+    className="p-0 h-auto text-primary font-medium"
+    onClick={() => navigate('/dashboard/leads/new?returnTo=new-visit')}
+  >
+    <Plus className="h-3 w-3 mr-1" />
+    Add New Lead
+  </Button>
+</div>
+```
 
-## Visit Item Display
+## Visual Summary
 
-### For Scheduled (Upcoming) Visits:
-| Element | Source | Style |
-|---------|--------|-------|
-| Time | Estimated from schedule or "TBD" | Badge, primary color |
-| Customer Name | customers.name | Bold, text-sm |
-| Purpose | plan_enrollments.notes or default | Text-xs, muted |
-| Location | customers.city | Text-xs, muted |
+### Leads Page Header (After)
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ ← Dashboard                                                   │
+│                                                               │
+│ Prospects                    [+ Add Lead] [Upload📤] [🔄Sync] │
+│ 🏢 Organization Name • 45 prospects                          │
+└──────────────────────────────────────────────────────────────┘
+```
 
-### For Completed Visits:
-| Element | Source | Style |
-|---------|--------|-------|
-| Status Icon | Based on check_out_time | ✓ green or ⏱ yellow |
-| Customer Name | leads.name | Bold, text-sm |
-| Completed Time | format(check_out_time) | Text-xs |
-| Purpose | visits.notes or category | Text-xs, muted |
-| Duration | check_out - check_in | Badge |
-| View Details Button | Navigate to /dashboard/visits/:id | Outline, small |
-| Add Follow-up Button | Navigate to /dashboard/leads/:id/follow-up | Outline, small |
+### New Visit Page (After)
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ Lead *                                                        │
+│ [Select lead...                                        ▼]     │
+│                                                               │
+│ Can't find the prospect? [+ Add New Lead]                     │
+│                                                               │
+│ ⚠️ This lead doesn't have a location... (if applicable)      │
+└──────────────────────────────────────────────────────────────┘
+```
 
----
+## Button Styling
+
+| Page | Button Style | Reason |
+|------|--------------|--------|
+| Leads Page Header | `btn-gradient-primary` | Primary action, should stand out |
+| Leads Page Empty State | `btn-gradient-primary` | Encourage adding first lead |
+| New Visit Page | `variant="link"` | Secondary action, non-intrusive |
 
 ## Summary of Changes
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/hooks/useDashboardData.ts` | Modify | Add `useRecentVisits` hook with filter support and scheduled visits query |
-| `src/components/dashboard/RecentVisitsSection.tsx` | Create | New component with filter tabs, schedule view, and completed visits list |
-| `src/pages/Dashboard.tsx` | Modify | Import and use `RecentVisitsSection` component |
+| `src/pages/Leads.tsx` | Modify | Add "Add Lead" button in header and empty state, import Plus icon |
+| `src/pages/NewVisit.tsx` | Modify | Add "Add New Lead" link below lead selector, import Plus icon |
 
----
-
-## Color Coding
-
-| State | Visual |
-|-------|--------|
-| Scheduled visit | Neutral card with time badge in primary |
-| Completed visit | Green check icon, success accent |
-| In-progress visit | Yellow clock icon, warning accent |
-| Overdue/late visit | Red border accent |
-
----
-
-## Mobile Considerations
-
-- Filter buttons scroll horizontally if needed
-- Visit cards stack vertically
-- Action buttons are full-width on mobile
-- Time badges are compact
+## Note
+This assumes a `/dashboard/leads/new` route exists for adding leads. If it doesn't exist, we may need to create a new page or use a dialog/modal for adding leads inline.
