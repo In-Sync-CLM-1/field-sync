@@ -276,6 +276,68 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_number: string
+          invoice_url: string | null
+          metadata: Json | null
+          organization_id: string
+          paid_at: string | null
+          status: string | null
+          tax_amount: number | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          invoice_url?: string | null
+          metadata?: Json | null
+          organization_id: string
+          paid_at?: string | null
+          status?: string | null
+          tax_amount?: number | null
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          invoice_url?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          paid_at?: string | null
+          status?: string | null
+          tax_amount?: number | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           approved_at: string | null
@@ -437,8 +499,11 @@ export type Database = {
       organizations: {
         Row: {
           apollo_config: Json | null
+          billing_address: Json | null
+          billing_email: string | null
           code: string | null
           created_at: string
+          current_plan_id: string | null
           description: string | null
           id: string
           is_active: boolean
@@ -446,17 +511,27 @@ export type Database = {
           max_automation_emails_per_day: number | null
           name: string
           primary_color: string | null
+          razorpay_customer_id: string | null
+          razorpay_subscription_id: string | null
           services_enabled: Json | null
           settings: Json | null
           slug: string | null
           subscription_active: boolean | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          trial_ends_at: string | null
           updated_at: string
           usage_limits: Json | null
+          user_count: number | null
         }
         Insert: {
           apollo_config?: Json | null
+          billing_address?: Json | null
+          billing_email?: string | null
           code?: string | null
           created_at?: string
+          current_plan_id?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
@@ -464,17 +539,27 @@ export type Database = {
           max_automation_emails_per_day?: number | null
           name: string
           primary_color?: string | null
+          razorpay_customer_id?: string | null
+          razorpay_subscription_id?: string | null
           services_enabled?: Json | null
           settings?: Json | null
           slug?: string | null
           subscription_active?: boolean | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          trial_ends_at?: string | null
           updated_at?: string
           usage_limits?: Json | null
+          user_count?: number | null
         }
         Update: {
           apollo_config?: Json | null
+          billing_address?: Json | null
+          billing_email?: string | null
           code?: string | null
           created_at?: string
+          current_plan_id?: string | null
           description?: string | null
           id?: string
           is_active?: boolean
@@ -482,14 +567,89 @@ export type Database = {
           max_automation_emails_per_day?: number | null
           name?: string
           primary_color?: string | null
+          razorpay_customer_id?: string | null
+          razorpay_subscription_id?: string | null
           services_enabled?: Json | null
           settings?: Json | null
           slug?: string | null
           subscription_active?: boolean | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          trial_ends_at?: string | null
           updated_at?: string
           usage_limits?: Json | null
+          user_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_current_plan_id_fkey"
+            columns: ["current_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          id: string
+          invoice_id: string | null
+          metadata: Json | null
+          organization_id: string
+          payment_method: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string
+          razorpay_signature: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json | null
+          organization_id: string
+          payment_method?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id: string
+          razorpay_signature?: string | null
+          status: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          payment_method?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string
+          razorpay_signature?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_enrollments: {
         Row: {
@@ -672,6 +832,45 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_per_user: number
+          trial_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_per_user?: number
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_per_user?: number
+          trial_days?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -820,6 +1019,12 @@ export type Database = {
         | "platform_admin"
         | "sales_officer"
         | "branch_manager"
+      subscription_status:
+        | "trial"
+        | "active"
+        | "past_due"
+        | "cancelled"
+        | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -960,6 +1165,13 @@ export const Constants = {
         "platform_admin",
         "sales_officer",
         "branch_manager",
+      ],
+      subscription_status: [
+        "trial",
+        "active",
+        "past_due",
+        "cancelled",
+        "expired",
       ],
     },
   },
