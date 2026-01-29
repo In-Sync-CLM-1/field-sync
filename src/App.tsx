@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { AdminRoute } from "@/components/AdminRoute";
@@ -32,6 +33,7 @@ import BranchAnalytics from "./pages/BranchAnalytics";
 import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
+import SubscriptionExpired from "./pages/SubscriptionExpired";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,18 +54,27 @@ const App = () => (
               <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              
+              {/* Protected but subscription-exempt routes */}
               <Route path="/onboarding" element={
                 <ProtectedRoute>
                   <Onboarding />
                 </ProtectedRoute>
               } />
+              <Route path="/subscription-expired" element={
+                <ProtectedRoute>
+                  <SubscriptionExpired />
+                </ProtectedRoute>
+              } />
               
-              {/* Protected routes */}
+              {/* Protected routes with subscription gate */}
               <Route
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    <Layout />
+                    <SubscriptionGate>
+                      <Layout />
+                    </SubscriptionGate>
                   </ProtectedRoute>
                 }
               >
