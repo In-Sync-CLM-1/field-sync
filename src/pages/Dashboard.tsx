@@ -1,10 +1,52 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { useNavigate } from 'react-router-dom';
+
+type StatusColor = 'success' | 'warning' | 'danger' | 'neutral';
+
+function getVisitsTodayStatus(completed: number, planned: number): StatusColor {
+  if (planned === 0) return 'neutral';
+  const percentage = (completed / planned) * 100;
+  if (percentage >= 80) return 'success';
+  if (percentage >= 40) return 'warning';
+  return 'danger';
+}
+
+function getWeekStatus(completed: number, planned: number): StatusColor {
+  if (planned === 0) return 'neutral';
+  const percentage = (completed / planned) * 100;
+  if (percentage >= 70) return 'success';
+  if (percentage >= 40) return 'warning';
+  return 'danger';
+}
+
+function getActiveVisitStatus(minutes: number): StatusColor {
+  if (minutes === 0) return 'neutral';
+  if (minutes > 120) return 'warning'; // More than 2 hours
+  return 'success';
+}
+
+function getFollowUpStatus(count: number): StatusColor {
+  if (count === 0) return 'success';
+  if (count > 10) return 'danger';
+  if (count > 5) return 'warning';
+  return 'neutral';
+}
+
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes} mins ago`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    return `${days}d ${hours % 24}h ago`;
+  }
+  return `${hours}h ${mins}m ago`;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -42,39 +84,68 @@ export default function Dashboard() {
     },
   ];
 
-  const weekChange = myStats?.visitsLastWeek && myStats?.visitsLastWeek > 0
-    ? ((myStats.visitsThisWeek - myStats.visitsLastWeek) / myStats.visitsLastWeek * 100).toFixed(0)
-    : '0';
+  // Calculate progress and status for Visits Today
+  const visitsTodayProgress = myStats?.plannedVisitsToday 
+    ? Math.round((myStats.visitsToday / myStats.plannedVisitsToday) * 100)
+    : 0;
+  const visitsTodayStatus = getVisitsTodayStatus(myStats?.visitsToday || 0, myStats?.plannedVisitsToday || 0);
+
+  // Week status
+  const weekProgress = myStats?.plannedVisitsWeek 
+    ? Math.round((myStats.visitsThisWeek / myStats.plannedVisitsWeek) * 100)
+    : 0;
+  const weekStatus = getWeekStatus(myStats?.visitsThisWeek || 0, myStats?.plannedVisitsWeek || 0);
+
+  // Active visit status
+  const activeVisitStatus = getActiveVisitStatus(myStats?.activeVisitMinutes || 0);
+
+  // Follow-up status
+  const followUpStatus = getFollowUpStatus(myStats?.followUpToday || 0);
 
   const stats = [
     { 
       label: 'Visits Today', 
-      value: myStats?.visitsToday.toString() || '0', 
-      change: `${weekChange}% vs last week`,
+      value: myStats?.visitsToday || 0,
+      primaryText: `${myStats?.visitsToday || 0} of ${myStats?.plannedVisitsToday || 0} planned`,
+      progress: visitsTodayProgress,
+      change: myStats?.weeklyTrend !== 0 ? `${myStats?.weeklyTrend || 0}% vs last week` : undefined,
+      trend: (myStats?.weeklyTrend || 0) > 0 ? 'up' as const : (myStats?.weeklyTrend || 0) < 0 ? 'down' as const : 'neutral' as const,
       icon: MapPin,
-      trend: 'up' as const,
       accentColor: 'primary' as const,
+      status: visitsTodayStatus,
+      onClick: () => navigate('/dashboard/visits'),
     },
     { 
       label: 'This Week', 
-      value: myStats?.visitsThisWeek.toString() || '0', 
+      value: myStats?.visitsThisWeek || 0,
+      primaryText: `${myStats?.visitsThisWeek || 0} completed`,
+      secondaryText: myStats?.plannedVisitsWeek ? `${myStats.plannedVisitsWeek} planned this week` : undefined,
       change: `${myStats?.visitsLastWeek || 0} last week`,
+      trend: (myStats?.visitsThisWeek || 0) >= (myStats?.visitsLastWeek || 0) ? 'up' as const : 'down' as const,
       icon: TrendingUp,
       accentColor: 'info' as const,
+      status: weekStatus,
+      onClick: () => navigate('/dashboard/visits'),
     },
     { 
       label: 'Active Visits', 
-      value: myStats?.activeVisits.toString() || '0', 
-      change: 'In progress',
-      icon: Calendar,
+      value: myStats?.activeVisits || 0,
+      primaryText: myStats?.activeVisits ? `${myStats.activeVisits} in progress` : 'No active visits',
+      secondaryText: myStats?.activeVisitMinutes ? `Started ${formatMinutes(myStats.activeVisitMinutes)}` : undefined,
+      icon: Clock,
       accentColor: 'warning' as const,
+      status: activeVisitStatus,
+      onClick: () => navigate('/dashboard/visits?status=active'),
     },
     { 
-      label: 'Total Leads', 
-      value: myStats?.totalLeads.toString() || '0', 
-      change: '',
+      label: 'Total Prospects', 
+      value: myStats?.totalLeads || 0,
+      primaryText: `${myStats?.openLeadsCount || 0} open leads`,
+      secondaryText: myStats?.followUpToday ? `${myStats.followUpToday} need follow-up today` : 'No follow-ups today',
       icon: Users,
       accentColor: 'accent' as const,
+      status: followUpStatus,
+      onClick: () => navigate('/dashboard/leads'),
     },
   ];
 
@@ -103,10 +174,15 @@ export default function Dashboard() {
             <MetricCard
               title={stat.label}
               value={stat.value}
+              primaryText={stat.primaryText}
+              secondaryText={stat.secondaryText}
+              progress={stat.progress}
               change={stat.change}
               icon={stat.icon}
               trend={stat.trend}
               accentColor={stat.accentColor}
+              status={stat.status}
+              onClick={stat.onClick}
             />
           </div>
         ))}
