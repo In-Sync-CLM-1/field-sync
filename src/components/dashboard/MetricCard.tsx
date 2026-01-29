@@ -92,62 +92,69 @@ export function MetricCard({
   return (
     <Card 
       className={cn(
-        "p-3 relative overflow-hidden group animate-fade-in card-hover",
+        "p-4 relative overflow-hidden group animate-fade-in card-hover min-h-[140px] flex flex-col",
         styles.card,
         statusBorder,
         onClick && "cursor-pointer hover:scale-[1.02] transition-transform duration-200"
       )}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</span>
+      {/* Header - fixed height */}
+      <div className="flex items-center justify-between mb-3 flex-shrink-0">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide leading-tight">{title}</span>
         {Icon && (
-          <div className={cn("icon-circle h-8 w-8 transition-transform duration-200 group-hover:scale-110", styles.icon)}>
+          <div className={cn("icon-circle h-8 w-8 flex-shrink-0 transition-transform duration-200 group-hover:scale-110", styles.icon)}>
             <Icon className="h-4 w-4" />
           </div>
         )}
       </div>
       
-      {/* Primary display - either value or primaryText */}
-      <div className={cn("text-2xl font-bold animate-count-up", styles.value)}>
-        {primaryText || value}
+      {/* Content area - grows to fill space */}
+      <div className="flex-1 flex flex-col justify-center">
+        {/* Primary display - either value or primaryText */}
+        <div className={cn("text-xl font-bold animate-count-up leading-tight", styles.value)}>
+          {primaryText || value}
+        </div>
+
+        {/* Progress bar */}
+        {progress !== undefined && (
+          <div className="mt-2">
+            <Progress 
+              value={Math.min(progress, 100)} 
+              className={cn("h-1.5 bg-muted/50", progressStyle)} 
+            />
+            <span className="text-[10px] text-muted-foreground mt-0.5 block">
+              {Math.round(progress)}% complete
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Progress bar */}
-      {progress !== undefined && (
-        <div className="mt-2">
-          <Progress 
-            value={Math.min(progress, 100)} 
-            className={cn("h-1.5 bg-muted/50", progressStyle)} 
-          />
-          <span className="text-[10px] text-muted-foreground mt-0.5 block">
-            {Math.round(progress)}% complete
-          </span>
-        </div>
-      )}
+      {/* Footer area - fixed at bottom */}
+      <div className="flex-shrink-0 mt-auto pt-1">
+        {/* Trend with change text */}
+        {change && (
+          <p className={cn(
+            "text-xs font-medium flex items-center gap-1",
+            trend === 'up' ? 'text-success' :
+            trend === 'down' ? 'text-destructive' :
+            'text-muted-foreground'
+          )}>
+            {trend && <TrendIcon className="h-3 w-3" />}
+            {change}
+          </p>
+        )}
 
-      {/* Trend with change text */}
-      {change && (
-        <p className={cn(
-          "text-xs mt-1 font-medium flex items-center gap-1",
-          trend === 'up' ? 'text-success' :
-          trend === 'down' ? 'text-destructive' :
-          'text-muted-foreground'
-        )}>
-          {trend && <TrendIcon className="h-3 w-3" />}
-          {change}
-        </p>
-      )}
+        {/* Secondary text */}
+        {secondaryText && (
+          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{secondaryText}</p>
+        )}
 
-      {/* Secondary text */}
-      {secondaryText && (
-        <p className="text-xs text-muted-foreground mt-0.5">{secondaryText}</p>
-      )}
-
-      {/* Subtitle (legacy support) */}
-      {subtitle && !secondaryText && (
-        <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
-      )}
+        {/* Subtitle (legacy support) */}
+        {subtitle && !secondaryText && (
+          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{subtitle}</p>
+        )}
+      </div>
 
       {/* Clickable indicator */}
       {onClick && (
