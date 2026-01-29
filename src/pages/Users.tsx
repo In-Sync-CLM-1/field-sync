@@ -244,12 +244,16 @@ export default function Forms() {
     setIsResettingPassword(true);
 
     try {
-      const { error } = await supabase.auth.admin.updateUserById(
-        selectedUser.id,
-        { password: values.password }
-      );
+      // Call Edge Function to reset password securely
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: { 
+          userId: selectedUser.id, 
+          password: values.password 
+        }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({
         title: 'Password Reset',
