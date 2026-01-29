@@ -34,6 +34,7 @@ import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
+import SubscriptionManagement from "./pages/SubscriptionManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -107,6 +108,11 @@ const App = () => (
                 <Route path="sync-monitoring" element={
                   <AdminRoute>
                     <SyncMonitoring />
+                  </AdminRoute>
+                } />
+                <Route path="subscription" element={
+                  <AdminRoute>
+                    <SubscriptionManagement />
                   </AdminRoute>
                 } />
               </Route>
