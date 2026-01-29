@@ -1,180 +1,192 @@
 
-# Add "Add New Lead" Button Plan
 
-## Overview
-Add a prominent "Add New Lead" button to both the New Visit page and the Leads page, making it easy for users to quickly add new leads/prospects without navigating away.
+# Create Lead Form Page Plan
 
-## Current State
+## Problem
+The "Add Lead" button navigates to `/dashboard/leads/new`, but this route is being matched by the existing `/dashboard/leads/:id` route, causing `LeadDetail` to try fetching a lead with ID "new" and showing "Prospect not found".
 
-### New Visit Page (`NewVisit.tsx`)
-- Has a lead selector dropdown
-- No option to add a new lead if the desired prospect doesn't exist
-- Users must navigate away to add leads
+## Solution
+Create a dedicated `NewLead.tsx` page with a form to add new leads, and add a specific route for it that takes precedence over the dynamic `:id` route.
 
-### Leads Page (`Leads.tsx`)
-- Header has "LeadsUpload" and "Sync" buttons
-- No direct "Add New Lead" button visible
-- Users can only bulk upload via CSV
+## Files to Create
 
-## Proposed Changes
+| File | Purpose |
+|------|---------|
+| `src/pages/NewLead.tsx` | Lead creation form with all required fields |
 
-### 1. Leads Page - Add Prominent Button
-
-**Location:** Next to the existing "LeadsUpload" and "Sync" buttons in the header
-
-**Design:**
-- Primary gradient button (most prominent)
-- Plus icon with "Add Lead" text
-- Positioned first (leftmost) as it's the primary action
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ ← Dashboard    Prospects                                │
-│                [+ Add Lead] [Upload] [Sync]             │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 2. New Visit Page - Add Quick Action
-
-**Location:** Below the lead selector dropdown
-
-**Design:**
-- Link-style or outline button
-- Plus icon with "Add New Lead" text
-- Helpful text explaining the option
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ Lead *                                                  │
-│ [Select lead...                              ▼]         │
-│                                                         │
-│ Can't find the lead? [+ Add New Lead]                   │
-└─────────────────────────────────────────────────────────┘
-```
-
-## Technical Implementation
-
-### Files to Modify
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/Leads.tsx` | Add "Add Lead" button in header |
-| `src/pages/NewVisit.tsx` | Add "Add New Lead" link below lead selector |
+| `src/App.tsx` | Add route `/dashboard/leads/new` before `/dashboard/leads/:id` |
 
-### Detailed Changes
+## Technical Implementation
 
-#### 1. Leads.tsx Changes
+### 1. Route Configuration (App.tsx)
 
-**Add import:**
+Add the new route BEFORE the dynamic `:id` route so it takes precedence:
+
 ```typescript
-import { Plus } from 'lucide-react';
+<Route path="leads" element={<Leads />} />
+<Route path="leads/new" element={<NewLead />} />  {/* ADD THIS */}
+<Route path="leads/:id" element={<LeadDetail />} />
 ```
 
-**Modify header buttons section (around line 96-107):**
-```typescript
-<div className="flex gap-2">
-  <Button 
-    onClick={() => navigate('/dashboard/leads/new')}
-    className="btn-gradient-primary text-primary-foreground"
-    size="sm"
-  >
-    <Plus className="h-3 w-3 mr-1" />
-    Add Lead
-  </Button>
-  <LeadsUpload />
-  <Button 
-    onClick={syncFromDatabase} 
-    disabled={syncing || !currentOrganization}
-    className="btn-outline-info"
-    size="sm"
-  >
-    <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-    {syncing ? 'Syncing' : 'Sync'}
-  </Button>
-</div>
-```
+### 2. New Lead Form (NewLead.tsx)
 
-**Also update empty state (around line 148-155):**
-```typescript
-<div className="flex gap-2">
-  <Button 
-    onClick={() => navigate('/dashboard/leads/new')}
-    className="btn-gradient-primary text-primary-foreground"
-    size="sm"
-  >
-    <Plus className="h-3 w-3 mr-1" />
-    Add Lead
-  </Button>
-  <Button onClick={syncFromDatabase} disabled={syncing} variant="outline" size="sm">
-    <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-    Sync
-  </Button>
-  <LeadsUpload />
-</div>
-```
+**Form Fields (based on leads table schema):**
 
-#### 2. NewVisit.tsx Changes
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| name | text | Yes | Customer/Lead name |
+| mobile_no | text | No | Mobile number |
+| policy_type_category | select | No | Life/Health/Motor/General |
+| policy_type | text | No | Specific policy type |
+| premium_amount | number | No | Annual premium |
+| village_city | text | No | Village or City |
+| district | text | No | District |
+| state | text | No | State |
+| lead_source | text | No | Source of lead |
+| customer_response | textarea | No | Notes |
+| follow_up_date | date | No | Follow-up date |
 
-**Add import:**
-```typescript
-import { Plus } from 'lucide-react';
-```
-
-**Add below the Popover (after line 258, before the lead location status):**
-```typescript
-{/* Add New Lead Option */}
-<div className="flex items-center gap-2 text-sm">
-  <span className="text-muted-foreground">Can't find the prospect?</span>
-  <Button
-    variant="link"
-    size="sm"
-    className="p-0 h-auto text-primary font-medium"
-    onClick={() => navigate('/dashboard/leads/new?returnTo=new-visit')}
-  >
-    <Plus className="h-3 w-3 mr-1" />
-    Add New Lead
-  </Button>
-</div>
-```
-
-## Visual Summary
-
-### Leads Page Header (After)
+**Component Structure:**
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│ ← Dashboard                                                   │
-│                                                               │
-│ Prospects                    [+ Add Lead] [Upload📤] [🔄Sync] │
-│ 🏢 Organization Name • 45 prospects                          │
-└──────────────────────────────────────────────────────────────┘
+NewLead
+├── Header with "Back to Prospects" link
+├── Card
+│   └── Form
+│       ├── Personal Details Section
+│       │   ├── Name (required)
+│       │   └── Mobile Number
+│       ├── Policy Details Section
+│       │   ├── Policy Category (dropdown)
+│       │   ├── Policy Type
+│       │   └── Premium Amount
+│       ├── Location Section
+│       │   ├── Village/City
+│       │   ├── District
+│       │   └── State
+│       ├── Additional Info Section
+│       │   ├── Lead Source
+│       │   ├── Follow-up Date
+│       │   └── Customer Response/Notes
+│       └── Submit Button
+└── Handle returnTo param for NewVisit flow
 ```
 
-### New Visit Page (After)
+**Key Features:**
+- Uses existing `useLeads().addLead()` function to save
+- Handles `returnTo=new-visit` query param to redirect back to New Visit page
+- Current location capture button for coordinates
+- Form validation with React Hook Form + Zod
+- Success toast and navigation on save
+
+### 3. Form Layout Mockup
+
 ```text
-┌──────────────────────────────────────────────────────────────┐
-│ Lead *                                                        │
-│ [Select lead...                                        ▼]     │
-│                                                               │
-│ Can't find the prospect? [+ Add New Lead]                     │
-│                                                               │
-│ ⚠️ This lead doesn't have a location... (if applicable)      │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ ← Back to Prospects                                     │
+│                                                         │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ Add New Lead                                        │ │
+│ │ Create a new prospect/lead                          │ │
+│ ├─────────────────────────────────────────────────────┤ │
+│ │                                                     │ │
+│ │ Personal Details                                    │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ Name *                                          │ │ │
+│ │ │ [Enter customer name                         ]  │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ Mobile Number                                   │ │ │
+│ │ │ [Enter mobile number                         ]  │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │                                                     │ │
+│ │ Policy Details                                      │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ Policy Category                                 │ │ │
+│ │ │ [Select category...                          ▼] │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ Policy Type                                     │ │ │
+│ │ │ [Enter policy type                           ]  │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ Premium Amount (Annual)                         │ │ │
+│ │ │ [₹ Enter amount                              ]  │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │                                                     │ │
+│ │ Location                                            │ │
+│ │ ┌────────────────────┐ ┌────────────────────────┐  │ │
+│ │ │ Village/City       │ │ District               │  │ │
+│ │ │ [City name      ]  │ │ [District name      ]  │  │ │
+│ │ └────────────────────┘ └────────────────────────┘  │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ State                                           │ │ │
+│ │ │ [State name                                  ]  │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │ [📍 Capture Current Location]                       │ │
+│ │                                                     │ │
+│ │ Additional Details                                  │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ Lead Source                                     │ │ │
+│ │ │ [Select source...                            ▼] │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ Follow-up Date                                  │ │ │
+│ │ │ [📅 Select date...                           ]  │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │ ┌─────────────────────────────────────────────────┐ │ │
+│ │ │ Notes                                           │ │ │
+│ │ │ [                                            ]  │ │ │
+│ │ │ [                                            ]  │ │ │
+│ │ └─────────────────────────────────────────────────┘ │ │
+│ │                                                     │ │
+│ │ [              ✓ Save Lead                       ]  │ │
+│ │                                                     │ │
+│ └─────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## Button Styling
+## Key Implementation Details
 
-| Page | Button Style | Reason |
-|------|--------------|--------|
-| Leads Page Header | `btn-gradient-primary` | Primary action, should stand out |
-| Leads Page Empty State | `btn-gradient-primary` | Encourage adding first lead |
-| New Visit Page | `variant="link"` | Secondary action, non-intrusive |
+### Form Submission Logic:
+```typescript
+const onSubmit = async (data: FormData) => {
+  const newLead = await addLead({
+    ...data,
+    organizationId: currentOrganization?.id,
+    status: 'lead',
+    createdBy: user?.id,
+  });
+  
+  // Handle returnTo param for New Visit flow
+  const returnTo = searchParams.get('returnTo');
+  if (returnTo === 'new-visit') {
+    navigate(`/dashboard/visits/new?leadId=${newLead.id}`);
+  } else {
+    navigate('/dashboard/leads');
+  }
+};
+```
 
-## Summary of Changes
+### Policy Category Options:
+- Life Insurance
+- Health Insurance  
+- Motor Insurance
+- General Insurance
+
+### Lead Source Options:
+- Direct/Walk-in
+- Referral
+- Digital/Online
+- Branch Campaign
+- Other
+
+## Summary
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/pages/Leads.tsx` | Modify | Add "Add Lead" button in header and empty state, import Plus icon |
-| `src/pages/NewVisit.tsx` | Modify | Add "Add New Lead" link below lead selector, import Plus icon |
-
-## Note
-This assumes a `/dashboard/leads/new` route exists for adding leads. If it doesn't exist, we may need to create a new page or use a dialog/modal for adding leads inline.
+| `src/pages/NewLead.tsx` | Create | Lead creation form with all fields, validation, and save logic |
+| `src/App.tsx` | Modify | Add `/dashboard/leads/new` route before dynamic `:id` route |
