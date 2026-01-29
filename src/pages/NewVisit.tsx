@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, MapPin, Loader2, ArrowLeft } from 'lucide-react';
+import { Check, ChevronsUpDown, MapPin, Loader2, ArrowLeft, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -256,6 +256,20 @@ export default function NewVisit() {
                 </Command>
               </PopoverContent>
             </Popover>
+            
+            {/* Add New Lead Option */}
+            <div className="flex items-center gap-2 text-sm mt-2">
+              <span className="text-muted-foreground">Can't find the prospect?</span>
+              <Button
+                variant="link"
+                size="sm"
+                className="p-0 h-auto text-primary font-medium"
+                onClick={() => navigate('/dashboard/leads/new?returnTo=new-visit')}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Add New Lead
+              </Button>
+            </div>
           </div>
 
           {/* Lead location status info */}
