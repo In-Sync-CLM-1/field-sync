@@ -226,10 +226,14 @@ export default function Auth() {
           : organizations.find(org => org.id === organizationId);
         if (selectedOrg) setCurrentOrganization(selectedOrg);
 
-        toast.success(validatedData.createNewOrg 
-          ? 'Organization created! Welcome to InSync.' 
-          : 'Account created successfully! Welcome to InSync.');
-        navigate('/', { replace: true });
+        // Redirect new organization creators to onboarding
+        if (validatedData.createNewOrg) {
+          toast.success('Organization created! Let\'s set up your account.');
+          navigate('/onboarding', { replace: true });
+        } else {
+          toast.success('Account created successfully! Welcome to InSync.');
+          navigate('/', { replace: true });
+        }
       } else {
         toast.success('Account created! Please check your email to verify your account.');
         setActiveTab('signin');
