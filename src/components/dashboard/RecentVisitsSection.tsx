@@ -216,55 +216,59 @@ export function RecentVisitsSection() {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty State - Single consolidated view */}
         {!isLoading && !showSchedule && recentVisits.length === 0 && (
           <div className="text-center py-6 text-muted-foreground">
-            <div className="icon-circle icon-circle-primary mx-auto mb-3 h-12 w-12">
-              <MapPin className="h-6 w-6" />
+            <div className={cn(
+              "icon-circle mx-auto mb-3 h-12 w-12",
+              filter === 'today' && hasNoVisitsToday ? "icon-circle-info" : "icon-circle-primary"
+            )}>
+              {filter === 'today' && hasNoVisitsToday ? (
+                <Calendar className="h-6 w-6" />
+              ) : (
+                <MapPin className="h-6 w-6" />
+              )}
             </div>
             <p className="text-sm font-medium mb-1">
-              {filter === 'today' && 'No visits today yet'}
+              {filter === 'today' && 'No visits scheduled for today'}
               {filter === 'this_week' && 'No visits this week'}
               {filter === 'pending' && 'No pending visits'}
               {filter === 'completed' && 'No completed visits'}
             </p>
-            <p className="text-xs text-muted-foreground mb-3">Start tracking your field activity</p>
-            <Button 
-              className="btn-gradient-primary text-primary-foreground" 
-              size="sm" 
-              onClick={() => navigate('/dashboard/visits/new')}
-            >
-              Start a Visit
-            </Button>
-          </div>
-        )}
-
-        {/* Empty Schedule State */}
-        {!isLoading && hasNoVisitsToday && !hasSchedule && filter === 'today' && (
-          <div className="text-center py-6 text-muted-foreground">
-            <div className="icon-circle icon-circle-info mx-auto mb-3 h-12 w-12">
-              <Calendar className="h-6 w-6" />
-            </div>
-            <p className="text-sm font-medium mb-1">No visits scheduled for today</p>
-            <p className="text-xs text-muted-foreground mb-3">Plan your day or start an unplanned visit</p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Button 
-                variant="outline"
-                size="sm" 
-                onClick={() => navigate('/dashboard/planning')}
-              >
-                <Calendar className="h-4 w-4 mr-1" />
-                Plan Today
-              </Button>
+            <p className="text-xs text-muted-foreground mb-3">
+              {filter === 'today' 
+                ? 'Plan your day or start an unplanned visit'
+                : 'Start tracking your field activity'
+              }
+            </p>
+            {filter === 'today' ? (
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button 
+                  variant="outline"
+                  size="sm" 
+                  onClick={() => navigate('/dashboard/planning')}
+                >
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Plan Today
+                </Button>
+                <Button 
+                  className="btn-gradient-primary text-primary-foreground" 
+                  size="sm" 
+                  onClick={() => navigate('/dashboard/visits/new')}
+                >
+                  <MapPin className="h-4 w-4 mr-1" />
+                  Start Visit
+                </Button>
+              </div>
+            ) : (
               <Button 
                 className="btn-gradient-primary text-primary-foreground" 
                 size="sm" 
                 onClick={() => navigate('/dashboard/visits/new')}
               >
-                <MapPin className="h-4 w-4 mr-1" />
-                Start Visit
+                Start a Visit
               </Button>
-            </div>
+            )}
           </div>
         )}
       </CardContent>
