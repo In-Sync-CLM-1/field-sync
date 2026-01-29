@@ -18,6 +18,7 @@ import {
   IndianRupee,
   Calendar,
   ArrowLeft,
+  Plus,
 } from 'lucide-react';
 import {
   Pagination,
@@ -94,6 +95,14 @@ export default function Leads() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button 
+              onClick={() => navigate('/dashboard/leads/new')}
+              className="btn-gradient-primary text-primary-foreground"
+              size="sm"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add Lead
+            </Button>
             <LeadsUpload />
             <Button 
               onClick={syncFromDatabase} 
@@ -146,6 +155,14 @@ export default function Leads() {
               </p>
               {currentOrganization && (
                 <div className="flex gap-2">
+                  <Button 
+                    onClick={() => navigate('/dashboard/leads/new')}
+                    className="btn-gradient-primary text-primary-foreground"
+                    size="sm"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Lead
+                  </Button>
                   <Button onClick={syncFromDatabase} disabled={syncing} variant="outline" size="sm">
                     <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
                     Sync
