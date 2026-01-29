@@ -15,27 +15,34 @@ export const useLeads = () => {
   // Get all leads from IndexedDB
   const allLeads = useLiveQuery(() => db.leads.toArray()) || [];
 
-  // Filter leads by organization, search, and status
-  const leads = allLeads.filter(lead => {
-    // Filter by current organization
-    const matchesOrg = !currentOrganization || lead.organizationId === currentOrganization.id;
+  // Filter leads by organization, search, and status, then sort by newest first
+  const leads = allLeads
+    .filter(lead => {
+      // Filter by current organization
+      const matchesOrg = !currentOrganization || lead.organizationId === currentOrganization.id;
 
-    const matchesSearch = 
-      searchQuery === '' ||
-      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.policyTypeCategory?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.mobileNo?.includes(searchQuery) ||
-      lead.villageCity?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.district?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.proposalNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.customerId?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = 
+        searchQuery === '' ||
+        lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.policyTypeCategory?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.mobileNo?.includes(searchQuery) ||
+        lead.villageCity?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.district?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.proposalNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.customerId?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = 
-      filterStatus === 'all' || 
-      lead.status === filterStatus;
+      const matchesStatus = 
+        filterStatus === 'all' || 
+        lead.status === filterStatus;
 
-    return matchesOrg && matchesSearch && matchesStatus;
-  });
+      return matchesOrg && matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      // Sort by createdAt descending (newest first)
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
 
   // Sync leads from Supabase to IndexedDB
   const syncFromDatabase = async () => {
