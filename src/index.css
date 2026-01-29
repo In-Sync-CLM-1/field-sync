@@ -16,72 +16,72 @@
 }
 
 /* 
-  Electric Violet + Lime Design System
-  Gaming-inspired with neon glows and power-up effects
+  Brand Color System - Professional InSync Palette
+  Teal-focused with professional accent colors
   All colors are HSL for accessibility and theming
 */
 
 @layer base {
   :root {
     /* Base Colors */
-    --background: 240 10% 98%;
-    --foreground: 260 10% 15%;
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
 
     /* Card Colors */
     --card: 0 0% 100%;
-    --card-foreground: 260 10% 15%;
+    --card-foreground: 215 25% 15%;
 
     /* Popover & Dropdown */
     --popover: 0 0% 100%;
-    --popover-foreground: 260 10% 15%;
+    --popover-foreground: 215 25% 15%;
 
-    /* Primary - Electric Violet */
-    --primary: 262 83% 58%;
+    /* Primary - Brand Teal #01B8AA */
+    --primary: 174 99% 36%;
     --primary-foreground: 0 0% 100%;
-    --primary-dark: 262 83% 48%;
+    --primary-dark: 174 99% 28%;
     
-    /* Secondary - Soft violet */
-    --secondary: 262 30% 95%;
-    --secondary-foreground: 262 83% 58%;
+    /* Secondary - Soft teal */
+    --secondary: 174 30% 95%;
+    --secondary-foreground: 174 99% 36%;
 
     /* Muted - Light backgrounds */
-    --muted: 260 20% 96%;
-    --muted-foreground: 260 10% 45%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 15% 45%;
 
-    /* Accent - Lime Green */
-    --accent: 82 84% 55%;
-    --accent-foreground: 82 84% 15%;
+    /* Accent - Brand Gold #F2C80F */
+    --accent: 48 93% 50%;
+    --accent-foreground: 48 93% 15%;
 
-    /* Success - Lime variant */
-    --success: 142 71% 45%;
+    /* Success - Teal variant */
+    --success: 174 99% 36%;
     --success-foreground: 0 0% 100%;
-    --success-bg: 142 71% 95%;
+    --success-bg: 174 60% 95%;
 
-    /* Warning - Amber */
-    --warning: 43 96% 56%;
-    --warning-foreground: 43 96% 15%;
-    --warning-bg: 43 96% 95%;
+    /* Warning - Brand Gold */
+    --warning: 48 93% 50%;
+    --warning-foreground: 48 93% 15%;
+    --warning-bg: 48 93% 95%;
 
     /* Error/Destructive - Rose */
     --destructive: 347 77% 50%;
     --destructive-foreground: 0 0% 100%;
     --destructive-bg: 347 77% 95%;
 
-    /* Info - Cyan */
-    --info: 189 94% 43%;
-    --info-foreground: 0 0% 100%;
-    --info-bg: 189 94% 95%;
+    /* Info - Brand Light Blue #8AD4EB */
+    --info: 197 73% 73%;
+    --info-foreground: 197 73% 15%;
+    --info-bg: 197 73% 95%;
 
     /* Border & Input */
-    --border: 260 20% 88%;
-    --input: 260 20% 88%;
-    --ring: 262 83% 58%;
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 174 99% 36%;
 
-    /* Gaming Colors */
-    --neon-violet: 262 83% 66%;
-    --neon-lime: 82 84% 55%;
-    --neon-pink: 330 81% 60%;
-    --neon-cyan: 189 94% 53%;
+    /* Brand Colors */
+    --neon-violet: 174 99% 40%;
+    --neon-lime: 48 93% 50%;
+    --neon-pink: 319 24% 62%;
+    --neon-cyan: 197 73% 73%;
 
     /* Border Radius */
     --radius: 0.5rem;
@@ -99,14 +99,14 @@
     --space-7: 4rem;
     --space-8: 6rem;
 
-    /* Shadows with violet tint */
-    --shadow-sm: 0 1px 3px hsla(262, 83%, 58%, 0.08);
-    --shadow-md: 0 4px 12px hsla(262, 83%, 58%, 0.12);
-    --shadow-lg: 0 8px 24px hsla(262, 83%, 58%, 0.16);
-    --shadow-xl: 0 16px 48px hsla(262, 83%, 58%, 0.24);
-    --shadow-glow: 0 0 20px hsla(262, 83%, 58%, 0.4);
-    --shadow-glow-lime: 0 0 20px hsla(82, 84%, 55%, 0.4);
-    --shadow-glow-pink: 0 0 20px hsla(330, 81%, 60%, 0.4);
+    /* Shadows with teal tint */
+    --shadow-sm: 0 1px 3px hsla(174, 99%, 36%, 0.08);
+    --shadow-md: 0 4px 12px hsla(174, 99%, 36%, 0.12);
+    --shadow-lg: 0 8px 24px hsla(174, 99%, 36%, 0.16);
+    --shadow-xl: 0 16px 48px hsla(174, 99%, 36%, 0.24);
+    --shadow-glow: 0 0 20px hsla(174, 99%, 36%, 0.4);
+    --shadow-glow-lime: 0 0 20px hsla(48, 93%, 50%, 0.4);
+    --shadow-glow-pink: 0 0 20px hsla(319, 24%, 62%, 0.4);
 
     /* Motion */
     --duration-instant: 100ms;
@@ -119,95 +119,95 @@
     --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
     /* Sidebar */
-    --sidebar-background: 262 30% 98%;
-    --sidebar-foreground: 260 10% 15%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-background: 174 30% 98%;
+    --sidebar-foreground: 215 25% 15%;
+    --sidebar-primary: 174 99% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 82 84% 92%;
-    --sidebar-accent-foreground: 82 84% 25%;
-    --sidebar-border: 260 20% 90%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-accent: 48 93% 92%;
+    --sidebar-accent-foreground: 48 93% 25%;
+    --sidebar-border: 210 20% 90%;
+    --sidebar-ring: 174 99% 36%;
   }
 
   .dark {
-    /* Dark Mode - Neon glow enhanced */
-    --background: 260 20% 8%;
-    --foreground: 260 10% 95%;
+    /* Dark Mode - Professional brand colors */
+    --background: 215 28% 8%;
+    --foreground: 210 15% 95%;
 
     /* Card Colors - Elevated surfaces */
-    --card: 260 20% 12%;
-    --card-foreground: 260 10% 95%;
+    --card: 215 28% 12%;
+    --card-foreground: 210 15% 95%;
 
     /* Popover & Dropdown */
-    --popover: 260 20% 14%;
-    --popover-foreground: 260 10% 95%;
+    --popover: 215 28% 14%;
+    --popover-foreground: 210 15% 95%;
 
-    /* Primary - Brighter in dark mode */
-    --primary: 262 83% 66%;
+    /* Primary - Brighter teal in dark mode */
+    --primary: 174 99% 42%;
     --primary-foreground: 0 0% 100%;
-    --primary-dark: 262 83% 56%;
+    --primary-dark: 174 99% 32%;
     
     /* Secondary */
-    --secondary: 262 30% 18%;
-    --secondary-foreground: 262 83% 75%;
+    --secondary: 174 30% 18%;
+    --secondary-foreground: 174 99% 60%;
 
     /* Muted */
-    --muted: 260 20% 16%;
-    --muted-foreground: 260 10% 65%;
+    --muted: 215 20% 16%;
+    --muted-foreground: 210 15% 65%;
 
-    /* Accent - Lime increased saturation */
-    --accent: 82 84% 60%;
-    --accent-foreground: 82 84% 10%;
+    /* Accent - Gold */
+    --accent: 48 93% 55%;
+    --accent-foreground: 48 93% 10%;
 
     /* Success */
-    --success: 142 71% 50%;
+    --success: 174 99% 42%;
     --success-foreground: 0 0% 100%;
-    --success-bg: 142 71% 15%;
+    --success-bg: 174 60% 15%;
 
     /* Warning */
-    --warning: 43 96% 60%;
-    --warning-foreground: 43 96% 10%;
-    --warning-bg: 43 96% 15%;
+    --warning: 48 93% 55%;
+    --warning-foreground: 48 93% 10%;
+    --warning-bg: 48 93% 15%;
 
     /* Error */
     --destructive: 347 77% 55%;
     --destructive-foreground: 0 0% 100%;
     --destructive-bg: 347 77% 15%;
 
-    /* Info */
-    --info: 189 94% 50%;
-    --info-foreground: 0 0% 100%;
-    --info-bg: 189 94% 15%;
+    /* Info - Light Blue */
+    --info: 197 73% 75%;
+    --info-foreground: 197 73% 10%;
+    --info-bg: 197 73% 15%;
 
     /* Border & Input */
-    --border: 260 20% 20%;
-    --input: 260 20% 20%;
-    --ring: 262 83% 66%;
+    --border: 215 20% 20%;
+    --input: 215 20% 20%;
+    --ring: 174 99% 42%;
 
-    /* Gaming Colors - Enhanced glow */
-    --neon-violet: 262 83% 70%;
-    --neon-lime: 82 84% 60%;
-    --neon-pink: 330 81% 65%;
-    --neon-cyan: 189 94% 58%;
+    /* Brand Colors - Dark mode */
+    --neon-violet: 174 99% 45%;
+    --neon-lime: 48 93% 55%;
+    --neon-pink: 319 24% 68%;
+    --neon-cyan: 197 73% 78%;
 
     /* Shadows - Enhanced glows in dark mode */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
     --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-    --shadow-glow: 0 0 30px hsla(262, 83%, 66%, 0.5);
-    --shadow-glow-lime: 0 0 30px hsla(82, 84%, 60%, 0.5);
-    --shadow-glow-pink: 0 0 30px hsla(330, 81%, 65%, 0.5);
+    --shadow-glow: 0 0 30px hsla(174, 99%, 42%, 0.5);
+    --shadow-glow-lime: 0 0 30px hsla(48, 93%, 55%, 0.5);
+    --shadow-glow-pink: 0 0 30px hsla(319, 24%, 68%, 0.5);
 
     /* Sidebar */
-    --sidebar-background: 260 20% 10%;
-    --sidebar-foreground: 260 10% 95%;
-    --sidebar-primary: 262 83% 66%;
+    --sidebar-background: 215 28% 10%;
+    --sidebar-foreground: 210 15% 95%;
+    --sidebar-primary: 174 99% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 82 84% 20%;
-    --sidebar-accent-foreground: 82 84% 70%;
-    --sidebar-border: 260 20% 18%;
-    --sidebar-ring: 262 83% 66%;
+    --sidebar-accent: 48 93% 20%;
+    --sidebar-accent-foreground: 48 93% 70%;
+    --sidebar-border: 215 20% 18%;
+    --sidebar-ring: 174 99% 42%;
   }
 }
 
@@ -274,17 +274,17 @@
     box-shadow: var(--shadow-glow);
   }
 
-  /* Input Focus - Neon Ring */
+  /* Input Focus - Brand Teal Ring */
   .input-focus:focus {
     outline: none;
     border-color: hsl(var(--primary));
-    box-shadow: 0 0 0 3px hsla(262, 83%, 58%, 0.2), var(--shadow-glow);
+    box-shadow: 0 0 0 3px hsla(174, 99%, 36%, 0.2), var(--shadow-glow);
   }
 
   /* Glass Effects */
-  .glass-violet {
+  .glass-teal {
     @apply bg-card/80 backdrop-blur-md border-primary/20;
-    box-shadow: inset 0 1px 0 0 hsla(262, 83%, 90%, 0.1);
+    box-shadow: inset 0 1px 0 0 hsla(174, 99%, 90%, 0.1);
   }
 
   .glass-card {
@@ -305,7 +305,7 @@
     box-shadow: var(--shadow-glow-pink);
   }
 
-  /* Gradient Utilities */
+  /* Gradient Utilities - Brand aligned */
   .gradient-primary {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%);
   }
@@ -314,8 +314,8 @@
     background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--neon-cyan)) 100%);
   }
 
-  .gradient-gaming {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 50%, hsl(var(--accent)) 100%);
+  .gradient-brand {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%);
   }
 
   /* XP Bar Progress */
@@ -607,18 +607,13 @@
                 radial-gradient(ellipse at bottom left, hsl(var(--accent) / 0.05) 0%, transparent 50%);
   }
 
-  /* Header Gradient Bar */
+  /* Header Gradient Bar - Brand Teal to Purple */
   .header-gradient-bar {
     @apply absolute top-0 left-0 right-0 h-1;
     background: linear-gradient(90deg, 
       hsl(var(--primary)) 0%, 
-      hsl(var(--neon-pink)) 25%, 
-      hsl(var(--neon-cyan)) 50%, 
-      hsl(var(--accent)) 75%, 
-      hsl(var(--primary)) 100%
+      hsl(var(--neon-pink)) 100%
     );
-    background-size: 200% 100%;
-    animation: gradient-shift 8s ease infinite;
   }
 
   /* Icon Circle Containers */
@@ -677,7 +672,7 @@
     @apply border-l-4 border-l-success;
   }
 
-  /* Gradient Text */
+  /* Gradient Text - Brand Colors */
   .gradient-text-primary {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%);
     -webkit-background-clip: text;
@@ -686,7 +681,7 @@
   }
 
   .gradient-text-accent {
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--neon-cyan)) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-cyan)) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -738,10 +733,10 @@
                 0 4px 12px hsl(var(--primary) / 0.08);
   }
 
-  /* Quick Action Button Styles */
+  /* Quick Action Button Styles - Brand Teal */
   .btn-gradient-primary {
     @apply relative overflow-hidden transition-all duration-200;
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(174 99% 28%) 100%);
   }
 
   .btn-gradient-primary:hover {
@@ -780,17 +775,17 @@
     box-shadow: 0 2px 8px hsl(43 96% 56% / 0.3);
   }
 
-  /* Welcome Hero Section */
+  /* Welcome Hero Section - Brand Teal */
   .hero-gradient {
     @apply relative overflow-hidden rounded-xl p-4;
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--neon-pink) / 0.05) 50%, hsl(var(--accent) / 0.1) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--neon-pink) / 0.04) 100%);
     border: 1px solid hsl(var(--primary) / 0.2);
   }
 
   .hero-gradient::before {
     content: '';
     @apply absolute -top-1/2 -right-1/2 w-full h-full;
-    background: radial-gradient(circle, hsl(var(--primary) / 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%);
     animation: float 8s ease-in-out infinite;
   }
 
