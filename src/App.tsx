@@ -13,6 +13,7 @@ import { LandingRoute } from "@/components/LandingRoute";
 import Layout from "@/components/Layout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import NewLead from "./pages/NewLead";
 import TeamDashboard from "./pages/TeamDashboard";
 import AnalyticsHub from "./pages/AnalyticsHub";
 import TerritoryMap from "./pages/TerritoryMap";
@@ -74,6 +75,7 @@ const App = () => (
                   </AdminRoute>
                 } />
                 <Route path="leads" element={<Leads />} />
+                <Route path="leads/new" element={<NewLead />} />
                 <Route path="leads/:id" element={<LeadDetail />} />
                 <Route path="visits" element={<Visits />} />
                 <Route path="visits/map" element={<TerritoryMap />} />
