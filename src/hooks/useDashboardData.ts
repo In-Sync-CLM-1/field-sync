@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
-import { startOfToday, startOfWeek, endOfWeek, subWeeks, subDays, format } from 'date-fns';
+import { startOfToday, startOfWeek, endOfWeek, subWeeks, subDays, format, differenceInMinutes } from 'date-fns';
 
 export function useMyStats() {
   const { user, currentOrganization } = useAuthStore();
@@ -13,6 +13,7 @@ export function useMyStats() {
 
       const now = new Date();
       const todayStart = startOfToday();
+      const todayString = format(todayStart, 'yyyy-MM-dd');
       const thisWeekStart = startOfWeek(now);
       const thisWeekEnd = endOfWeek(now);
       const lastWeekStart = startOfWeek(subWeeks(now, 1));
@@ -41,25 +42,79 @@ export function useMyStats() {
         .gte('check_in_time', lastWeekStart.toISOString())
         .lte('check_in_time', lastWeekEnd.toISOString());
 
-      // Get active visits (not checked out)
-      const { count: activeVisits } = await supabase
+      // Get active visits with oldest start time
+      const { data: activeVisitsData } = await supabase
         .from('visits')
-        .select('*', { count: 'exact', head: true })
+        .select('check_in_time')
         .eq('user_id', user.id)
-        .is('check_out_time', null);
+        .is('check_out_time', null)
+        .order('check_in_time', { ascending: true });
 
-      // Get leads count
+      const activeVisits = activeVisitsData?.length || 0;
+      const oldestActiveVisitTime = activeVisitsData?.[0]?.check_in_time 
+        ? new Date(activeVisitsData[0].check_in_time) 
+        : null;
+      const activeVisitMinutes = oldestActiveVisitTime 
+        ? differenceInMinutes(now, oldestActiveVisitTime) 
+        : 0;
+
+      // Get today's plan for planned visits
+      const { data: todayPlan } = await supabase
+        .from('daily_plans')
+        .select('prospects_target')
+        .eq('user_id', user.id)
+        .eq('plan_date', todayString)
+        .single();
+
+      const plannedVisitsToday = todayPlan?.prospects_target || 0;
+
+      // Get this week's plans for planned visits
+      const { data: weekPlans } = await supabase
+        .from('daily_plans')
+        .select('prospects_target')
+        .eq('user_id', user.id)
+        .gte('plan_date', format(thisWeekStart, 'yyyy-MM-dd'))
+        .lte('plan_date', format(thisWeekEnd, 'yyyy-MM-dd'));
+
+      const plannedVisitsWeek = weekPlans?.reduce((sum, p) => sum + (p.prospects_target || 0), 0) || 0;
+
+      // Get open leads count (not enrolled/converted/closed)
+      const { count: openLeadsCount } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', currentOrganization.id)
+        .not('status', 'in', '("enrolled","converted","closed")');
+
+      // Get total leads count
       const { count: totalLeads } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
         .eq('organization_id', currentOrganization.id);
 
+      // Get leads needing follow-up today
+      const { count: followUpToday } = await supabase
+        .from('leads')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', currentOrganization.id)
+        .eq('follow_up_date', todayString);
+
+      // Calculate weekly trend percentage
+      const weeklyTrend = visitsLastWeek && visitsLastWeek > 0
+        ? Math.round(((visitsThisWeek || 0) - visitsLastWeek) / visitsLastWeek * 100)
+        : 0;
+
       return {
         visitsToday: visitsToday || 0,
         visitsThisWeek: visitsThisWeek || 0,
         visitsLastWeek: visitsLastWeek || 0,
-        activeVisits: activeVisits || 0,
+        activeVisits,
+        activeVisitMinutes,
         totalLeads: totalLeads || 0,
+        openLeadsCount: openLeadsCount || 0,
+        followUpToday: followUpToday || 0,
+        plannedVisitsToday,
+        plannedVisitsWeek,
+        weeklyTrend,
         pendingSync: 0,
         formsCompleted: 0,
         photosCaptured: 0,
