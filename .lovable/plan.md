@@ -1,129 +1,103 @@
 
-# UI Enhancement Plan - Add Visual Depth and Color
+# Update Dashboard Colors to Brand Palette
 
-## Overview
-The app currently has a flat appearance despite having a rich design system with vibrant colors (Electric Violet, Lime Green, gaming neon effects). This plan will enhance the visual design by applying consistent color treatments, gradients, shadows, and visual hierarchy across all main pages.
+## Problem
+The current Dashboard uses a rainbow color scheme (violet, pink, cyan, lime) which looks unprofessional and doesn't match the established brand identity. The screenshot shows:
+- Rainbow gradient header bar
+- Multi-colored metric card borders (red, purple, blue, green)
+- Rainbow quick action buttons
+- Various bright neon colors clashing
 
-## Current State Analysis
-- Design system has vibrant colors defined but underutilized
-- Cards are plain white with minimal differentiation
-- Metric cards have accent bars but lack color-coded icons
-- Quick action buttons are visually similar
-- Pages lack gradient backgrounds and visual depth
-- The "Bold & Dark" teal aesthetic from brand guidelines isn't visible
+## Brand Color Palette
+According to the brand guidelines, we should use:
+- **Primary (Teal):** #01B8AA
+- **Light Blue:** #8AD4EB  
+- **Purple:** #A66999
+- **Gold:** #F2C80F
+- **Background:** Slate-950 dark aesthetic (or light mode equivalent)
 
-## Enhancement Strategy
+## Solution Overview
+Replace the current "gaming neon" color system with the professional brand palette, creating a cohesive, modern look with consistent teal-focused theming.
 
-### 1. Dashboard Page (`src/pages/Dashboard.tsx`)
-**Changes:**
-- Add a gradient hero section with welcome message
-- Color-code metric cards with distinct accent colors:
-  - Visits Today: Primary violet
-  - This Week: Cyan/Info
-  - Active Visits: Amber/Warning  
-  - Total Leads: Accent green
-- Add icon background circles with color variants
-- Style Quick Actions with gradient primary button and colored outline variants
-- Add subtle background pattern/gradient to page
-
-### 2. MetricCard Component (`src/components/dashboard/MetricCard.tsx`)
-**Changes:**
-- Add `accentColor` prop to support different color themes per card
-- Add colored icon backgrounds with glow effects
-- Enhanced hover states with card lift and glow
-- Color-coded accent bars based on card type
-
-### 3. Card Component (`src/components/ui/card.tsx`)
-**Changes:**
-- Add optional `variant` prop for different card styles:
-  - `default`: Current styling
-  - `gradient`: Subtle gradient background
-  - `glass`: Frosted glass effect
-  - `elevated`: More prominent shadow
-
-### 4. Layout Header (`src/components/Layout.tsx`)
-**Changes:**
-- Add gradient accent bar (multi-color instead of single primary)
-- Enhanced bottom navigation with colored active states
-
-### 5. Sidebar (`src/components/AppSidebar.tsx`)
-**Changes:**
-- Add subtle gradient background
-- Colored icons for different sections
-- Enhanced active state styling with glow
-
-### 6. Main Pages Enhancement
-
-**Leads Page (`src/pages/Leads.tsx`):**
-- Add page header with gradient background
-- Colored status badges with better contrast
-- Card hover effects with subtle glow
-
-**Visits Page (`src/pages/Visits.tsx`):**
-- Add gradient page header
-- Enhanced status badges (green for completed, amber for in-progress)
-- Visual distinction between visit cards
-
-**Planning Page (`src/pages/Planning.tsx`):**
-- Add gradient header section
-- Color-coded target cards (Prospects, Quotes, Policies)
-- Progress bars with gradient fills
-- Enhanced milestone celebrations
-
-**Territory Map (`src/pages/TerritoryMap.tsx`):**
-- Add gradient header bar
-- Colored filter controls
-
-**Performance Board (`src/pages/PerformanceBoard.tsx`):**
-- Gradient leaderboard header
-- Gold/Silver/Bronze colored rank badges
-- Enhanced metric displays
-
-### 7. Global CSS Enhancements (`src/index.css`)
-**New utility classes:**
-- `.page-gradient`: Subtle gradient for page backgrounds
-- `.card-gradient-[color]`: Color-specific card backgrounds
-- `.icon-circle-[color]`: Colored icon containers
-- Enhanced glow utilities for different colors
-
-## Color Usage Guidelines
-
-| Element | Color | CSS Variable |
-|---------|-------|--------------|
-| Primary actions | Electric Violet | `--primary` |
-| Success/Growth | Lime Green | `--accent` |
-| Visits/Today | Cyan | `--info` |
-| Active/Warning | Amber | `--warning` |
-| Completed/Done | Green | `--success` |
-| Delete/Error | Rose | `--destructive` |
+---
 
 ## Files to Modify
 
-| File | Type of Changes |
-|------|-----------------|
-| `src/index.css` | Add new utility classes, page gradients |
-| `src/components/dashboard/MetricCard.tsx` | Add color variants, icon styling |
-| `src/components/ui/card.tsx` | Add variant prop |
-| `src/pages/Dashboard.tsx` | Apply color scheme to metrics and actions |
-| `src/pages/Leads.tsx` | Enhanced header, colored badges |
-| `src/pages/Visits.tsx` | Enhanced header, status colors |
-| `src/pages/Planning.tsx` | Color-coded sections |
-| `src/pages/PerformanceBoard.tsx` | Leaderboard styling |
-| `src/components/Layout.tsx` | Gradient header, colored nav |
-| `src/components/AppSidebar.tsx` | Enhanced sidebar styling |
+### 1. `src/index.css` - Core CSS Variables
+
+Replace the current color definitions with brand-aligned colors:
+
+| Current Variable | Current Color | New Color | Hex |
+|-----------------|---------------|-----------|-----|
+| `--primary` | Electric Violet | Teal | #01B8AA |
+| `--accent` | Lime Green | Gold | #F2C80F |
+| `--info` | Cyan | Light Blue | #8AD4EB |
+| `--neon-pink` | Neon Pink | Purple | #A66999 |
+| `--neon-cyan` | Neon Cyan | Light Blue | #8AD4EB |
+| `--neon-violet` | Neon Violet | Teal | #01B8AA |
+| `--neon-lime` | Neon Lime | Gold | #F2C80F |
+
+**Additional changes:**
+- Update gradient utilities to use brand colors
+- Simplify the header gradient bar to use teal-to-purple (not rainbow)
+- Update glow/shadow utilities to use teal
+
+### 2. `src/pages/Dashboard.tsx` - Metric Card Colors
+
+Update the accent colors for metric cards to use a cohesive palette:
+
+| Metric | Current | New |
+|--------|---------|-----|
+| Visits Today | `primary` (violet) | `primary` (teal) |
+| This Week | `info` (cyan) | `info` (light blue) |
+| Active Visits | `warning` (amber) | `warning` (gold) |
+| Total Leads | `accent` (lime) | `accent` (gold) |
+
+Update Quick Action button classes for consistent styling.
+
+### 3. `src/components/dashboard/MetricCard.tsx` - No Changes Needed
+
+The component already uses the CSS variables, so updating the CSS will automatically apply new colors.
+
+---
+
+## Color Mapping Details
+
+**HSL Conversions for CSS:**
+```text
+Teal #01B8AA      → 174 99% 36%
+Light Blue #8AD4EB → 197 73% 73%
+Purple #A66999    → 319 24% 62%
+Gold #F2C80F      → 48 93% 50%
+```
+
+**Gradient Updates:**
+- Header bar: Teal → Purple (subtle, professional)
+- Hero section: Teal gradient backgrounds
+- Button primary: Solid teal or teal-to-purple gradient
+
+---
 
 ## Visual Impact
 
 **Before:**
-- Flat, monotone appearance
-- All cards look identical
-- Limited visual hierarchy
-- Minimal use of brand colors
+- Rainbow gradient header
+- Clashing neon colors (violet, pink, cyan, lime)
+- Gaming aesthetic that looks unprofessional
 
 **After:**
-- Vibrant, modern interface
-- Color-coded information for quick scanning
-- Clear visual hierarchy with gradients and shadows
-- Consistent use of brand palette
-- Gaming-inspired glow effects on key elements
-- Better differentiation between UI elements
+- Clean teal-purple gradient header
+- Cohesive brand colors throughout
+- Professional, modern appearance
+- Consistent color hierarchy (teal for primary, gold for accents)
+
+---
+
+## Implementation Steps
+
+1. Update CSS color variables in `:root` and `.dark` sections
+2. Update gradient utilities to use new brand colors
+3. Simplify header gradient bar
+4. Update Dashboard metric card accent colors
+5. Update Quick Action button styling
+6. Update any other affected components
