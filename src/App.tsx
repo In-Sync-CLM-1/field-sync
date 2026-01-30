@@ -8,6 +8,7 @@ import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { AdminRoute } from "@/components/AdminRoute";
+import { PlatformAdminRoute } from "@/components/PlatformAdminRoute";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ServiceWorkerUpdateHandler } from "@/components/ServiceWorkerUpdateHandler";
 import { LandingRoute } from "@/components/LandingRoute";
@@ -35,6 +36,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
+import OrganizationsDashboard from "./pages/PlatformAdmin/OrganizationsDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +68,18 @@ const App = () => (
                 <ProtectedRoute>
                   <SubscriptionExpired />
                 </ProtectedRoute>
+              } />
+              
+              {/* Platform Admin routes - bypass subscription gate */}
+              <Route path="/platform-admin" element={
+                <PlatformAdminRoute>
+                  <OrganizationsDashboard />
+                </PlatformAdminRoute>
+              } />
+              <Route path="/platform-admin/organizations" element={
+                <PlatformAdminRoute>
+                  <OrganizationsDashboard />
+                </PlatformAdminRoute>
               } />
               
               {/* Protected routes with subscription gate */}
