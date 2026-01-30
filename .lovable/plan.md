@@ -1,387 +1,107 @@
 
+## Automated Trial Expiration System
 
-# Fully Automated Field Force Automation Platform
+This plan implements an automated mechanism to transition organizations from `trial` to `expired` status when their `trial_ends_at` date passes.
 
-## Overview
+---
 
-Transform the InSync Field Force application into a fully automated self-service SaaS platform where:
-- Users can sign up, create their own organization, and start using the app immediately
-- 14-day free trial activates automatically
-- Razorpay handles subscription payments with automatic renewal
-- Subscription expiry blocks access completely until payment is made
-- Platform admins (In-Sync team) have a dedicated console to manage all clients
+### Overview
 
-## Current State Analysis
-
-### What Exists
-- Self-registration with organization creation/selection
-- Organization-based multi-tenancy with `organization_id` filtering
-- Feature flags system (`services_enabled`, `subscription_active`, `usage_limits`)
-- Role-based access control with `platform_admin` role
-- Edge functions for secure user management
-- Trial pricing displayed on landing page (14-day, ₹99/user/month)
-
-### What's Missing
-- Trial period tracking (no `trial_ends_at` field)
-- Payment gateway integration (Razorpay)
-- Subscription management tables and logic
-- Automatic subscription blocking
-- Welcome/onboarding flow for new organizations
-- Platform Admin Console for managing all clients
-- Billing history and invoice generation
-
-## Architecture
+The solution uses a scheduled edge function triggered by a PostgreSQL cron job. Every hour, the function checks all organizations in `trial` status and updates those whose trial period has ended to `expired` status.
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                           IN-SYNC MASTER CONTROLLER                          │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐          │
-│  │  Organization A │    │  Organization B │    │  Organization C │   ...    │
-│  │  (Client 1)     │    │  (Client 2)     │    │  (Client 3)     │          │
-│  └────────┬────────┘    └────────┬────────┘    └────────┬────────┘          │
-│           │                      │                      │                    │
-│           └──────────────────────┼──────────────────────┘                    │
-│                                  ▼                                           │
-│  ┌───────────────────────────────────────────────────────────────────┐      │
-│  │                    SHARED PLATFORM SERVICES                        │      │
-│  ├───────────────────────────────────────────────────────────────────┤      │
-│  │  - Master Database & Schema                                        │      │
-│  │  - User Authentication & Authorization                             │      │
-│  │  - Subscription & Billing (Razorpay)                              │      │
-│  │  - Feature Enablement per Organization                             │      │
-│  │  - Data Backup & Recovery                                          │      │
-│  │  - Security & Compliance                                           │      │
-│  └───────────────────────────────────────────────────────────────────┘      │
-│                                                                              │
-│  ┌───────────────────────────────────────────────────────────────────┐      │
-│  │                    PLATFORM ADMIN CONSOLE                          │      │
-│  │  (/platform-admin/*) - Accessible only to platform_admin role     │      │
-│  ├───────────────────────────────────────────────────────────────────┤      │
-│  │  - Dashboard: All organizations, subscriptions, revenue            │      │
-│  │  - Organizations: View/Edit/Activate/Deactivate                    │      │
-│  │  - Subscriptions: Manage plans, trials, payments                   │      │
-│  │  - Feature Flags: Enable/disable features per organization         │      │
-│  │  - Billing: View all transactions, generate invoices               │      │
-│  │  - Users: View all users across organizations                      │      │
-│  └───────────────────────────────────────────────────────────────────┘      │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Cron Job (Hourly)                        │
+│                         pg_cron                             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Edge Function: expire-trials                   │
+│  - Queries organizations with trial status                  │
+│  - Checks if trial_ends_at < now()                          │
+│  - Updates subscription_status to 'expired'                 │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Organizations Table                        │
+│  subscription_status: 'trial' → 'expired'                   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Implementation Plan
+---
 
-### Phase 1: Database Schema Updates
+### Implementation Steps
 
-**New Tables**
+**Step 1: Create the Edge Function**
 
-| Table | Purpose |
-|-------|---------|
-| `subscription_plans` | Define available plans (Free Trial, Basic, etc.) |
-| `organization_subscriptions` | Track subscription status per organization |
-| `payment_transactions` | Store Razorpay payment records |
-| `invoices` | Generated invoices for billing |
+Create a new edge function `supabase/functions/expire-trials/index.ts` that:
+- Uses the service role key to bypass RLS
+- Queries all organizations where `subscription_status = 'trial'` and `trial_ends_at < now()`
+- Updates their `subscription_status` to `'expired'`
+- Logs the number of organizations expired for monitoring
+- Returns a summary of the operation
 
-**Modifications to `organizations` table**
+**Step 2: Update Configuration**
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| `trial_ends_at` | timestamp | When the 14-day trial expires |
-| `subscription_status` | enum | 'trial', 'active', 'expired', 'cancelled' |
-| `razorpay_customer_id` | text | Link to Razorpay customer |
-| `billing_email` | text | Email for billing notifications |
-| `billing_address` | jsonb | GST, address details |
+Add the new function to `supabase/config.toml` with `verify_jwt = false` (since it will be called by the cron job using the anon key).
 
-**Schema SQL (Key Parts)**
+**Step 3: Enable Database Extensions**
 
-```sql
--- Subscription status enum
-CREATE TYPE subscription_status AS ENUM ('trial', 'active', 'past_due', 'cancelled', 'expired');
+Run a SQL migration to enable the required extensions:
+- `pg_cron` - for scheduling
+- `pg_net` - for making HTTP calls to the edge function
 
--- Subscription plans
-CREATE TABLE subscription_plans (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  price_per_user NUMERIC(10,2) NOT NULL, -- ₹99
-  billing_cycle TEXT DEFAULT 'monthly',
-  features JSONB,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+**Step 4: Create the Cron Job**
 
--- Add to organizations
-ALTER TABLE organizations ADD COLUMN trial_ends_at TIMESTAMPTZ;
-ALTER TABLE organizations ADD COLUMN subscription_status subscription_status DEFAULT 'trial';
-ALTER TABLE organizations ADD COLUMN razorpay_customer_id TEXT;
-ALTER TABLE organizations ADD COLUMN razorpay_subscription_id TEXT;
-ALTER TABLE organizations ADD COLUMN billing_email TEXT;
-ALTER TABLE organizations ADD COLUMN billing_address JSONB;
-ALTER TABLE organizations ADD COLUMN user_count INTEGER DEFAULT 0;
+Set up a cron job that runs hourly to call the expire-trials edge function. The job will:
+- Run every hour at minute 0 (`0 * * * *`)
+- Call the edge function endpoint via HTTP POST
+- Include proper authorization headers
 
--- Payment transactions
-CREATE TABLE payment_transactions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  razorpay_payment_id TEXT NOT NULL,
-  razorpay_order_id TEXT,
-  razorpay_signature TEXT,
-  amount NUMERIC(10,2) NOT NULL,
-  currency TEXT DEFAULT 'INR',
-  status TEXT NOT NULL,
-  payment_method TEXT,
-  invoice_id UUID,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+---
 
--- Invoices
-CREATE TABLE invoices (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  invoice_number TEXT UNIQUE NOT NULL,
-  amount NUMERIC(10,2) NOT NULL,
-  tax_amount NUMERIC(10,2) DEFAULT 0,
-  total_amount NUMERIC(10,2) NOT NULL,
-  status TEXT DEFAULT 'pending',
-  billing_period_start DATE,
-  billing_period_end DATE,
-  due_date DATE,
-  paid_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+### Technical Details
+
+**Edge Function Logic:**
+```
+1. Initialize Supabase admin client with service role key
+2. Query: SELECT id, name FROM organizations 
+          WHERE subscription_status = 'trial' 
+          AND trial_ends_at < now()
+3. For each organization found:
+   - Update subscription_status to 'expired'
+   - Log the organization ID and name
+4. Return count of expired organizations
 ```
 
-### Phase 2: Self-Service Registration Flow
+**Cron Schedule:**
+- Frequency: Every hour
+- Pattern: `0 * * * *` (at minute 0 of every hour)
+- This ensures trials are expired within 1 hour of their end time
 
-**Enhanced Registration Process**
+**Security Considerations:**
+- Edge function uses service role key for database access
+- JWT verification is disabled since the function is called by the database cron
+- Authorization header with anon key is included in cron HTTP request
 
-1. User fills registration form (Name, Email, Company Name, Phone)
-2. Organization created with `trial_ends_at = now() + 14 days`
-3. User gets `admin` role automatically
-4. Welcome email sent with getting started guide
-5. User redirected to onboarding wizard
+---
 
-**Files to Modify**
-- `src/pages/Auth.tsx` - Update registration to set trial period
-- Create `src/pages/Onboarding.tsx` - Step-by-step setup wizard
+### Files to Create/Modify
 
-**Onboarding Steps**
-1. Company profile setup (Logo, Industry, Address)
-2. First user invitation
-3. First lead/prospect creation
-4. First visit logging
-5. Dashboard tour
+| File | Action |
+|------|--------|
+| `supabase/functions/expire-trials/index.ts` | Create new edge function |
+| `supabase/config.toml` | Add function configuration |
+| Database migration | Enable pg_cron/pg_net and create cron job |
 
-### Phase 3: Subscription Management
+---
 
-**Razorpay Integration Architecture**
+### Outcome
 
-```text
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Frontend      │     │   Edge Functions  │     │    Razorpay     │
-│   (React)       │────▶│   (Supabase)      │────▶│    API          │
-└─────────────────┘     └──────────────────┘     └─────────────────┘
-        │                        │
-        │                        ▼
-        │               ┌──────────────────┐
-        └──────────────▶│    Database      │
-                        │    (Supabase)    │
-                        └──────────────────┘
-```
-
-**Edge Functions to Create**
-
-| Function | Purpose |
-|----------|---------|
-| `create-razorpay-subscription` | Create subscription when trial ends |
-| `razorpay-webhook` | Handle payment events from Razorpay |
-| `check-subscription-status` | Verify if org can access app |
-| `generate-invoice` | Create invoice PDFs |
-| `send-billing-reminder` | Send payment due emails |
-
-**Subscription Flow**
-
-1. Trial Period (14 days):
-   - Full access to all features
-   - Banner showing "X days left in trial"
-   - Prompt to add payment method
-
-2. Trial Expiring (3 days before):
-   - Email reminder to add payment
-   - In-app notification
-
-3. Trial Expired:
-   - Redirect to subscription page
-   - Must add Razorpay payment to continue
-   - Show subscription options
-
-4. Active Subscription:
-   - Full access
-   - Monthly auto-billing via Razorpay
-   - Invoice generated automatically
-
-5. Payment Failed:
-   - Immediate block on access
-   - Email notification to billing admin
-   - Redirect to payment update page
-
-### Phase 4: Access Control & Blocking
-
-**Subscription Guard Component**
-
-Create `src/components/SubscriptionGuard.tsx` to wrap protected routes:
-
-```typescript
-// Checks subscription status before allowing access
-// If expired: Redirect to /subscription/expired
-// If trial ending: Show warning banner
-// If active: Render children normally
-```
-
-**Blocked State UI**
-
-Create `src/pages/SubscriptionExpired.tsx`:
-- Clear message about expired subscription
-- Current user count and amount due
-- Razorpay payment button
-- Contact support option
-
-### Phase 5: Platform Admin Console
-
-**New Routes**
-
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/platform-admin` | PlatformDashboard | Overview of all orgs, revenue, metrics |
-| `/platform-admin/organizations` | PlatformOrganizations | List/manage all organizations |
-| `/platform-admin/organizations/:id` | PlatformOrgDetail | Single org details, edit, features |
-| `/platform-admin/subscriptions` | PlatformSubscriptions | All subscriptions, status, issues |
-| `/platform-admin/billing` | PlatformBilling | Revenue, transactions, invoices |
-| `/platform-admin/users` | PlatformUsers | All users across all orgs |
-| `/platform-admin/settings` | PlatformSettings | System-wide settings, plans |
-
-**Platform Dashboard Features**
-
-- Total organizations (active, trial, churned)
-- Monthly recurring revenue (MRR)
-- New signups this week/month
-- Organizations with expiring trials
-- Failed payments needing attention
-- User growth chart
-
-**Organization Management**
-
-- View all organization details
-- Enable/disable features per org
-- Extend trials manually
-- Suspend/reactivate accounts
-- View all users in organization
-- Access organization data for support
-
-### Phase 6: Automated Processes
-
-**Cron Jobs (Edge Functions with pg_cron)**
-
-| Job | Schedule | Action |
-|-----|----------|--------|
-| `check-trial-expiry` | Daily at 9 AM | Email orgs with 3 days left |
-| `expire-trials` | Daily at midnight | Set expired status for overdue |
-| `process-renewals` | Daily at midnight | Trigger Razorpay renewals |
-| `send-payment-reminders` | Daily at 10 AM | Email failed payment orgs |
-| `generate-monthly-invoices` | 1st of month | Create invoices for all |
-
-**Automated Email Triggers**
-
-| Trigger | Email |
-|---------|-------|
-| New signup | Welcome + getting started guide |
-| Trial 3 days left | Trial expiring reminder |
-| Trial expired | Subscription required notice |
-| Payment successful | Receipt + invoice |
-| Payment failed | Update payment method |
-| Feature enabled | Feature announcement |
-
-### Phase 7: File Structure
-
-**New Files to Create**
-
-```text
-src/
-├── pages/
-│   ├── Onboarding.tsx                    # First-time setup wizard
-│   ├── SubscriptionExpired.tsx           # Blocked access page
-│   ├── Subscription.tsx                  # Payment/plan management
-│   └── platform-admin/
-│       ├── PlatformDashboard.tsx         # Admin overview
-│       ├── PlatformOrganizations.tsx     # Org management
-│       ├── PlatformOrgDetail.tsx         # Single org view
-│       ├── PlatformSubscriptions.tsx     # Subscription management
-│       ├── PlatformBilling.tsx           # Revenue/invoices
-│       ├── PlatformUsers.tsx             # All users
-│       └── PlatformSettings.tsx          # System settings
-├── components/
-│   ├── SubscriptionGuard.tsx             # Route protection
-│   ├── TrialBanner.tsx                   # Trial warning banner
-│   ├── PaymentModal.tsx                  # Razorpay payment
-│   └── OnboardingWizard.tsx              # Setup steps
-├── hooks/
-│   ├── useSubscription.ts                # Subscription status
-│   └── usePlatformAdmin.ts               # Admin data access
-└── services/
-    └── razorpay.ts                       # Razorpay integration
-
-supabase/functions/
-├── create-razorpay-subscription/         # Create subscription
-├── razorpay-webhook/                     # Handle webhooks
-├── check-subscription-status/            # Verify access
-├── generate-invoice/                     # Create invoices
-├── send-billing-reminder/                # Email reminders
-├── expire-trials/                        # Scheduled trial expiry
-└── process-renewals/                     # Scheduled renewals
-```
-
-## Implementation Order
-
-| Phase | Description | Estimated Work |
-|-------|-------------|----------------|
-| 1 | Database schema updates | 1 session |
-| 2 | Registration + Trial setup | 1 session |
-| 3 | Razorpay integration + Edge functions | 2-3 sessions |
-| 4 | Subscription blocking + UI | 1 session |
-| 5 | Platform Admin Console (all pages) | 3-4 sessions |
-| 6 | Automated jobs + Emails | 2 sessions |
-| 7 | Testing + Polish | 1-2 sessions |
-
-## Prerequisites
-
-Before starting implementation:
-
-1. **Razorpay Account Setup**
-   - Create Razorpay account at razorpay.com
-   - Get API Key ID and Secret from Dashboard
-   - Set up webhook endpoint URL
-   - Add these as secrets: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`
-
-2. **Email Service (Resend)**
-   - Already mentioned in memory - set up for billing emails
-   - Add `RESEND_API_KEY` secret
-
-## Security Considerations
-
-- All payment operations through server-side edge functions only
-- Webhook signature verification for Razorpay callbacks
-- Platform admin routes protected by role check
-- Organization data isolation via RLS policies
-- Subscription status verified server-side, not client-side
-
-## Summary
-
-This automation plan transforms InSync into a fully self-service SaaS platform with:
-
-- Zero-touch user registration and onboarding
-- Automatic 14-day trial with expiry tracking
-- Razorpay payment integration with automatic billing
-- Complete access blocking for expired subscriptions
-- Dedicated platform admin console for client management
-- Automated billing, invoicing, and reminder emails
-
+After implementation:
+- Organizations with expired trials will automatically transition to `expired` status within 1 hour
+- The `SubscriptionGate` component (already implemented) will block access for expired organizations
+- Users will be redirected to the upgrade-only UI at `/subscription-expired`
+- Admins can monitor expired organizations in the database
