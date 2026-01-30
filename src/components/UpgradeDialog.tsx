@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Check, Loader2, CreditCard, Users, Zap, Shield, BarChart3 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { toast } from 'sonner';
+import { useRazorpayCheckout } from '@/hooks/useRazorpayCheckout';
 
 interface UpgradeDialogProps {
   open: boolean;
@@ -27,26 +26,16 @@ const FEATURES = [
 
 export function UpgradeDialog({ open, onOpenChange }: UpgradeDialogProps) {
   const { currentOrganization } = useAuthStore();
-  const [loading, setLoading] = useState(false);
+  const { initiateCheckout, loading } = useRazorpayCheckout();
 
   const handleUpgrade = async () => {
-    if (!currentOrganization) {
-      toast.error('No organization found');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // TODO: Integrate with Razorpay checkout
-      // For now, show a message about the upgrade process
-      toast.info('Upgrade flow coming soon! Contact support to upgrade your plan.');
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error('Upgrade error:', error);
-      toast.error('Failed to start upgrade process');
-    } finally {
-      setLoading(false);
-    }
+    await initiateCheckout({
+      onSuccess: () => {
+        onOpenChange(false);
+        // Reload to refresh organization status
+        window.location.reload();
+      },
+    });
   };
 
   const userCount = currentOrganization?.user_count || 1;

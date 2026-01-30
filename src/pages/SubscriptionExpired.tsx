@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { useRazorpayCheckout } from '@/hooks/useRazorpayCheckout';
 import { 
   AlertTriangle, 
   CreditCard, 
@@ -31,7 +31,7 @@ export default function SubscriptionExpired() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { currentOrganization, user } = useAuthStore();
-  const [loading, setLoading] = useState(false);
+  const { initiateCheckout, loading } = useRazorpayCheckout();
   const [signingOut, setSigningOut] = useState(false);
 
   const userCount = currentOrganization?.user_count || 1;
@@ -39,21 +39,12 @@ export default function SubscriptionExpired() {
   const monthlyTotal = userCount * pricePerUser;
 
   const handleUpgrade = async () => {
-    if (!currentOrganization) {
-      toast.error('No organization found');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // TODO: Integrate with Razorpay checkout
-      toast.info('Upgrade flow coming soon! Contact support to upgrade your plan.');
-    } catch (error: any) {
-      console.error('Upgrade error:', error);
-      toast.error('Failed to start upgrade process');
-    } finally {
-      setLoading(false);
-    }
+    await initiateCheckout({
+      onSuccess: () => {
+        // Redirect to dashboard after successful payment
+        window.location.href = '/dashboard';
+      },
+    });
   };
 
   const handleSignOut = async () => {
