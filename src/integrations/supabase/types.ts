@@ -842,6 +842,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           price_per_user: number
+          razorpay_plan_id: string | null
           trial_days: number | null
           updated_at: string
         }
@@ -854,6 +855,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           price_per_user?: number
+          razorpay_plan_id?: string | null
           trial_days?: number | null
           updated_at?: string
         }
@@ -866,6 +868,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           price_per_user?: number
+          razorpay_plan_id?: string | null
           trial_days?: number | null
           updated_at?: string
         }
