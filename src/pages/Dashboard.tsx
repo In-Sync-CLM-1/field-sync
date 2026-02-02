@@ -240,7 +240,9 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold tracking-tight gradient-text-primary">
               Welcome back!
             </h1>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <p className="text-sm text-muted-foreground">
+              {user?.user_metadata?.full_name || user?.email}
+            </p>
           </div>
         </div>
       </div>
