@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      branches: {
+        Row: {
+          address: string | null
+          city: string | null
+          code: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          manager_id: string | null
+          name: string
+          organization_id: string
+          phone: string | null
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          manager_id?: string | null
+          name: string
+          organization_id: string
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          manager_id?: string | null
+          name?: string
+          organization_id?: string
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branches_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -736,6 +802,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          branch_id: string | null
           calling_enabled: boolean
           created_at: string
           designation_id: string | null
@@ -757,6 +824,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          branch_id?: string | null
           calling_enabled?: boolean
           created_at?: string
           designation_id?: string | null
@@ -778,6 +846,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          branch_id?: string | null
           calling_enabled?: boolean
           created_at?: string
           designation_id?: string | null
@@ -798,6 +867,13 @@ export type Database = {
           whatsapp_enabled?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_organization_id_fkey"
             columns: ["organization_id"]
