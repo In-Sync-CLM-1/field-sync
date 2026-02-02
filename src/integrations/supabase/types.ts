@@ -591,6 +591,36 @@ export type Database = {
           },
         ]
       }
+      otp_verifications: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          identifier: string
+          identifier_type: string
+          verified_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          identifier: string
+          identifier_type: string
+          verified_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           amount: number
@@ -999,6 +1029,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_otps: { Args: never; Returns: undefined }
       get_user_organization_id: { Args: { user_id: string }; Returns: string }
       has_role: {
         Args: {
