@@ -271,7 +271,7 @@ const Landing = () => {
       {/* Video Tutorial Dialog */}
       <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>
         <DialogContent className="sm:max-w-4xl bg-slate-900 border-slate-700 p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-0">
+          <DialogHeader className="p-6 pb-0 flex flex-row items-center justify-between">
             <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
               <Play className="h-5 w-5 text-[#01B8AA]" />
               How In-Sync Field Force Works
@@ -279,10 +279,10 @@ const Landing = () => {
           </DialogHeader>
           <div className="p-6">
             <div className="aspect-video bg-slate-800 rounded-xl overflow-hidden flex items-center justify-center">
-              {/* Replace the src with your actual video URL */}
+              {/* Replace VIDEO_ID with your actual YouTube video ID */}
               <iframe
                 className="w-full h-full"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
                 title="In-Sync Field Force Tutorial"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -292,6 +292,15 @@ const Landing = () => {
             <p className="text-slate-400 text-sm mt-4 text-center">
               Learn how to track visits, manage your team, and boost performance with In-Sync Field Force.
             </p>
+            <div className="flex justify-center mt-4">
+              <Button 
+                onClick={() => setShowVideoDialog(false)}
+                className="bg-[#01B8AA] hover:bg-[#00a89b] text-slate-950 font-semibold px-8 py-2 rounded-lg"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Close
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
