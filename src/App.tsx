@@ -16,7 +16,7 @@ import Layout from "@/components/Layout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import NewLead from "./pages/NewLead";
-import TeamDashboard from "./pages/TeamDashboard";
+import TeamAndBranches from "./pages/TeamAndBranches";
 import AnalyticsHub from "./pages/AnalyticsHub";
 import TerritoryMap from "./pages/TerritoryMap";
 import PerformanceBoard from "./pages/PerformanceBoard";
@@ -28,7 +28,7 @@ import NewVisit from "./pages/NewVisit";
 import Users from "./pages/Users";
 import SyncMonitoring from "./pages/SyncMonitoring";
 import Planning from "./pages/Planning";
-import TeamPlanning from "./pages/TeamPlanning";
+// TeamPlanning is now integrated into TeamAndBranches
 import PlanningOverview from "./pages/PlanningOverview";
 import BranchAnalytics from "./pages/BranchAnalytics";
 import Landing from "./pages/Landing";
@@ -95,9 +95,9 @@ const App = () => (
               >
                 <Route index element={<Dashboard />} />
                 <Route path="planning" element={<Planning />} />
-                <Route path="planning/team" element={<TeamPlanning />} />
+                <Route path="planning/team" element={<TeamAndBranches />} />
                 <Route path="planning/overview" element={<PlanningOverview />} />
-                <Route path="team" element={<TeamDashboard />} />
+                <Route path="team" element={<TeamAndBranches />} />
                 <Route path="analytics" element={<AnalyticsHub />} />
                 <Route path="analytics/branch" element={<BranchAnalytics />} />
                 <Route path="territory" element={<TerritoryMap />} />

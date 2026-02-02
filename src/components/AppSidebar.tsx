@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users, ClipboardList, LogOut, CreditCard, Building2 } from 'lucide-react';
+import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users, ClipboardList, LogOut, CreditCard } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -57,9 +57,8 @@ export function AppSidebar() {
   const dashboards = [
     { icon: Home, label: 'My Dashboard', path: '/dashboard', roles: ['all'] },
     { icon: ClipboardList, label: 'Daily Plan', path: '/dashboard/planning', roles: ['all'] },
-    { icon: Building2, label: 'Branch', path: '/dashboard/planning/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: Users, label: 'Team & Branches', path: '/dashboard/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: ClipboardList, label: 'Admin', path: '/dashboard/planning/overview', roles: ['admin', 'super_admin', 'platform_admin'] },
-    { icon: Users, label: 'Team', path: '/dashboard/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: BarChart3, label: 'Branch Analytics', path: '/dashboard/analytics/branch', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: Globe, label: 'Territory', path: '/dashboard/territory', roles: ['all'] },
