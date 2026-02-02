@@ -37,7 +37,7 @@ import Onboarding from "./pages/Onboarding";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 import OrganizationsDashboard from "./pages/PlatformAdmin/OrganizationsDashboard";
-import Tutorials from "./pages/Tutorials";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -130,7 +130,7 @@ const App = () => (
                     <SubscriptionManagement />
                   </AdminRoute>
                 } />
-                <Route path="tutorials" element={<Tutorials />} />
+                
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
