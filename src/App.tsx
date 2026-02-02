@@ -99,7 +99,7 @@ const App = () => (
                 <Route path="planning/overview" element={<PlanningOverview />} />
                 <Route path="team" element={<TeamAndBranches />} />
                 <Route path="analytics" element={<AnalyticsHub />} />
-                <Route path="analytics/branch" element={<BranchAnalytics />} />
+                <Route path="analytics/branch" element={<AnalyticsHub />} />
                 <Route path="territory" element={<TerritoryMap />} />
                 <Route path="performance" element={
                   <AdminRoute>
