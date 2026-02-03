@@ -70,7 +70,7 @@ export function AppSidebar() {
   const currentPath = location.pathname;
 
   return (
-    <Sidebar collapsible="offcanvas" className="md:w-56 bg-sidebar border-r border-sidebar-border">
+    <Sidebar data-tour="sidebar" collapsible="offcanvas" className="md:w-56 bg-sidebar border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-3 py-2 flex flex-col items-center">
         <div className="relative group">
           <img 
