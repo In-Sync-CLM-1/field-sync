@@ -481,7 +481,7 @@ export default function Planning() {
   return (
     <div className="p-4 space-y-4 page-gradient min-h-screen">
       {/* Enhanced Header */}
-      <div className="hero-gradient">
+      <div className="hero-gradient" data-tour="planning-date">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1 hover:bg-primary/10">
@@ -507,7 +507,7 @@ export default function Planning() {
       </div>
 
       {/* Monthly Commission Card - First */}
-      <Card className="glass-card">
+      <Card className="glass-card" data-tour="planning-incentive">
         <CardHeader className="compact-header pb-1">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             <span className="flex items-center gap-2">
@@ -677,7 +677,7 @@ export default function Planning() {
       {isLoading ? (
         <Card className="glass-card"><CardContent className="p-3"><Skeleton className="h-24" /></CardContent></Card>
       ) : (
-        <Card className="glass-card">
+        <Card className="glass-card" data-tour="planning-targets">
           <CardHeader className="compact-header pb-1">
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
               <span className="flex items-center gap-2">
