@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { 
   Loader2, Building2, Users, UserPlus, MapPin, Check, ChevronRight, 
   ChevronLeft, Sparkles, PartyPopper, Lightbulb, Target, Rocket,
-  ArrowRight, CheckCircle2, Star
+  ArrowRight, CheckCircle2, Star, Zap, Trophy, Send, Plus
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -45,8 +45,36 @@ const triggerConfetti = () => {
     particleCount: 100,
     spread: 70,
     origin: { y: 0.6 },
-    colors: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899']
+    colors: ['#01B8AA', '#4AC5BB', '#F2C80F', '#374649']
   });
+};
+
+// Big celebration for portal access
+const triggerBigCelebration = () => {
+  const duration = 3000;
+  const end = Date.now() + duration;
+
+  const frame = () => {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors: ['#01B8AA', '#4AC5BB', '#F2C80F']
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors: ['#01B8AA', '#4AC5BB', '#F2C80F']
+    });
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  };
+  frame();
 };
 
 export default function Onboarding() {
@@ -54,7 +82,7 @@ export default function Onboarding() {
   const { user, currentOrganization, setCurrentOrganization } = useAuthStore();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [showPortalAccess, setShowPortalAccess] = useState(false);
   const [data, setData] = useState<OnboardingData>({
     companyName: currentOrganization?.name || '',
     industry: '',
@@ -122,14 +150,9 @@ export default function Onboarding() {
         });
       }
 
-      // Show celebration before moving to step 2
-      setShowCelebration(true);
-      triggerConfetti();
-      
-      setTimeout(() => {
-        setShowCelebration(false);
-        setStep(2);
-      }, 2500);
+      // Show portal access celebration
+      setShowPortalAccess(true);
+      triggerBigCelebration();
       
     } catch (error: any) {
       console.error('Error updating organization:', error);
@@ -139,12 +162,18 @@ export default function Onboarding() {
     }
   };
 
+  const handleContinueFromPortalAccess = () => {
+    setShowPortalAccess(false);
+    setStep(2);
+  };
+
   const handleStep2Submit = async () => {
     if (data.inviteEmail.trim()) {
       setLoading(true);
       try {
-        toast.success(`Invitation sent to ${data.inviteEmail}`);
-        setStep(3);
+        toast.success(`🎉 Invitation sent to ${data.inviteEmail}!`);
+        triggerConfetti();
+        setTimeout(() => setStep(3), 500);
       } catch (error: any) {
         console.error('Error inviting user:', error);
         toast.error('Failed to send invitation');
@@ -184,9 +213,9 @@ export default function Onboarding() {
         if (error) throw error;
       }
 
-      triggerConfetti();
-      toast.success('🎉 Setup complete! Welcome to InSync.');
-      navigate('/dashboard');
+      triggerBigCelebration();
+      toast.success('🚀 You\'re all set! Let\'s crush those sales!');
+      setTimeout(() => navigate('/dashboard'), 1500);
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
       toast.error('Failed to complete setup');
@@ -216,25 +245,61 @@ export default function Onboarding() {
     }
   };
 
-  // Celebration screen after Step 1
-  if (showCelebration) {
+  // Portal Access Celebration Screen
+  if (showPortalAccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-primary/5 to-background">
-        <div className="text-center space-y-6 animate-in fade-in zoom-in duration-500">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 mb-4">
-            <PartyPopper className="h-12 w-12 text-primary animate-bounce" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Awesome! You're all set up! 🎉
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-md mx-auto">
-            Your company profile is ready. Now let's get your team and first prospect set up.
-          </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Loading next steps...</span>
-          </div>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-accent/10">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" />
         </div>
+
+        <Card className="w-full max-w-lg relative z-10 shadow-2xl border-primary/20 overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-accent to-primary" />
+          
+          <CardContent className="pt-12 pb-8 text-center space-y-6">
+            <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 mb-4 animate-in zoom-in duration-500">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <Trophy className="h-10 w-10 text-primary animate-bounce" />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold animate-in slide-in-from-bottom duration-300">
+                <Zap className="h-4 w-4" />
+                Registration Complete!
+              </div>
+              
+              <h1 className="text-3xl font-bold text-foreground animate-in slide-in-from-bottom duration-500 delay-100">
+                🎉 Portal Access Unlocked!
+              </h1>
+              
+              <p className="text-lg text-muted-foreground max-w-sm mx-auto animate-in slide-in-from-bottom duration-500 delay-200">
+                Welcome to <strong className="text-primary">InSync</strong>! Your workspace is ready.
+                Let's set up your team to maximize your success!
+              </p>
+            </div>
+
+            <div className="pt-4 space-y-3 animate-in slide-in-from-bottom duration-500 delay-300">
+              <Button 
+                onClick={handleContinueFromPortalAccess} 
+                size="lg"
+                className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg"
+              >
+                <Users className="mr-2 h-5 w-5" />
+                Let's Build Your Team!
+                <Sparkles className="ml-2 h-5 w-5" />
+              </Button>
+              
+              <button
+                onClick={handleSkipToEnd}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                I'll explore on my own →
+              </button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -258,13 +323,13 @@ export default function Onboarding() {
           </div>
           <CardTitle className="text-2xl">
             {step === 1 && 'Set up your company'}
-            {step === 2 && 'Build your team'}
-            {step === 3 && 'Add your first prospect'}
+            {step === 2 && '🚀 Invite Your Dream Team!'}
+            {step === 3 && '🎯 Add Your First Prospect!'}
           </CardTitle>
           <CardDescription>
             {step === 1 && 'Tell us about your organization to get started'}
-            {step === 2 && 'Invite team members to collaborate together'}
-            {step === 3 && 'Start tracking your sales journey'}
+            {step === 2 && 'Great leaders build great teams — start yours now!'}
+            {step === 3 && 'Every sale starts with a prospect — let\'s begin!'}
           </CardDescription>
         </CardHeader>
 
@@ -342,7 +407,7 @@ export default function Onboarding() {
                   ) : (
                     <>
                       <Rocket className="mr-2 h-5 w-5" />
-                      Complete Setup & Continue
+                      Unlock Your Portal!
                     </>
                   )}
                 </Button>
@@ -350,40 +415,45 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 2: Invite Team - Post Registration */}
+          {/* Step 2: Invite Team - Energetic Style */}
           {step === 2 && (
             <div className="space-y-4">
-              {/* Welcome message */}
-              <div className="text-center py-2 mb-2">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+              {/* Success badge */}
+              <div className="text-center py-2">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 text-primary text-sm font-semibold border border-primary/20">
                   <CheckCircle2 className="h-4 w-4" />
-                  Registration complete!
+                  Portal Access Granted!
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/5 border border-accent/10">
-                <UserPlus className="h-5 w-5 text-accent" />
-                <span className="text-sm font-medium">Team Invitation</span>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20">
+                <div className="p-2 rounded-full bg-accent/20">
+                  <UserPlus className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold">Team Invitation</span>
+                  <p className="text-xs text-muted-foreground">Collaboration = Success!</p>
+                </div>
               </div>
 
-              {/* Guidance card */}
-              <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Target className="h-4 w-4 text-primary" />
-                  <span>Why invite your team?</span>
+              {/* Energetic guidance card */}
+              <div className="p-4 rounded-lg bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                  <Zap className="h-4 w-4" />
+                  <span>Why build your team now?</span>
                 </div>
-                <ul className="text-sm text-muted-foreground space-y-2 ml-6">
+                <ul className="text-sm text-muted-foreground space-y-2">
                   <li className="flex items-start gap-2">
-                    <ArrowRight className="h-3 w-3 mt-1.5 text-primary shrink-0" />
-                    <span>Sales officers can log visits & track prospects</span>
+                    <CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                    <span><strong>Sales Officers</strong> can log visits & track prospects</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <ArrowRight className="h-3 w-3 mt-1.5 text-primary shrink-0" />
-                    <span>Managers can monitor team performance</span>
+                    <CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                    <span><strong>Managers</strong> get real-time performance insights</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <ArrowRight className="h-3 w-3 mt-1.5 text-primary shrink-0" />
-                    <span>Everyone stays in sync with real-time data</span>
+                    <CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                    <span><strong>Everyone</strong> stays in sync — no more guesswork!</span>
                   </li>
                 </ul>
               </div>
@@ -411,13 +481,13 @@ export default function Onboarding() {
                 />
               </div>
 
-              {/* How to add more members later */}
+              {/* Where to add more */}
               <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/5 border border-accent/10">
                 <Lightbulb className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <span className="font-medium text-accent">Later:</span>
+                  <span className="font-medium text-accent">📍 Find it later:</span>
                   <span className="text-muted-foreground ml-1">
-                    Add more team members from <strong>Team & Branches</strong> in the sidebar menu.
+                    Go to <strong>Team & Branches</strong> in the sidebar to add more members!
                   </span>
                 </div>
               </div>
@@ -427,7 +497,7 @@ export default function Onboarding() {
                   variant="outline"
                   onClick={() => setStep(1)}
                   disabled={loading}
-                  className="px-6"
+                  className="px-4"
                 >
                   <ChevronLeft className="mr-1 h-4 w-4" />
                   Back
@@ -437,12 +507,12 @@ export default function Onboarding() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : data.inviteEmail.trim() ? (
                     <>
+                      <Send className="mr-2 h-4 w-4" />
                       Send Invite & Continue
-                      <ChevronRight className="ml-2 h-4 w-4" />
                     </>
                   ) : (
                     <>
-                      Skip for Now
+                      Skip to Prospects
                       <ChevronRight className="ml-2 h-4 w-4" />
                     </>
                   )}
@@ -451,24 +521,41 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 3: First Prospect - Post Registration */}
+          {/* Step 3: First Prospect - Energetic Style */}
           {step === 3 && (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                <MapPin className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">First Prospect</span>
+              {/* Motivation banner */}
+              <div className="text-center py-2">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-accent/10 to-primary/10 text-accent text-sm font-semibold border border-accent/20">
+                  <Star className="h-4 w-4" />
+                  Almost There!
+                </div>
               </div>
 
-              {/* Guidance card */}
-              <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Star className="h-4 w-4 text-accent" />
-                  <span>Your sales journey starts here!</span>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
+                <div className="p-2 rounded-full bg-primary/20">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold">Your First Prospect</span>
+                  <p className="text-xs text-muted-foreground">The first step to closing deals!</p>
+                </div>
+              </div>
+
+              {/* Energetic guidance */}
+              <div className="p-4 rounded-lg bg-gradient-to-br from-accent/5 to-primary/5 border border-accent/10 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-accent">
+                  <Rocket className="h-4 w-4" />
+                  <span>Ready to start selling?</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Add a prospect you're working with. You'll be able to track visits, 
-                  record outcomes, and manage the complete sales cycle.
+                  Add a prospect you're already working with. You'll be able to:
                 </p>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                  <li>✓ Log visits and interactions</li>
+                  <li>✓ Track follow-ups with reminders</li>
+                  <li>✓ Monitor the complete sales cycle</li>
+                </ul>
               </div>
 
               <div className="space-y-2">
@@ -482,36 +569,36 @@ export default function Onboarding() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="prospectPhone">Phone Number</Label>
-                <Input
-                  id="prospectPhone"
-                  type="tel"
-                  value={data.prospectPhone}
-                  onChange={(e) => setData({ ...data, prospectPhone: e.target.value })}
-                  placeholder="9876543210"
-                  disabled={loading}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="prospectPhone">Mobile Number</Label>
+                  <Input
+                    id="prospectPhone"
+                    value={data.prospectPhone}
+                    onChange={(e) => setData({ ...data, prospectPhone: e.target.value })}
+                    placeholder="+91 98765 43210"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="prospectCity">City/Village</Label>
+                  <Input
+                    id="prospectCity"
+                    value={data.prospectCity}
+                    onChange={(e) => setData({ ...data, prospectCity: e.target.value })}
+                    placeholder="Mumbai"
+                    disabled={loading}
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="prospectCity">City / Village</Label>
-                <Input
-                  id="prospectCity"
-                  value={data.prospectCity}
-                  onChange={(e) => setData({ ...data, prospectCity: e.target.value })}
-                  placeholder="Mumbai"
-                  disabled={loading}
-                />
-              </div>
-
-              {/* How to add more prospects later */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/5 border border-accent/10">
-                <Lightbulb className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+              {/* Where to add more */}
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                <Plus className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <span className="font-medium text-accent">Next steps:</span>
+                  <span className="font-medium text-primary">📍 Add more prospects:</span>
                   <span className="text-muted-foreground ml-1">
-                    Add more prospects from <strong>Prospects</strong> menu or use the <strong>+ New</strong> button.
+                    Use the <strong>Prospects</strong> menu or the <strong>+ New</strong> button!
                   </span>
                 </div>
               </div>
@@ -521,36 +608,47 @@ export default function Onboarding() {
                   variant="outline"
                   onClick={() => setStep(2)}
                   disabled={loading}
-                  className="px-6"
+                  className="px-4"
                 >
                   <ChevronLeft className="mr-1 h-4 w-4" />
                   Back
                 </Button>
-                <Button onClick={handleStep3Submit} disabled={loading} className="flex-1 h-12">
+                <Button 
+                  onClick={handleStep3Submit} 
+                  disabled={loading} 
+                  className="flex-1 h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+                >
                   {loading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : data.prospectName.trim() ? (
+                    <>
+                      <Rocket className="mr-2 h-5 w-5" />
+                      Save & Launch Dashboard!
+                    </>
                   ) : (
                     <>
-                      <Check className="mr-2 h-4 w-4" />
-                      {data.prospectName.trim() ? 'Complete & Go to Dashboard' : 'Skip & Go to Dashboard'}
+                      <PartyPopper className="mr-2 h-5 w-5" />
+                      Finish & Explore!
                     </>
                   )}
                 </Button>
               </div>
-
-              {/* Skip all option */}
-              <div className="text-center pt-2">
-                <button
-                  onClick={handleSkipToEnd}
-                  className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
-                  disabled={loading}
-                >
-                  I'll explore on my own
-                </button>
-              </div>
             </div>
           )}
         </CardContent>
+
+        {/* Skip link */}
+        {step > 1 && (
+          <div className="px-6 pb-6 text-center">
+            <button
+              onClick={handleSkipToEnd}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              disabled={loading}
+            >
+              I'll explore on my own →
+            </button>
+          </div>
+        )}
       </Card>
     </div>
   );
