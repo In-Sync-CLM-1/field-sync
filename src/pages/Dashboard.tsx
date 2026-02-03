@@ -1,11 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer, FileText, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer, FileText, ChevronRight, Lightbulb } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RecentVisitsSection } from '@/components/dashboard/RecentVisitsSection';
 import { useNavigate } from 'react-router-dom';
+import { DashboardTour, TourTriggerButton } from '@/components/DashboardTour';
 
 type StatusColor = 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -229,6 +230,9 @@ export default function Dashboard() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 space-y-3 page-gradient min-h-screen">
+      {/* Dashboard Tour */}
+      <DashboardTour />
+
       {/* Hero Welcome Section */}
       <div className="hero-gradient animate-fade-in">
         <div className="relative z-10 flex items-center justify-between">
@@ -244,11 +248,13 @@ export default function Dashboard() {
               {user?.user_metadata?.full_name || user?.email}
             </p>
           </div>
+          {/* Tour trigger button */}
+          <TourTriggerButton />
         </div>
       </div>
 
       {/* Stats Grid - 2 columns on mobile */}
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      <div data-tour="metrics" className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
           <div key={stat.label} style={{ animationDelay: `${index * 80}ms` }} className="animate-slide-up opacity-0">
             <MetricCard
@@ -269,7 +275,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions - Priority layout with time-based primary action */}
-      <div className="animate-fade-in" style={{ animationDelay: '250ms' }}>
+      <div data-tour="quick-actions" className="animate-fade-in" style={{ animationDelay: '250ms' }}>
         <h2 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
           <span className="w-1 h-1 rounded-full bg-primary" />
           Quick Actions
@@ -308,7 +314,9 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Visits Section */}
-      <RecentVisitsSection />
+      <div data-tour="recent-visits">
+        <RecentVisitsSection />
+      </div>
     </div>
   );
 }
