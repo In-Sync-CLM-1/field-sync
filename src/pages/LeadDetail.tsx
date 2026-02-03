@@ -1,9 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLead } from '@/hooks/useLeads';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { AssignUserDialog } from '@/components/AssignUserDialog';
 import {
   ArrowLeft,
   Phone,
@@ -25,7 +28,24 @@ import { format } from 'date-fns';
 export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { lead, isLoading } = useLead(id);
+
+  // Get assigned user name
+  const { data: assignedUser } = useQuery({
+    queryKey: ['user', lead?.assigned_user_id],
+    queryFn: async () => {
+      if (!lead?.assigned_user_id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', lead.assigned_user_id)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!lead?.assigned_user_id,
+  });
 
   const handleCall = () => {
     if (!lead?.mobile_no) return;
@@ -98,9 +118,18 @@ export default function LeadDetail() {
           <ArrowLeft />
           Back
         </Button>
-        <Badge className={getStatusColor(lead.status)}>
-          {lead.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <AssignUserDialog
+            entityType="lead"
+            entityId={id!}
+            currentAssigneeId={lead.assigned_user_id}
+            currentAssigneeName={assignedUser?.full_name}
+            onAssigned={() => queryClient.invalidateQueries({ queryKey: ['lead', id] })}
+          />
+          <Badge className={getStatusColor(lead.status)}>
+            {lead.status}
+          </Badge>
+        </div>
       </div>
 
       {/* Main Info Card */}

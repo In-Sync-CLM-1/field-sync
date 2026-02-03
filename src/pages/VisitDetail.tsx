@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useVisit, useVisits } from '@/hooks/useVisits';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { AssignUserDialog } from '@/components/AssignUserDialog';
 import { toast } from 'sonner';
 import { MapPin, Clock, Loader2, ArrowLeft, Navigation } from 'lucide-react';
 import { format } from 'date-fns';
@@ -12,11 +15,28 @@ import { format } from 'date-fns';
 export default function VisitDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { visit, isLoading } = useVisit(id);
   const { checkOutVisit, isCheckingOut } = useVisits();
   const [notes, setNotes] = useState('');
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
+
+  // Get assigned user name
+  const { data: assignedUser } = useQuery({
+    queryKey: ['user', visit?.user_id],
+    queryFn: async () => {
+      if (!visit?.user_id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', visit.user_id)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!visit?.user_id,
+  });
 
   useEffect(() => {
     if (visit?.notes) {
@@ -127,9 +147,18 @@ export default function VisitDetail() {
           <ArrowLeft />
           Back
         </Button>
-        <Badge variant={isCompleted ? 'default' : 'secondary'}>
-          {isCompleted ? 'COMPLETED' : 'IN PROGRESS'}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <AssignUserDialog
+            entityType="visit"
+            entityId={id!}
+            currentAssigneeId={visit.user_id}
+            currentAssigneeName={assignedUser?.full_name}
+            onAssigned={() => queryClient.invalidateQueries({ queryKey: ['visit', id] })}
+          />
+          <Badge variant={isCompleted ? 'default' : 'secondary'}>
+            {isCompleted ? 'COMPLETED' : 'IN PROGRESS'}
+          </Badge>
+        </div>
       </div>
 
       <Card>
