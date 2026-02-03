@@ -763,48 +763,4 @@
     animation: float 10s ease-in-out infinite;
   }
 
-  /* Metric Card Enhancements */
-  .metric-card-primary {
-    @apply relative overflow-hidden;
-    border-top: 2px solid hsl(var(--primary));
-  }
-
-  .metric-card-primary::before {
-    content: '';
-    @apply absolute top-0 right-0 w-16 h-16 opacity-5;
-    background: radial-gradient(circle at top right, hsl(var(--primary)) 0%, transparent 70%);
-  }
-
-  .metric-card-info {
-    @apply relative overflow-hidden;
-    border-top: 2px solid hsl(var(--info));
-  }
-
-  .metric-card-info::before {
-    content: '';
-    @apply absolute top-0 right-0 w-16 h-16 opacity-5;
-    background: radial-gradient(circle at top right, hsl(var(--info)) 0%, transparent 70%);
-  }
-
-  .metric-card-warning {
-    @apply relative overflow-hidden;
-    border-top: 2px solid hsl(var(--warning));
-  }
-
-  .metric-card-warning::before {
-    content: '';
-    @apply absolute top-0 right-0 w-16 h-16 opacity-5;
-    background: radial-gradient(circle at top right, hsl(var(--warning)) 0%, transparent 70%);
-  }
-
-  .metric-card-accent {
-    @apply relative overflow-hidden;
-    border-top: 2px solid hsl(var(--accent));
-  }
-
-  .metric-card-accent::before {
-    content: '';
-    @apply absolute top-0 right-0 w-16 h-16 opacity-5;
-    background: radial-gradient(circle at top right, hsl(var(--accent)) 0%, transparent 70%);
-  }
 }
