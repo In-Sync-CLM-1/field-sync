@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from 'sonner';
-import { Loader2, Eye, EyeOff, Plus } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Plus, Mail, Phone, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -46,6 +47,9 @@ const signUpSchema = z.object({
   path: ["organizationId"],
 });
 
+type RegistrationStep = 'details' | 'verify-method' | 'otp' | 'complete';
+type VerificationType = 'email' | 'phone';
+
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signIn, signUp } = useAuth();
@@ -60,6 +64,15 @@ export default function Auth() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [sendingReset, setSendingReset] = useState(false);
+
+  // OTP verification states
+  const [registrationStep, setRegistrationStep] = useState<RegistrationStep>('details');
+  const [verificationType, setVerificationType] = useState<VerificationType>('email');
+  const [otpCode, setOtpCode] = useState('');
+  const [sendingOTP, setSendingOTP] = useState(false);
+  const [verifyingOTP, setVerifyingOTP] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const [signInData, setSignInData] = useState({ email: '', password: '', organizationId: '' });
   const [signUpData, setSignUpData] = useState({ 
@@ -112,6 +125,14 @@ export default function Auth() {
     }
   }, [user, navigate]);
 
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -149,11 +170,94 @@ export default function Auth() {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const validatedData = signUpSchema.parse(signUpData);
+      signUpSchema.parse(signUpData);
+      // Move to verification method selection
+      setRegistrationStep('verify-method');
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+    }
+  };
+
+  const sendOTP = async () => {
+    const identifier = verificationType === 'email' ? signUpData.email : signUpData.phone;
+    
+    if (!identifier) {
+      toast.error(`Please provide a valid ${verificationType}`);
+      return;
+    }
+
+    if (verificationType === 'phone' && !signUpData.phone) {
+      toast.error('Phone number is required for phone verification');
+      return;
+    }
+
+    setSendingOTP(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-otp', {
+        body: {
+          identifier: verificationType === 'phone' ? signUpData.phone.replace(/\D/g, '') : identifier,
+          identifier_type: verificationType,
+        },
+      });
+
+      if (error) throw error;
+      
+      toast.success(`Verification code sent to your ${verificationType}`);
+      setRegistrationStep('otp');
+      setResendCooldown(60);
+    } catch (error: any) {
+      console.error('Error sending OTP:', error);
+      toast.error('Failed to send verification code');
+    } finally {
+      setSendingOTP(false);
+    }
+  };
+
+  const verifyOTP = async () => {
+    if (otpCode.length !== 6) {
+      toast.error('Please enter a 6-digit code');
+      return;
+    }
+
+    const identifier = verificationType === 'email' ? signUpData.email : signUpData.phone.replace(/\D/g, '');
+
+    setVerifyingOTP(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: {
+          identifier,
+          identifier_type: verificationType,
+          code: otpCode,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data.success) {
+        setOtpVerified(true);
+        toast.success('Verification successful!');
+        // Proceed with registration
+        await completeRegistration();
+      } else {
+        toast.error(data.error || 'Invalid verification code');
+      }
+    } catch (error: any) {
+      console.error('Error verifying OTP:', error);
+      toast.error('Failed to verify code');
+    } finally {
+      setVerifyingOTP(false);
+    }
+  };
+
+  const completeRegistration = async () => {
+    try {
       setLoading(true);
+      const validatedData = signUpSchema.parse(signUpData);
       
       const { error } = await signUp(validatedData.email, validatedData.password, validatedData.fullName);
       
@@ -200,7 +304,6 @@ export default function Auth() {
 
           if (roleError) {
             console.error('Role assignment error:', roleError);
-            // Don't block - they can still use the app
           }
         }
 
@@ -226,17 +329,20 @@ export default function Auth() {
           : organizations.find(org => org.id === organizationId);
         if (selectedOrg) setCurrentOrganization(selectedOrg);
 
-        // Redirect new organization creators to onboarding
-        if (validatedData.createNewOrg) {
-          toast.success('Organization created! Let\'s set up your account.');
-          navigate('/onboarding', { replace: true });
-        } else {
-          toast.success('Account created successfully! Welcome to InSync.');
-          navigate('/', { replace: true });
-        }
+        setRegistrationStep('complete');
+        
+        // Redirect after showing success
+        setTimeout(() => {
+          if (validatedData.createNewOrg) {
+            navigate('/onboarding', { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
+        }, 2000);
       } else {
         toast.success('Account created! Please check your email to verify your account.');
         setActiveTab('signin');
+        resetRegistration();
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -244,6 +350,14 @@ export default function Auth() {
       }
       setLoading(false);
     }
+  };
+
+  const resetRegistration = () => {
+    setRegistrationStep('details');
+    setVerificationType('email');
+    setOtpCode('');
+    setOtpVerified(false);
+    setResendCooldown(0);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -274,6 +388,303 @@ export default function Auth() {
     }
   };
 
+  const renderRegistrationStep = () => {
+    switch (registrationStep) {
+      case 'verify-method':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setRegistrationStep('details')}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h3 className="text-lg font-semibold text-foreground">Verify Your Identity</h3>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-4">
+              Choose how you'd like to receive your verification code:
+            </p>
+
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setVerificationType('email')}
+                className={`w-full p-4 rounded-lg border-2 flex items-center gap-3 transition-all ${
+                  verificationType === 'email' 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:border-muted-foreground'
+                }`}
+              >
+                <div className={`p-2 rounded-full ${verificationType === 'email' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                  <Mail size={20} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-medium text-foreground">Email</p>
+                  <p className="text-sm text-muted-foreground truncate">{signUpData.email}</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setVerificationType('phone')}
+                disabled={!signUpData.phone}
+                className={`w-full p-4 rounded-lg border-2 flex items-center gap-3 transition-all ${
+                  verificationType === 'phone' 
+                    ? 'border-primary bg-primary/5' 
+                    : signUpData.phone 
+                      ? 'border-border hover:border-muted-foreground' 
+                      : 'border-border opacity-50 cursor-not-allowed'
+                }`}
+              >
+                <div className={`p-2 rounded-full ${verificationType === 'phone' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                  <Phone size={20} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-medium text-foreground">Phone</p>
+                  <p className="text-sm text-muted-foreground">
+                    {signUpData.phone || 'No phone number provided'}
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            <Button 
+              onClick={sendOTP} 
+              className="w-full mt-4" 
+              disabled={sendingOTP}
+            >
+              {sendingOTP && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Send Verification Code
+            </Button>
+          </div>
+        );
+
+      case 'otp':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setRegistrationStep('verify-method')}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h3 className="text-lg font-semibold text-foreground">Enter Verification Code</h3>
+            </div>
+
+            <p className="text-sm text-muted-foreground text-center">
+              We sent a 6-digit code to{' '}
+              <span className="font-medium text-foreground">
+                {verificationType === 'email' ? signUpData.email : signUpData.phone}
+              </span>
+            </p>
+
+            <div className="flex justify-center py-4">
+              <InputOTP
+                maxLength={6}
+                value={otpCode}
+                onChange={setOtpCode}
+                disabled={verifyingOTP}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <Button 
+              onClick={verifyOTP} 
+              className="w-full" 
+              disabled={verifyingOTP || otpCode.length !== 6}
+            >
+              {verifyingOTP && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Verify & Create Account
+            </Button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={sendOTP}
+                disabled={resendCooldown > 0 || sendingOTP}
+                className="text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resendCooldown > 0 
+                  ? `Resend code in ${resendCooldown}s` 
+                  : 'Resend code'}
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'complete':
+        return (
+          <div className="text-center py-8 space-y-4">
+            <div className="flex justify-center">
+              <div className="p-3 rounded-full bg-green-100 text-green-600">
+                <CheckCircle2 size={48} />
+              </div>
+            </div>
+            <h3 className="text-xl font-semibold text-foreground">Account Created!</h3>
+            <p className="text-muted-foreground">
+              Welcome to InSync. Redirecting you now...
+            </p>
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+          </div>
+        );
+
+      default:
+        return (
+          <form onSubmit={handleDetailsSubmit} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-name" className="text-sm text-foreground">Full Name</Label>
+              <Input 
+                id="signup-name" 
+                type="text" 
+                placeholder="John Doe" 
+                value={signUpData.fullName} 
+                onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })} 
+                required 
+                disabled={loading} 
+                className="h-9 text-sm" 
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-email" className="text-sm text-foreground">Email</Label>
+              <Input 
+                id="signup-email" 
+                type="email" 
+                placeholder="john@company.com" 
+                value={signUpData.email} 
+                onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })} 
+                required 
+                disabled={loading} 
+                className="h-9 text-sm" 
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="signup-phone" className="text-sm text-foreground">Phone (for OTP verification)</Label>
+              <Input 
+                id="signup-phone" 
+                type="tel" 
+                placeholder="9876543210" 
+                value={signUpData.phone} 
+                onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })} 
+                disabled={loading} 
+                className="h-9 text-sm" 
+              />
+              <p className="text-xs text-muted-foreground">Optional if verifying via email</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-password" className="text-sm text-foreground">Password</Label>
+                <div className="relative">
+                  <Input 
+                    id="signup-password" 
+                    type={showSignUpPassword ? "text" : "password"} 
+                    placeholder="••••••" 
+                    value={signUpData.password} 
+                    onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })} 
+                    required 
+                    disabled={loading} 
+                    className="h-9 text-sm pr-9" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showSignUpPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="signup-confirm" className="text-sm text-foreground">Confirm</Label>
+                <div className="relative">
+                  <Input 
+                    id="signup-confirm" 
+                    type={showConfirmPassword ? "text" : "password"} 
+                    placeholder="••••••" 
+                    value={signUpData.confirmPassword} 
+                    onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })} 
+                    required 
+                    disabled={loading} 
+                    className="h-9 text-sm pr-9" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <Label>Organization</Label>
+              <Select 
+                value={signUpData.createNewOrg ? '__create_new__' : signUpData.organizationId} 
+                onValueChange={(value) => {
+                  if (value === '__create_new__') {
+                    setSignUpData({ ...signUpData, createNewOrg: true, organizationId: '' });
+                  } else {
+                    setSignUpData({ ...signUpData, createNewOrg: false, organizationId: value, newOrgName: '' });
+                  }
+                }} 
+                disabled={loading || loadingOrgs}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select or create organization"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                  ))}
+                  <SelectItem value="__create_new__" className="text-primary font-medium">
+                    <span className="flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      Create New Organization
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {signUpData.createNewOrg && (
+                <div className="space-y-2">
+                  <Input 
+                    type="text" 
+                    placeholder="Enter your organization name" 
+                    value={signUpData.newOrgName} 
+                    onChange={(e) => setSignUpData({ ...signUpData, newOrgName: e.target.value })} 
+                    disabled={loading} 
+                    className="h-9 text-sm" 
+                    autoFocus
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You'll be assigned as the admin of this organization.
+                  </p>
+                </div>
+              )}
+            </div>
+            <Button type="submit" className="w-full mt-6 h-9 text-sm" disabled={loading || (!signUpData.createNewOrg && loadingOrgs)}>
+              Continue
+            </Button>
+          </form>
+        );
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden bg-background">
       {/* Subtle background elements */}
@@ -290,15 +701,15 @@ export default function Auth() {
             />
           </div>
           <CardTitle className="text-xl font-bold text-foreground">
-            {activeTab === 'signin' ? 'Welcome Back' : 'Create Account'}
+            {activeTab === 'signin' ? 'Welcome Back' : registrationStep === 'complete' ? 'Success!' : 'Create Account'}
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
-            {activeTab === 'signin' ? 'Sign in to your account' : 'Register to get started'}
+            {activeTab === 'signin' ? 'Sign in to your account' : registrationStep === 'details' ? 'Register to get started' : ''}
           </CardDescription>
         </CardHeader>
         
         <CardContent className="pt-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); resetRegistration(); }} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4 h-9">
               <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
               <TabsTrigger value="register" className="text-sm">Register</TabsTrigger>
@@ -376,144 +787,7 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="register">
-              <form onSubmit={handleSignUp} className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="signup-name" className="text-sm text-foreground">Full Name</Label>
-                  <Input 
-                    id="signup-name" 
-                    type="text" 
-                    placeholder="John Doe" 
-                    value={signUpData.fullName} 
-                    onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })} 
-                    required 
-                    disabled={loading} 
-                    className="h-9 text-sm" 
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="signup-email" className="text-sm text-foreground">Email</Label>
-                  <Input 
-                    id="signup-email" 
-                    type="email" 
-                    placeholder="john@company.com" 
-                    value={signUpData.email} 
-                    onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })} 
-                    required 
-                    disabled={loading} 
-                    className="h-9 text-sm" 
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="signup-phone" className="text-sm text-foreground">Phone (Optional)</Label>
-                  <Input 
-                    id="signup-phone" 
-                    type="tel" 
-                    placeholder="9876543210" 
-                    value={signUpData.phone} 
-                    onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })} 
-                    disabled={loading} 
-                    className="h-9 text-sm" 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="signup-password" className="text-sm text-foreground">Password</Label>
-                    <div className="relative">
-                      <Input 
-                        id="signup-password" 
-                        type={showSignUpPassword ? "text" : "password"} 
-                        placeholder="••••••" 
-                        value={signUpData.password} 
-                        onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })} 
-                        required 
-                        disabled={loading} 
-                        className="h-9 text-sm pr-9" 
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowSignUpPassword(!showSignUpPassword)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        tabIndex={-1}
-                      >
-                        {showSignUpPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="signup-confirm" className="text-sm text-foreground">Confirm</Label>
-                    <div className="relative">
-                      <Input 
-                        id="signup-confirm" 
-                        type={showConfirmPassword ? "text" : "password"} 
-                        placeholder="••••••" 
-                        value={signUpData.confirmPassword} 
-                        onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })} 
-                        required 
-                        disabled={loading} 
-                        className="focus:ring-primary/30 focus:border-primary pr-10" 
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        tabIndex={-1}
-                      >
-                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <Label>Organization</Label>
-                  <Select 
-                    value={signUpData.createNewOrg ? '__create_new__' : signUpData.organizationId} 
-                    onValueChange={(value) => {
-                      if (value === '__create_new__') {
-                        setSignUpData({ ...signUpData, createNewOrg: true, organizationId: '' });
-                      } else {
-                        setSignUpData({ ...signUpData, createNewOrg: false, organizationId: value, newOrgName: '' });
-                      }
-                    }} 
-                    disabled={loading || loadingOrgs}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select or create organization"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {organizations.map((org) => (
-                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
-                      ))}
-                      <SelectItem value="__create_new__" className="text-primary font-medium">
-                        <span className="flex items-center gap-2">
-                          <Plus className="h-4 w-4" />
-                          Create New Organization
-                        </span>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  {signUpData.createNewOrg && (
-                    <div className="space-y-2">
-                      <Input 
-                        type="text" 
-                        placeholder="Enter your organization name" 
-                        value={signUpData.newOrgName} 
-                        onChange={(e) => setSignUpData({ ...signUpData, newOrgName: e.target.value })} 
-                        disabled={loading} 
-                        className="focus:ring-primary/30 focus:border-primary" 
-                        autoFocus
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        You'll be assigned as the admin of this organization.
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <Button type="submit" className="w-full mt-6" disabled={loading || (!signUpData.createNewOrg && loadingOrgs)}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Account
-                </Button>
-              </form>
+              {renderRegistrationStep()}
             </TabsContent>
           </Tabs>
         </CardContent>
