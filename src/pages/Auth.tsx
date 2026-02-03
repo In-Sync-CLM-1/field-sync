@@ -275,42 +275,39 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-muted/30" />
-      
-      {/* Subtle floating orbs */}
-      <div className="absolute top-20 left-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-orb-float" />
-      <div className="absolute bottom-20 right-20 w-48 h-48 bg-accent/10 rounded-full blur-3xl animate-orb-float" style={{ animationDelay: '-4s' }} />
+    <div className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden bg-background">
+      {/* Subtle background elements */}
+      <div className="absolute top-20 left-20 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 right-20 w-40 h-40 bg-accent/5 rounded-full blur-3xl" />
 
-      <Card className="w-full max-w-md relative z-10 animate-scale-in border-border shadow-lg">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
+      <Card className="w-full max-w-md relative z-10 animate-scale-in border-border shadow-lg bg-card">
+        <CardHeader className="space-y-1 text-center pb-2">
+          <div className="flex justify-center mb-3">
             <img 
               src={insyncLogo} 
               alt="InSync" 
-              className="h-20 w-auto object-contain"
+              className="h-16 w-auto object-contain"
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-foreground">
+          <CardTitle className="text-xl font-bold text-foreground">
             {activeTab === 'signin' ? 'Welcome Back' : 'Create Account'}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm text-muted-foreground">
             {activeTab === 'signin' ? 'Sign in to your account' : 'Register to get started'}
           </CardDescription>
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="pt-2">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-4 h-9">
+              <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
+              <TabsTrigger value="register" className="text-sm">Register</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+              <form onSubmit={handleSignIn} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="signin-email" className="text-sm text-foreground">Email</Label>
                   <Input 
                     id="signin-email" 
                     type="email" 
@@ -319,11 +316,11 @@ export default function Auth() {
                     onChange={(e) => setSignInData({ ...signInData, email: e.target.value })} 
                     required 
                     disabled={loading} 
-                    className="focus:ring-primary/30 focus:border-primary" 
+                    className="h-9 text-sm" 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signin-password" className="text-sm text-foreground">Password</Label>
                   <div className="relative">
                     <Input 
                       id="signin-password" 
@@ -333,7 +330,7 @@ export default function Auth() {
                       onChange={(e) => setSignInData({ ...signInData, password: e.target.value })} 
                       required 
                       disabled={loading} 
-                      className="focus:ring-primary/30 focus:border-primary pr-10" 
+                      className="h-9 text-sm pr-10" 
                     />
                     <button
                       type="button"
@@ -341,18 +338,18 @@ export default function Auth() {
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       tabIndex={-1}
                     >
-                      {showSignInPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showSignInPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-organization">Organization</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signin-organization" className="text-sm text-foreground">Organization</Label>
                   <Select 
                     value={signInData.organizationId} 
                     onValueChange={(value) => setSignInData({ ...signInData, organizationId: value })} 
                     disabled={loading || loadingOrgs}
                   >
-                    <SelectTrigger id="signin-organization">
+                    <SelectTrigger id="signin-organization" className="h-9 text-sm">
                       <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -366,12 +363,12 @@ export default function Auth() {
                   <button
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-primary hover:underline"
+                    className="text-xs text-primary hover:underline"
                   >
                     Forgot password?
                   </button>
                 </div>
-                <Button type="submit" className="w-full mt-4" disabled={loading || loadingOrgs}>
+                <Button type="submit" className="w-full h-9 text-sm" disabled={loading || loadingOrgs}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign In
                 </Button>
@@ -379,9 +376,9 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="register">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
+              <form onSubmit={handleSignUp} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-name" className="text-sm text-foreground">Full Name</Label>
                   <Input 
                     id="signup-name" 
                     type="text" 
@@ -390,11 +387,11 @@ export default function Auth() {
                     onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })} 
                     required 
                     disabled={loading} 
-                    className="focus:ring-primary/30 focus:border-primary" 
+                    className="h-9 text-sm" 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-email" className="text-sm text-foreground">Email</Label>
                   <Input 
                     id="signup-email" 
                     type="email" 
@@ -403,11 +400,11 @@ export default function Auth() {
                     onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })} 
                     required 
                     disabled={loading} 
-                    className="focus:ring-primary/30 focus:border-primary" 
+                    className="h-9 text-sm" 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-phone">Phone (Optional)</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-phone" className="text-sm text-foreground">Phone (Optional)</Label>
                   <Input 
                     id="signup-phone" 
                     type="tel" 
@@ -415,12 +412,12 @@ export default function Auth() {
                     value={signUpData.phone} 
                     onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })} 
                     disabled={loading} 
-                    className="focus:ring-primary/30 focus:border-primary" 
+                    className="h-9 text-sm" 
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-password" className="text-sm text-foreground">Password</Label>
                     <div className="relative">
                       <Input 
                         id="signup-password" 
@@ -430,20 +427,20 @@ export default function Auth() {
                         onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })} 
                         required 
                         disabled={loading} 
-                        className="focus:ring-primary/30 focus:border-primary pr-10" 
+                        className="h-9 text-sm pr-9" 
                       />
                       <button
                         type="button"
                         onClick={() => setShowSignUpPassword(!showSignUpPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                         tabIndex={-1}
                       >
-                        {showSignUpPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showSignUpPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">Confirm</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-confirm" className="text-sm text-foreground">Confirm</Label>
                     <div className="relative">
                       <Input 
                         id="signup-confirm" 

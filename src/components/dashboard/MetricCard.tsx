@@ -92,19 +92,19 @@ export function MetricCard({
   return (
     <Card 
       className={cn(
-        "p-4 relative overflow-hidden group animate-fade-in card-hover min-h-[140px] flex flex-col",
+        "p-3 relative overflow-hidden group animate-fade-in card-hover min-h-[120px] flex flex-col",
         styles.card,
         statusBorder,
-        onClick && "cursor-pointer hover:scale-[1.02] transition-transform duration-200"
+        onClick && "cursor-pointer hover:scale-[1.01] transition-transform duration-200"
       )}
       onClick={onClick}
     >
       {/* Header - fixed height */}
-      <div className="flex items-center justify-between mb-3 flex-shrink-0">
+      <div className="flex items-center justify-between mb-2 flex-shrink-0">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide leading-tight">{title}</span>
         {Icon && (
-          <div className={cn("icon-circle h-8 w-8 flex-shrink-0 transition-transform duration-200 group-hover:scale-110", styles.icon)}>
-            <Icon className="h-4 w-4" />
+          <div className={cn("icon-circle h-7 w-7 flex-shrink-0 transition-transform duration-200 group-hover:scale-105", styles.icon)}>
+            <Icon className="h-3.5 w-3.5" />
           </div>
         )}
       </div>
@@ -112,16 +112,16 @@ export function MetricCard({
       {/* Content area - grows to fill space */}
       <div className="flex-1 flex flex-col justify-center">
         {/* Primary display - either value or primaryText */}
-        <div className={cn("text-xl font-bold animate-count-up leading-tight", styles.value)}>
+        <div className={cn("text-lg font-bold animate-count-up leading-tight", styles.value)}>
           {primaryText || value}
         </div>
 
         {/* Progress bar */}
         {progress !== undefined && (
-          <div className="mt-2">
+          <div className="mt-1.5">
             <Progress 
               value={Math.min(progress, 100)} 
-              className={cn("h-1.5 bg-muted/50", progressStyle)} 
+              className={cn("h-1 bg-muted/50", progressStyle)} 
             />
             <span className="text-[10px] text-muted-foreground mt-0.5 block">
               {Math.round(progress)}% complete
