@@ -59,12 +59,18 @@ export default function TeamAndBranches() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="team" className="gap-2">
+        <TabsList className="grid w-full grid-cols-2 max-w-md h-12 p-1 bg-muted">
+          <TabsTrigger 
+            value="team" 
+            className="gap-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
             <Users className="h-4 w-4" />
             Team Planning
           </TabsTrigger>
-          <TabsTrigger value="branches" className="gap-2">
+          <TabsTrigger 
+            value="branches" 
+            className="gap-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
             <Building2 className="h-4 w-4" />
             Branches
           </TabsTrigger>
@@ -313,9 +319,13 @@ function TeamPlanningTab() {
               </TableBody>
             </Table>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No plans submitted</p>
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-3 opacity-40" />
+              <p className="text-sm font-medium mb-1">No plans submitted</p>
+              <p className="text-xs max-w-sm mx-auto">
+                Team plans appear here when agents reporting to you submit their daily plans.
+                To build your team, go to <span className="font-medium text-primary">Users</span> and assign yourself as Reporting Manager.
+              </p>
             </div>
           )}
         </CardContent>
