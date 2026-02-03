@@ -13,8 +13,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, AlertCircle, Users, Search, UserPlus, KeyRound, RefreshCw } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, AlertCircle, Users, Search, UserPlus, KeyRound, Edit2, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { usePagination } from '@/hooks/usePagination';
 import { z } from 'zod';
@@ -26,10 +28,18 @@ type UserRole = {
   role: string;
 };
 
+type Branch = {
+  id: string;
+  name: string;
+};
+
 type UserWithRoles = {
   id: string;
   full_name: string | null;
   phone: string | null;
+  is_active: boolean;
+  branch_id: string | null;
+  reporting_manager_id: string | null;
   user_roles: UserRole[];
 };
 
@@ -56,6 +66,17 @@ const resetPasswordSchema = z.object({
 });
 
 type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
+
+const editUserSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  phone: z.string().min(10, 'Phone must be at least 10 characters').max(20),
+  role: z.enum(['sales_officer', 'branch_manager', 'admin', 'super_admin']),
+  branchId: z.string().optional(),
+  reportingManagerId: z.string().optional(),
+  isActive: z.boolean(),
+});
+
+type EditUserForm = z.infer<typeof editUserSchema>;
 
 // Role display names for UI
 const ROLE_DISPLAY_NAMES: Record<string, string> = {
@@ -89,8 +110,12 @@ export default function Forms() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -112,14 +137,26 @@ export default function Forms() {
     },
   });
 
+  const editForm = useForm<EditUserForm>({
+    resolver: zodResolver(editUserSchema),
+    defaultValues: {
+      fullName: '',
+      phone: '',
+      role: 'sales_officer',
+      branchId: '',
+      reportingManagerId: '',
+      isActive: true,
+    },
+  });
+
   // Fetch users with their roles
   const { data: users = [], isLoading: isLoadingUsers, refetch: refetchUsers } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      // First get all profiles
+      // First get all profiles with additional fields
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, phone')
+        .select('id, full_name, phone, is_active, branch_id, reporting_manager_id')
         .order('full_name');
 
       if (profilesError) throw profilesError;
@@ -141,6 +178,27 @@ export default function Forms() {
     },
     enabled: isAdmin,
   });
+
+  // Fetch branches for dropdown
+  const { data: branches = [] } = useQuery({
+    queryKey: ['branches'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('branches')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) throw error;
+      return data as Branch[];
+    },
+    enabled: isAdmin,
+  });
+
+  // Get potential managers (branch_managers, admins, super_admins)
+  const potentialManagers = users.filter(u => 
+    u.user_roles.some(r => ['branch_manager', 'admin', 'super_admin'].includes(r.role))
+  );
 
   // Filter users based on search query
   const filteredUsers = users.filter((user) => {
@@ -278,6 +336,101 @@ export default function Forms() {
   const handleResetPasswordClick = (user: UserWithRoles) => {
     setSelectedUser(user);
     setResetDialogOpen(true);
+  };
+
+  const handleEditClick = (user: UserWithRoles) => {
+    setSelectedUser(user);
+    const primaryRole = user.user_roles[0]?.role || 'sales_officer';
+    editForm.reset({
+      fullName: user.full_name || '',
+      phone: user.phone || '',
+      role: ['sales_officer', 'branch_manager', 'admin', 'super_admin'].includes(primaryRole) 
+        ? primaryRole as 'sales_officer' | 'branch_manager' | 'admin' | 'super_admin'
+        : 'sales_officer',
+      branchId: user.branch_id || '',
+      reportingManagerId: user.reporting_manager_id || '',
+      isActive: user.is_active,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (user: UserWithRoles) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const onEditUser = async (values: EditUserForm) => {
+    if (!selectedUser) return;
+    
+    setIsUpdating(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('update-user', {
+        body: {
+          userId: selectedUser.id,
+          fullName: values.fullName,
+          phone: values.phone,
+          role: values.role,
+          branchId: values.branchId || null,
+          reportingManagerId: values.reportingManagerId || null,
+          isActive: values.isActive,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: 'User Updated',
+        description: `${values.fullName} has been successfully updated.`,
+      });
+
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+      refetchUsers();
+    } catch (error) {
+      console.error('Update user error:', error);
+      toast({
+        title: 'Failed to Update User',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const onDeleteUser = async () => {
+    if (!selectedUser) return;
+    
+    setIsDeleting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: selectedUser.id },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: 'User Deleted',
+        description: `${selectedUser.full_name} has been successfully deleted.`,
+      });
+
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+      refetchUsers();
+    } catch (error) {
+      console.error('Delete user error:', error);
+      toast({
+        title: 'Failed to Delete User',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (!isAdmin) {
@@ -481,6 +634,185 @@ export default function Forms() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user details for {selectedUser?.full_name || 'user'}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditUser)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1234567890" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="sales_officer">Sales Officer</SelectItem>
+                        <SelectItem value="branch_manager">Branch Manager</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="branchId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Branch</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a branch (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">No Branch</SelectItem>
+                        {branches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id}>
+                            {branch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="reportingManagerId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reporting Manager</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a manager (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">No Manager</SelectItem>
+                        {potentialManagers
+                          .filter(m => m.id !== selectedUser?.id)
+                          .map((manager) => (
+                            <SelectItem key={manager.id} value={manager.id}>
+                              {manager.full_name || 'Unnamed'} ({manager.user_roles[0]?.role || 'user'})
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>Active Status</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        {field.value ? 'User can access the system' : 'User is deactivated'}
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={isUpdating}>
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update User'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{selectedUser?.full_name}</strong>? 
+              This action cannot be undone. All data associated with this user will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onDeleteUser}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete User'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* User List Section */}
       <Card>
         <CardHeader>
@@ -532,20 +864,26 @@ export default function Forms() {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Phone</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Roles</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedUsers.map((user) => (
-                      <TableRow key={user.id}>
+                    {paginatedUsers.map((u) => (
+                      <TableRow key={u.id}>
                         <TableCell className="font-medium">
-                          {user.full_name || 'Unknown User'}
+                          {u.full_name || 'Unknown User'}
                         </TableCell>
-                        <TableCell>{user.phone || '-'}</TableCell>
+                        <TableCell>{u.phone || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant={u.is_active ? 'default' : 'secondary'}>
+                            {u.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {user.user_roles.map((ur, idx) => (
+                            {u.user_roles.map((ur, idx) => (
                               <Badge
                                 key={idx}
                                 variant={getRoleBadgeVariant(ur.role)}
@@ -556,14 +894,33 @@ export default function Forms() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleResetPasswordClick(user)}
-                          >
-                            <KeyRound className="h-4 w-4 mr-2" />
-                            Reset Password
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditClick(u)}
+                              title="Edit User"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleResetPasswordClick(u)}
+                              title="Reset Password"
+                            >
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteClick(u)}
+                              title="Delete User"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -573,18 +930,23 @@ export default function Forms() {
 
               {/* Mobile Card View */}
               <div className="md:hidden space-y-3">
-                {paginatedUsers.map((user) => (
-                  <Card key={user.id}>
+                {paginatedUsers.map((u) => (
+                  <Card key={u.id}>
                     <CardContent className="pt-6 space-y-3">
-                      <div>
-                        <p className="font-medium">{user.full_name || 'Unknown User'}</p>
-                        <p className="text-sm text-muted-foreground">{user.phone || '-'}</p>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">{u.full_name || 'Unknown User'}</p>
+                          <p className="text-sm text-muted-foreground">{u.phone || '-'}</p>
+                        </div>
+                        <Badge variant={u.is_active ? 'default' : 'secondary'}>
+                          {u.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
                       </div>
 
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground">Roles</p>
                         <div className="flex flex-wrap gap-1">
-                          {user.user_roles.map((ur, idx) => (
+                          {u.user_roles.map((ur, idx) => (
                             <Badge
                               key={idx}
                               variant={getRoleBadgeVariant(ur.role)}
@@ -594,15 +956,34 @@ export default function Forms() {
                           ))}
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleResetPasswordClick(user)}
-                        className="w-full"
-                      >
-                        <KeyRound className="h-4 w-4 mr-2" />
-                        Reset Password
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditClick(u)}
+                          className="flex-1"
+                        >
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResetPasswordClick(u)}
+                          className="flex-1"
+                        >
+                          <KeyRound className="h-4 w-4 mr-2" />
+                          Password
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteClick(u)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
