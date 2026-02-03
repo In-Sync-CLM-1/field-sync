@@ -252,10 +252,14 @@ export default function OrganizationsDashboard() {
                         const StatusIcon = config.icon;
                         
                         return (
-                          <TableRow key={org.id}>
+                          <TableRow 
+                            key={org.id} 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => navigate(`/platform-admin/organizations/${org.id}`)}
+                          >
                             <TableCell>
                               <div className="flex flex-col">
-                                <span className="font-medium">{org.name}</span>
+                                <span className="font-medium text-primary hover:underline">{org.name}</span>
                                 {org.code && (
                                   <span className="text-xs text-muted-foreground">{org.code}</span>
                                 )}
