@@ -90,13 +90,13 @@ export default function Layout() {
           <TrialBanner onUpgrade={() => setShowUpgradeDialog(true)} />
           
           {/* Header with gradient accent line */}
-          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative">
+          <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 relative">
             {/* Multi-color gradient accent bar */}
             <div className="header-gradient-bar" />
             
-            <div className="flex h-12 items-center justify-between px-3 md:px-4">
+            <div className="flex h-11 items-center justify-between px-3">
               <div className="flex items-center">
-                <SidebarTrigger className="-ml-2 hover:bg-primary/10 hover:text-primary transition-colors" />
+                <SidebarTrigger className="-ml-2 hover:bg-muted transition-colors" />
               </div>
 
               <div className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export default function Layout() {
                     size="sm"
                     onClick={handleSync}
                     disabled={isSyncing}
-                    className="border-accent/50 text-accent hover:bg-accent/10 hover:border-accent"
+                    className="h-8 text-xs border-border hover:bg-muted"
                   >
                     <RefreshCw className={`h-3 w-3 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
                     {isSyncing ? 'Syncing...' : 'Sync Now'}
@@ -114,16 +114,16 @@ export default function Layout() {
                 )}
                 <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 hover:ring-2 hover:ring-primary/30 transition-all">
-                  <Avatar className="h-8 w-8 border-2 border-transparent hover:border-primary/50 transition-colors">
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 hover:bg-muted transition-all">
+                  <Avatar className="h-8 w-8 border border-border">
                     <AvatarFallback className="text-xs bg-primary text-primary-foreground font-semibold">{getInitials(user?.email)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 border-border/50 bg-card/95 backdrop-blur" align="end">
+              <DropdownMenuContent className="w-56 border-border bg-popover" align="end">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.email}</p>
+                    <p className="text-sm font-medium leading-none text-foreground">{user?.email}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       Field Agent
                     </p>
@@ -132,13 +132,13 @@ export default function Layout() {
                 <DropdownMenuSeparator />
                 {isAdmin && (
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard/sync-monitoring" className="cursor-pointer hover:bg-primary/10 hover:text-primary">
+                    <Link to="/dashboard/sync-monitoring" className="cursor-pointer hover:bg-muted">
                       <Activity className="mr-2 h-4 w-4" />
                       <span>Sync Monitoring</span>
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem className="hover:bg-primary/10 hover:text-primary">
+                <DropdownMenuItem className="hover:bg-muted">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
@@ -154,12 +154,12 @@ export default function Layout() {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 pb-16 min-w-0">
+          <main className="flex-1 pb-14 min-w-0">
             <Outlet />
           </main>
 
-          {/* Bottom Navigation - Glass effect with neon indicators */}
-          <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 border-t border-border/50 bg-background/90 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80">
+          {/* Bottom Navigation */}
+          <nav className="fixed bottom-0 left-0 right-0 z-50 h-12 border-t border-border bg-card/95 backdrop-blur-sm">
             <div className="grid h-full grid-cols-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -169,22 +169,19 @@ export default function Layout() {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex flex-col items-center justify-center gap-0.5 py-1.5 transition-all duration-200 relative ${
+                    className={`flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 relative ${
                       active
                         ? 'text-primary'
-                        : 'text-muted-foreground hover:text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <div className={`relative transition-transform duration-200 ${active ? 'scale-110' : 'hover:scale-105'}`}>
-                      <Icon className="h-6 w-6" />
-                      {active && (
-                        <div className="absolute -inset-2 bg-primary/20 rounded-full blur-md -z-10" />
-                      )}
+                    <div className={`relative transition-transform duration-200 ${active ? 'scale-105' : 'hover:scale-100'}`}>
+                      <Icon className="h-5 w-5" />
                     </div>
                     <span className="text-[10px] font-medium leading-tight">{item.label}</span>
                     {/* Active indicator dot */}
                     {active && (
-                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent shadow-[0_0_8px_hsl(var(--accent))]" />
+                      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
                     )}
                   </Link>
                 );

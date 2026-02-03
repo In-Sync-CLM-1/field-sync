@@ -228,16 +228,16 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4 page-gradient min-h-screen">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 space-y-3 page-gradient min-h-screen">
       {/* Hero Welcome Section */}
       <div className="hero-gradient animate-fade-in">
         <div className="relative z-10 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+              <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-xs font-medium text-primary uppercase tracking-wider">Dashboard</span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight gradient-text-primary">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               Welcome back!
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -248,9 +248,9 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid - 2 columns on mobile */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <div key={stat.label} style={{ animationDelay: `${index * 100}ms` }} className="animate-slide-up opacity-0">
+          <div key={stat.label} style={{ animationDelay: `${index * 80}ms` }} className="animate-slide-up opacity-0">
             <MetricCard
               title={stat.label}
               value={stat.value}
@@ -269,19 +269,19 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions - Priority layout with time-based primary action */}
-      <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
-        <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+      <div className="animate-fade-in" style={{ animationDelay: '250ms' }}>
+        <h2 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+          <span className="w-1 h-1 rounded-full bg-primary" />
           Quick Actions
         </h2>
         
         {/* Primary Action - Larger, prominent button */}
         <Button
-          size="lg"
-          className="w-full mb-3 h-14 text-base font-semibold bg-gradient-to-r from-primary via-primary to-info hover:from-primary/90 hover:via-primary/90 hover:to-info/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02]"
+          size="default"
+          className="w-full mb-2 h-12 text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all duration-200 hover:shadow-lg"
           onClick={() => navigate(primaryAction.action)}
         >
-          <primaryAction.icon className="h-5 w-5 mr-2" />
+          <primaryAction.icon className="h-4 w-4 mr-2" />
           {primaryAction.label}
           <span className="ml-2 text-xs opacity-80 hidden sm:inline">— {primaryAction.description}</span>
         </Button>
@@ -295,12 +295,12 @@ export default function Dashboard() {
                 key={action.label}
                 variant="outline"
                 size="sm"
-                className="h-11 flex flex-col items-center justify-center gap-0.5 py-2 hover:bg-muted/50 transition-colors"
+                className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5 border-border hover:bg-muted/50 hover:border-primary/30 transition-colors"
                 onClick={action.action}
-                style={{ animationDelay: `${400 + index * 50}ms` }}
+                style={{ animationDelay: `${300 + index * 40}ms` }}
               >
                 <Icon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium">{action.label}</span>
+                <span className="text-xs font-medium text-foreground">{action.label}</span>
               </Button>
             );
           })}

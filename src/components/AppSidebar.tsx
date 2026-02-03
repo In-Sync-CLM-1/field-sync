@@ -69,19 +69,17 @@ export function AppSidebar() {
   const currentPath = location.pathname;
 
   return (
-    <Sidebar collapsible="offcanvas" className="md:w-60 bg-gradient-to-b from-sidebar to-sidebar/95">
-      <SidebarHeader className="border-b border-sidebar-border/50 px-4 py-3 flex flex-col items-center">
+    <Sidebar collapsible="offcanvas" className="md:w-56 bg-sidebar border-r border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-2 flex flex-col items-center">
         <div className="relative group">
           <img 
             src={inSyncLogo} 
             alt="In-Sync" 
-            className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" 
+            className="h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105" 
           />
-          {/* Glow effect on hover */}
-          <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
         </div>
         {user?.email && (
-          <p className="text-xs text-muted-foreground mt-1 truncate text-center">{user.email}</p>
+          <p className="text-xs text-muted-foreground mt-1 truncate text-center max-w-full">{user.email}</p>
         )}
       </SidebarHeader>
       <SidebarContent>
@@ -98,18 +96,18 @@ export function AppSidebar() {
                       <NavLink 
                         to={item.path} 
                         end
-                        className={`flex items-center gap-2 text-sm rounded-md transition-all duration-200 ${
+                        className={`flex items-center gap-2 text-sm rounded-md transition-all duration-150 ${
                           isActive 
-                            ? 'bg-primary/15 text-primary font-medium border-l-2 border-accent shadow-sm' 
-                            : 'hover:bg-primary/10 hover:text-primary'
+                            ? 'bg-primary/10 text-primary font-medium border-l-2 border-primary' 
+                            : 'hover:bg-muted text-foreground'
                         }`}
                         activeClassName=""
-                        style={{ animationDelay: `${index * 50}ms` }}
+                        style={{ animationDelay: `${index * 40}ms` }}
                       >
-                        <Icon className={`h-4 w-4 flex-shrink-0 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
+                        <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? '' : 'text-muted-foreground'}`} />
                         {!collapsed && <span>{item.label}</span>}
                         {isActive && !collapsed && (
-                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent animate-glow-pulse" />
+                          <div className="ml-auto w-1 h-1 rounded-full bg-primary" />
                         )}
                       </NavLink>
                     </SidebarMenuButton>
@@ -121,16 +119,16 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="p-2 border-t border-sidebar-border">
         <Button 
           variant="ghost" 
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+          className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors h-9"
           onClick={async () => {
             await supabase.auth.signOut();
           }}
         >
           <LogOut className="h-4 w-4 flex-shrink-0" />
-          {!collapsed && <span>Logout</span>}
+          {!collapsed && <span className="text-sm">Logout</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>
