@@ -700,14 +700,14 @@ export default function Forms() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Branch</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} value={field.value || 'none'}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a branch (optional)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No Branch</SelectItem>
+                        <SelectItem value="none">No Branch</SelectItem>
                         {branches.map((branch) => (
                           <SelectItem key={branch.id} value={branch.id}>
                             {branch.name}
@@ -725,14 +725,14 @@ export default function Forms() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Reporting Manager</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} value={field.value || 'none'}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a manager (optional)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No Manager</SelectItem>
+                        <SelectItem value="none">No Manager</SelectItem>
                         {potentialManagers
                           .filter(m => m.id !== selectedUser?.id)
                           .map((manager) => (
