@@ -37,6 +37,7 @@ import Onboarding from "./pages/Onboarding";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 import OrganizationsDashboard from "./pages/PlatformAdmin/OrganizationsDashboard";
+import OrganizationDetail from "./pages/PlatformAdmin/OrganizationDetail";
 
 import NotFound from "./pages/NotFound";
 
@@ -80,6 +81,11 @@ const App = () => (
               <Route path="/platform-admin/organizations" element={
                 <PlatformAdminRoute>
                   <OrganizationsDashboard />
+                </PlatformAdminRoute>
+              } />
+              <Route path="/platform-admin/organizations/:id" element={
+                <PlatformAdminRoute>
+                  <OrganizationDetail />
                 </PlatformAdminRoute>
               } />
               
