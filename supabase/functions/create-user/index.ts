@@ -119,10 +119,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Add role to user_roles table
+    // Add role to user_roles table (use upsert to handle case where role already exists)
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .insert({ user_id: newUser.user.id, role })
+      .upsert(
+        { user_id: newUser.user.id, role },
+        { onConflict: 'user_id,role' }
+      )
 
     if (roleError) {
       console.error('Role insert error:', roleError)
