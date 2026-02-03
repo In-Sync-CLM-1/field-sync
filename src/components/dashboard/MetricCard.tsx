@@ -14,7 +14,6 @@ interface MetricCardProps {
   trend?: 'up' | 'down' | 'neutral';
   subtitle?: string;
   accentColor?: AccentColor;
-  // New enhanced props
   progress?: number;
   primaryText?: string;
   secondaryText?: string;
@@ -22,44 +21,32 @@ interface MetricCardProps {
   onClick?: () => void;
 }
 
-const accentStyles: Record<AccentColor, { card: string; icon: string; value: string }> = {
+// Flat color styles - use foreground colors for text contrast
+const accentStyles: Record<AccentColor, { icon: string; iconBg: string }> = {
   primary: {
-    card: 'metric-card-primary',
-    icon: 'icon-circle-primary',
-    value: 'text-primary',
+    icon: 'text-primary',
+    iconBg: 'bg-primary/10',
   },
   info: {
-    card: 'metric-card-info',
-    icon: 'icon-circle-info',
-    value: 'text-info',
+    icon: 'text-info-foreground',
+    iconBg: 'bg-info/20',
   },
   warning: {
-    card: 'metric-card-warning',
-    icon: 'icon-circle-warning',
-    value: 'text-warning',
+    icon: 'text-warning-foreground',
+    iconBg: 'bg-warning/20',
   },
   accent: {
-    card: 'metric-card-accent',
-    icon: 'icon-circle-accent',
-    value: 'text-accent',
+    icon: 'text-accent-foreground',
+    iconBg: 'bg-accent/20',
   },
   success: {
-    card: 'metric-card-primary',
-    icon: 'icon-circle-success',
-    value: 'text-success',
+    icon: 'text-success',
+    iconBg: 'bg-success/10',
   },
   destructive: {
-    card: 'metric-card-primary',
-    icon: 'icon-circle-destructive',
-    value: 'text-destructive',
+    icon: 'text-destructive',
+    iconBg: 'bg-destructive/10',
   },
-};
-
-const statusBorderStyles: Record<StatusColor, string> = {
-  success: 'ring-2 ring-success/30 border-success/50',
-  warning: 'ring-2 ring-warning/30 border-warning/50',
-  danger: 'ring-2 ring-destructive/30 border-destructive/50',
-  neutral: '',
 };
 
 const statusProgressStyles: Record<StatusColor, string> = {
@@ -84,44 +71,38 @@ export function MetricCard({
   onClick,
 }: MetricCardProps) {
   const styles = accentStyles[accentColor];
-  const statusBorder = statusBorderStyles[status];
   const progressStyle = statusProgressStyles[status];
-
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
 
   return (
     <Card 
       className={cn(
-        "p-3 relative overflow-hidden group animate-fade-in card-hover min-h-[120px] flex flex-col",
-        styles.card,
-        statusBorder,
-        onClick && "cursor-pointer hover:scale-[1.01] transition-transform duration-200"
+        "p-3 bg-card border border-border shadow-sm min-h-[100px] flex flex-col",
+        onClick && "cursor-pointer hover:shadow-md transition-shadow duration-200"
       )}
       onClick={onClick}
     >
-      {/* Header - fixed height */}
-      <div className="flex items-center justify-between mb-2 flex-shrink-0">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide leading-tight">{title}</span>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</span>
         {Icon && (
-          <div className={cn("icon-circle h-7 w-7 flex-shrink-0 transition-transform duration-200 group-hover:scale-105", styles.icon)}>
-            <Icon className="h-3.5 w-3.5" />
+          <div className={cn("h-7 w-7 rounded-full flex items-center justify-center", styles.iconBg)}>
+            <Icon className={cn("h-3.5 w-3.5", styles.icon)} />
           </div>
         )}
       </div>
       
-      {/* Content area - grows to fill space */}
+      {/* Content */}
       <div className="flex-1 flex flex-col justify-center">
-        {/* Primary display - either value or primaryText */}
-        <div className={cn("text-lg font-bold animate-count-up leading-tight", styles.value)}>
+        <div className="text-lg font-bold text-foreground leading-tight">
           {primaryText || value}
         </div>
 
-        {/* Progress bar */}
         {progress !== undefined && (
-          <div className="mt-1.5">
+          <div className="mt-1">
             <Progress 
               value={Math.min(progress, 100)} 
-              className={cn("h-1 bg-muted/50", progressStyle)} 
+              className={cn("h-1 bg-muted", progressStyle)} 
             />
             <span className="text-[10px] text-muted-foreground mt-0.5 block">
               {Math.round(progress)}% complete
@@ -130,9 +111,8 @@ export function MetricCard({
         )}
       </div>
 
-      {/* Footer area - fixed at bottom */}
-      <div className="flex-shrink-0 mt-auto pt-1">
-        {/* Trend with change text */}
+      {/* Footer */}
+      <div className="mt-auto pt-1">
         {change && (
           <p className={cn(
             "text-xs font-medium flex items-center gap-1",
@@ -145,23 +125,14 @@ export function MetricCard({
           </p>
         )}
 
-        {/* Secondary text */}
         {secondaryText && (
-          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{secondaryText}</p>
+          <p className="text-xs text-muted-foreground leading-tight">{secondaryText}</p>
         )}
 
-        {/* Subtitle (legacy support) */}
         {subtitle && !secondaryText && (
-          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{subtitle}</p>
+          <p className="text-xs text-muted-foreground leading-tight">{subtitle}</p>
         )}
       </div>
-
-      {/* Clickable indicator */}
-      {onClick && (
-        <div className="absolute bottom-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <span className="text-[10px] text-muted-foreground">Click for details →</span>
-        </div>
-      )}
     </Card>
   );
 }
