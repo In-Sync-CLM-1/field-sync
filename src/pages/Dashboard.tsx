@@ -6,7 +6,7 @@ import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RecentVisitsSection } from '@/components/dashboard/RecentVisitsSection';
 import { useNavigate } from 'react-router-dom';
-import { DashboardTour, TourTriggerButton } from '@/components/DashboardTour';
+import { AppTour, TourTriggerButton } from '@/components/AppTour';
 
 type StatusColor = 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -230,8 +230,8 @@ export default function Dashboard() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 space-y-3 page-gradient min-h-screen">
-      {/* Dashboard Tour */}
-      <DashboardTour />
+      {/* App-wide Tour */}
+      <AppTour />
 
       {/* Hero Welcome Section */}
       <div className="hero-gradient animate-fade-in">

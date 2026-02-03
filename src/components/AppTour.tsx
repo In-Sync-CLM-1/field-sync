@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { X, ChevronLeft, ChevronRight, Sparkles, Lightbulb } from 'lucide-react';
-import { useDashboardTour } from '@/hooks/useDashboardTour';
+import { Badge } from '@/components/ui/badge';
+import { X, ChevronLeft, ChevronRight, Sparkles, Lightbulb, Loader2, MapPin } from 'lucide-react';
+import { useAppTour } from '@/hooks/useAppTour';
 
 interface TooltipPosition {
   top: number;
@@ -12,27 +13,29 @@ interface TooltipPosition {
   arrowPosition: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export function DashboardTour() {
+export function AppTour() {
   const {
     isActive,
     currentStep,
     totalSteps,
     currentStepData,
     hasCompletedTour,
+    isNavigating,
+    pageInfo,
     startTour,
     nextStep,
     prevStep,
     skipTour,
-  } = useDashboardTour();
+  } = useAppTour();
 
   const [position, setPosition] = useState<TooltipPosition | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [targetFound, setTargetFound] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   // Show welcome dialog for new users
   useEffect(() => {
     if (!hasCompletedTour) {
-      // Small delay to let the page render
       const timer = setTimeout(() => setShowWelcome(true), 1000);
       return () => clearTimeout(timer);
     }
@@ -40,15 +43,23 @@ export function DashboardTour() {
 
   // Calculate tooltip position based on target element
   useEffect(() => {
-    if (!isActive || !currentStepData) return;
+    if (!isActive || !currentStepData || isNavigating) {
+      setPosition(null);
+      setTargetFound(false);
+      return;
+    }
 
     const updatePosition = () => {
       const target = document.querySelector(currentStepData.target);
-      if (!target) return;
+      if (!target) {
+        setTargetFound(false);
+        return;
+      }
 
+      setTargetFound(true);
       const rect = target.getBoundingClientRect();
-      const tooltipWidth = 320;
-      const tooltipHeight = 180;
+      const tooltipWidth = 340;
+      const tooltipHeight = 220;
       const padding = 16;
       const arrowOffset = 12;
 
@@ -86,24 +97,22 @@ export function DashboardTour() {
       setPosition({ top, left, arrowPosition });
 
       // Highlight target element
+      document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
       target.classList.add('tour-highlight');
     };
 
-    updatePosition();
+    // Wait for page to render
+    const timer = setTimeout(updatePosition, 300);
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition);
-      
-      // Remove highlight from previous target
-      const target = document.querySelector(currentStepData.target);
-      if (target) {
-        target.classList.remove('tour-highlight');
-      }
+      document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
     };
-  }, [isActive, currentStep, currentStepData]);
+  }, [isActive, currentStep, currentStepData, isNavigating]);
 
   // Welcome dialog for new users
   if (showWelcome && !isActive) {
@@ -118,11 +127,25 @@ export function DashboardTour() {
             
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-foreground">
-                Welcome to Your Dashboard! 🎉
+                Welcome to InSync! 🎉
               </h2>
               <p className="text-muted-foreground">
-                Want a quick tour to discover all the features that'll help you succeed?
+                Take a quick tour to discover all the powerful features that'll help you succeed.
               </p>
+              <div className="flex flex-wrap justify-center gap-2 pt-2">
+                <Badge variant="outline" className="gap-1">
+                  <MapPin className="h-3 w-3" />
+                  Dashboard
+                </Badge>
+                <Badge variant="outline" className="gap-1">
+                  <MapPin className="h-3 w-3" />
+                  Daily Planning
+                </Badge>
+                <Badge variant="outline" className="gap-1">
+                  <MapPin className="h-3 w-3" />
+                  Prospects
+                </Badge>
+              </div>
             </div>
 
             <div className="flex gap-3 pt-4">
@@ -154,7 +177,22 @@ export function DashboardTour() {
     );
   }
 
-  if (!isActive || !currentStepData || !position) return null;
+  // Navigating state
+  if (isActive && isNavigating) {
+    return createPortal(
+      <div className="fixed inset-0 z-[99] flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+        <Card className="shadow-xl border-primary/20">
+          <CardContent className="py-8 px-12 text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-sm text-muted-foreground">Navigating to next section...</p>
+          </CardContent>
+        </Card>
+      </div>,
+      document.body
+    );
+  }
+
+  if (!isActive || !currentStepData || !position || !targetFound) return null;
 
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
@@ -169,7 +207,7 @@ export function DashboardTour() {
       {/* Tooltip */}
       <div
         ref={tooltipRef}
-        className="fixed z-[100] w-80 animate-in fade-in slide-in-from-bottom-2 duration-300"
+        className="fixed z-[100] w-[340px] animate-in fade-in slide-in-from-bottom-2 duration-300"
         style={{ top: position.top, left: position.left }}
       >
         <Card className="shadow-2xl border-primary/30 overflow-hidden">
@@ -184,11 +222,16 @@ export function DashboardTour() {
           />
 
           <CardContent className="p-4 space-y-3">
-            {/* Header with close button */}
+            {/* Header with page indicator and close button */}
             <div className="flex items-start justify-between gap-2">
-              <h3 className="text-base font-semibold text-foreground">
-                {currentStepData.title}
-              </h3>
+              <div className="space-y-1">
+                <Badge variant="outline" className="text-xs mb-1">
+                  {pageInfo.pageName}
+                </Badge>
+                <h3 className="text-base font-semibold text-foreground">
+                  {currentStepData.title}
+                </h3>
+              </div>
               <button
                 onClick={skipTour}
                 className="p-1 rounded-md hover:bg-muted transition-colors"
@@ -203,12 +246,27 @@ export function DashboardTour() {
             </p>
 
             {/* Progress */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>Step {currentStep + 1} of {totalSteps}</span>
                 <span>{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-1.5" />
+              {/* Page indicators */}
+              <div className="flex justify-center gap-1 pt-1">
+                {['Dashboard', 'Planning', 'Prospects'].map((page, idx) => (
+                  <div 
+                    key={page}
+                    className={`h-1 rounded-full transition-all ${
+                      idx === pageInfo.pageIndex 
+                        ? 'w-6 bg-primary' 
+                        : idx < pageInfo.pageIndex 
+                          ? 'w-2 bg-primary/50' 
+                          : 'w-2 bg-muted'
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
 
             {/* Navigation */}
@@ -231,7 +289,7 @@ export function DashboardTour() {
               >
                 {currentStep === totalSteps - 1 ? (
                   <>
-                    Finish
+                    Finish Tour
                     <Sparkles className="h-4 w-4" />
                   </>
                 ) : (
@@ -252,7 +310,7 @@ export function DashboardTour() {
 
 // Tour trigger button for restarting the tour
 export function TourTriggerButton() {
-  const { hasCompletedTour, startTour } = useDashboardTour();
+  const { hasCompletedTour, startTour } = useAppTour();
 
   if (!hasCompletedTour) return null;
 
