@@ -130,7 +130,7 @@ const Landing = () => {
           <Button 
             variant="ghost" 
             onClick={() => navigate("/auth")}
-            className="text-white font-semibold hover:text-[#01B8AA] hover:bg-[#01B8AA]/10 border border-slate-700 hover:border-[#01B8AA]/50 transition-all"
+            className="text-white text-base font-semibold hover:text-[#01B8AA] hover:bg-[#01B8AA]/10 border border-slate-700 hover:border-[#01B8AA]/50 transition-all px-5 py-2"
             style={{ textShadow: '0 1px 8px rgba(255, 255, 255, 0.2)' }}
           >
             Sign In
@@ -172,7 +172,7 @@ const Landing = () => {
 
           {/* Trust Text */}
           <p 
-            className="text-sm text-slate-200 font-medium"
+            className="text-base md:text-lg text-slate-200 font-medium"
             style={{ textShadow: '0 1px 10px rgba(0, 0, 0, 0.4)' }}
           >
             <span className="text-[#01B8AA] font-semibold">₹99/user/month</span> after trial · <span className="text-white">No credit card required</span>
