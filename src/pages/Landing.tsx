@@ -151,7 +151,7 @@ const Landing = () => {
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-slate-200 max-w-2xl mx-auto mb-10">
             Track visits, boost performance, close more policies with real-time field sales management built for insurance teams.
           </p>
 
@@ -167,7 +167,7 @@ const Landing = () => {
           </div>
 
           {/* Trust Text */}
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-300">
             ₹99/user/month after trial · No credit card required
           </p>
         </section>
@@ -184,7 +184,7 @@ const Landing = () => {
                   <feature.icon className="h-6 w-6 text-[#01B8AA]" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-slate-400">{feature.description}</p>
+                <p className="text-slate-300">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -196,7 +196,7 @@ const Landing = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-300">
               One plan, all features, no hidden fees
             </p>
           </div>
@@ -207,7 +207,7 @@ const Landing = () => {
               <div className="text-center mb-8">
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-5xl md:text-6xl font-black text-[#01B8AA]">₹99</span>
-                  <span className="text-slate-400 text-lg">/user/month</span>
+                  <span className="text-slate-300 text-lg">/user/month</span>
                 </div>
               </div>
 
@@ -244,11 +244,11 @@ const Landing = () => {
                 alt="In-Sync Field Force" 
                 className="h-8 w-auto"
               />
-              <span className="text-slate-400 text-sm">
+              <span className="text-slate-300 text-sm">
                 © 2025 In-Sync Field Force
               </span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-slate-500">
+            <div className="flex items-center gap-6 text-sm text-slate-400">
               <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
               <a href="#" className="hover:text-slate-300 transition-colors">Contact</a>
