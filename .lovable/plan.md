@@ -1,8 +1,8 @@
 
-# Remove "See How It Works" Button from Landing Page
+# Improve Text Readability on Landing Page
 
 ## Summary
-Simplify the hero section Call-to-Action by removing the "See How It Works" button and video dialog, keeping only the primary "Start 14-Day Free Trial" button.
+Update the landing page text colors from dark slate tones to lighter, more readable colors that ensure proper contrast against the dark background.
 
 ---
 
@@ -10,33 +10,41 @@ Simplify the hero section Call-to-Action by removing the "See How It Works" butt
 
 ### File: `src/pages/Landing.tsx`
 
-**1. Remove Video State**
-- Remove the `showVideoDialog` state variable since the video dialog will no longer be needed
+**1. Hero Section - Subheadline (Line 154)**
+- Change: `text-slate-400` → `text-slate-200`
+- Makes the description text more readable against the dark background
 
-**2. Remove Unused Imports**
-- Remove the `Play` and `X` icons from lucide-react imports (they're only used for the video button and dialog)
-- Keep the `Dialog, DialogContent, DialogHeader, DialogTitle` imports removed as well
+**2. Hero Section - Trust Text (Line 170)**
+- Change: `text-slate-500` → `text-slate-300`
+- Ensures the pricing/trial info is clearly visible
 
-**3. Simplify Hero CTA Section (Lines 161-178)**
-- Remove the secondary "See How It Works" button entirely
-- Keep the primary "Start 14-Day Free Trial" button
-- Center the single CTA button instead of flex row layout
+**3. Features Section - Feature Descriptions (Line 187)**
+- Change: `text-slate-400` → `text-slate-300`
+- Improves readability of feature cards
 
-**4. Remove Video Dialog Component (Lines 271-306)**
-- Remove the entire Video Tutorial Dialog at the bottom of the component
+**4. Pricing Section - Subtitle (Lines 199-200)**
+- Change: `text-slate-400` → `text-slate-300`
+- Better contrast for the pricing subtitle
+
+**5. Pricing Section - Price Unit (Line 210)**
+- Change: `text-slate-400` → `text-slate-300`
+- Makes "/user/month" more visible
+
+**6. Footer - Copyright (Line 247-248)**
+- Change: `text-slate-400` → `text-slate-300`
+- Improves footer text visibility
+
+**7. Footer - Links (Line 251)**
+- Change: `text-slate-500` → `text-slate-400`
+- Better readability for footer links
 
 ---
 
-## Visual Result
+## Color Mapping Summary
 
-**Before:**
-```text
-[Start 14-Day Free Trial →]  [▷ See How It Works]
-```
+| Current Color | New Color | Usage |
+|--------------|-----------|-------|
+| `text-slate-500` | `text-slate-300` | Trust text, footer links |
+| `text-slate-400` | `text-slate-200` or `text-slate-300` | Subheadlines, descriptions |
 
-**After:**
-```text
-[Start 14-Day Free Trial →]
-```
-
-The landing page will have a cleaner, more focused call-to-action directing all users to start their trial immediately.
+This ensures all text maintains the flat design aesthetic while being clearly readable on the dark background.
