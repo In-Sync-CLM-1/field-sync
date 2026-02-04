@@ -1,39 +1,42 @@
 
-# Add Navigation to Platform Admin Dashboard
+# Remove "See How It Works" Button from Landing Page
 
-## Problem
-The Platform Admin page is currently rendered outside of the main `Layout` component, which means there's no sidebar navigation available. Users who navigate to `/platform-admin/organizations` have no UI element to return to the main dashboard.
+## Summary
+Simplify the hero section Call-to-Action by removing the "See How It Works" button and video dialog, keeping only the primary "Start 14-Day Free Trial" button.
 
-## Solution
-Add a "Back to Dashboard" button to the Platform Admin page header, following the same navigation pattern used across other pages in the application.
+---
 
-## Implementation
+## Changes
 
-### Changes to `src/pages/PlatformAdmin/OrganizationsDashboard.tsx`
+### File: `src/pages/Landing.tsx`
 
-1. **Import Dependencies**
-   - Add `ArrowLeft` icon from `lucide-react`
-   - Add `useNavigate` hook from `react-router-dom`
+**1. Remove Video State**
+- Remove the `showVideoDialog` state variable since the video dialog will no longer be needed
 
-2. **Add Navigation Hook**
-   - Initialize `useNavigate()` in the component
+**2. Remove Unused Imports**
+- Remove the `Play` and `X` icons from lucide-react imports (they're only used for the video button and dialog)
+- Keep the `Dialog, DialogContent, DialogHeader, DialogTitle` imports removed as well
 
-3. **Add Back Button to Header**
-   - Add a "Back to Dashboard" ghost button with the `ArrowLeft` icon
-   - Position it in the header section alongside the existing "Refresh" button
-   - Button navigates to `/dashboard` when clicked
+**3. Simplify Hero CTA Section (Lines 161-178)**
+- Remove the secondary "See How It Works" button entirely
+- Keep the primary "Start 14-Day Free Trial" button
+- Center the single CTA button instead of flex row layout
 
-### UI Layout
-The header will be updated to include:
+**4. Remove Video Dialog Component (Lines 271-306)**
+- Remove the entire Video Tutorial Dialog at the bottom of the component
+
+---
+
+## Visual Result
+
+**Before:**
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ ← Back to Dashboard    Platform Admin           [Refresh]   │
-│                        Manage organizations...              │
-└─────────────────────────────────────────────────────────────┘
+[Start 14-Day Free Trial →]  [▷ See How It Works]
 ```
 
-## Technical Details
+**After:**
+```text
+[Start 14-Day Free Trial →]
+```
 
-- The button will use the `ghost` variant to match the "Back to Dashboard" pattern used in other modules (Visits, Leads, Planning, etc.)
-- Navigation target: `/dashboard` (following the mandatory `/dashboard` prefix routing pattern)
-- The implementation follows the existing design pattern documented in the project memories
+The landing page will have a cleaner, more focused call-to-action directing all users to start their trial immediately.
