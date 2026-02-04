@@ -145,9 +145,12 @@ const Landing = () => {
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6">
+          <h1 
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6"
+            style={{ textShadow: '0 2px 20px rgba(0, 0, 0, 0.5), 0 4px 40px rgba(1, 184, 170, 0.15)' }}
+          >
             Your Field.{" "}
-            <span className="text-[#01B8AA]">Your Control.</span>
+            <span className="text-[#01B8AA]" style={{ textShadow: '0 2px 20px rgba(1, 184, 170, 0.4)' }}>Your Control.</span>
           </h1>
 
           {/* Subheadline */}
@@ -183,7 +186,7 @@ const Landing = () => {
                 <div className="w-12 h-12 rounded-xl bg-[#01B8AA]/10 flex items-center justify-center mb-4 group-hover:bg-[#01B8AA]/20 transition-colors">
                   <feature.icon className="h-6 w-6 text-[#01B8AA]" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                <h3 className="text-xl font-bold text-white mb-2" style={{ textShadow: '0 1px 10px rgba(0, 0, 0, 0.3)' }}>{feature.title}</h3>
                 <p className="text-slate-300">{feature.description}</p>
               </div>
             ))}
@@ -193,7 +196,10 @@ const Landing = () => {
         {/* Pricing Section */}
         <section className="px-6 md:px-12 py-16 max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 
+              className="text-3xl md:text-4xl font-bold text-white mb-4"
+              style={{ textShadow: '0 2px 15px rgba(0, 0, 0, 0.4)' }}
+            >
               Simple, Transparent Pricing
             </h2>
             <p className="text-slate-300">
