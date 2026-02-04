@@ -172,10 +172,10 @@ const Landing = () => {
 
           {/* Trust Text */}
           <p 
-            className="text-base md:text-lg text-slate-200 font-medium"
+            className="text-base md:text-lg text-slate-300 font-medium"
             style={{ textShadow: '0 1px 10px rgba(0, 0, 0, 0.4)' }}
           >
-            <span className="text-[#01B8AA] font-semibold">₹99/user/month</span> after trial · <span className="text-white">No credit card required</span>
+            ₹99/user/month after trial · No credit card required
           </p>
         </section>
 
