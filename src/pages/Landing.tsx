@@ -1,14 +1,11 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, BarChart3, Users, Target, Clock, Shield, Check, ArrowRight, Play, X } from "lucide-react";
+import { MapPin, BarChart3, Users, Target, Clock, Shield, Check, ArrowRight } from "lucide-react";
 import insyncLogo from "@/assets/insync-logo-color.png";
 import landingBg from "@/assets/landing-bg.jpg";
 
 const Landing = () => {
   const navigate = useNavigate();
-  const [showVideoDialog, setShowVideoDialog] = useState(false);
 
   const features = [
     {
@@ -158,22 +155,14 @@ const Landing = () => {
             Track visits, boost performance, close more policies with real-time field sales management built for insurance teams.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+          {/* CTA Button */}
+          <div className="flex justify-center mb-6">
             <Button 
               onClick={() => navigate("/auth")}
               className="bg-[#01B8AA] hover:bg-[#00a89b] text-slate-950 font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-[#01B8AA]/25 hover:shadow-[#01B8AA]/40 transition-all"
             >
               Start 14-Day Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => setShowVideoDialog(true)}
-              className="border-slate-700 text-slate-300 hover:bg-slate-800/50 hover:text-white px-8 py-6 text-lg rounded-xl"
-            >
-              <Play className="mr-2 h-5 w-5" />
-              See How It Works
             </Button>
           </div>
 
@@ -268,42 +257,6 @@ const Landing = () => {
         </footer>
       </div>
 
-      {/* Video Tutorial Dialog */}
-      <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>
-        <DialogContent className="sm:max-w-4xl bg-slate-900 border-slate-700 p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-0 flex flex-row items-center justify-between">
-            <DialogTitle className="text-xl font-bold text-white flex items-center gap-2">
-              <Play className="h-5 w-5 text-[#01B8AA]" />
-              How In-Sync Field Force Works
-            </DialogTitle>
-          </DialogHeader>
-          <div className="p-6">
-            <div className="aspect-video bg-slate-800 rounded-xl overflow-hidden flex items-center justify-center">
-              {/* Replace VIDEO_ID with your actual YouTube video ID */}
-              <iframe
-                className="w-full h-full"
-                src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
-                title="In-Sync Field Force Tutorial"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-            <p className="text-slate-400 text-sm mt-4 text-center">
-              Learn how to track visits, manage your team, and boost performance with In-Sync Field Force.
-            </p>
-            <div className="flex justify-center mt-4">
-              <Button 
-                onClick={() => setShowVideoDialog(false)}
-                className="bg-[#01B8AA] hover:bg-[#00a89b] text-slate-950 font-semibold px-8 py-2 rounded-lg"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Close
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
