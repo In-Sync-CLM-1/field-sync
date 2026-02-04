@@ -163,7 +163,7 @@ const Landing = () => {
           <div className="flex justify-center mb-6">
             <Button 
               onClick={() => navigate("/auth")}
-              className="bg-[#01B8AA] hover:bg-[#00a89b] text-slate-950 font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-[#01B8AA]/25 hover:shadow-[#01B8AA]/40 transition-all"
+              className="bg-[#01B8AA] hover:bg-[#00a89b] text-slate-950 font-bold px-10 py-7 text-xl rounded-xl shadow-xl shadow-[#01B8AA]/40 hover:shadow-[#01B8AA]/60 hover:scale-105 transition-all duration-300 ring-2 ring-[#01B8AA]/50 ring-offset-2 ring-offset-slate-950"
             >
               Start 14-Day Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />
