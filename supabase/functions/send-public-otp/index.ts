@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { hashSync, compareSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,14 +74,14 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
     body: JSON.stringify(payload),
   });
 
+  const responseText = await response.text();
+
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Exotel API error:", response.status, errorText);
-    throw new Error(`WhatsApp send failed: ${response.status}`);
+    console.error("Exotel API error:", response.status, responseText);
+    throw new Error(`WhatsApp send failed: ${response.status} - ${responseText}`);
   }
 
-  const result = await response.json();
-  console.log("WhatsApp OTP sent successfully:", result);
+  console.log("WhatsApp OTP sent successfully:", responseText);
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -141,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       // Compare OTP against bcrypt hash
-      const isValid = await bcrypt.compare(otp, otpRecord.otp_hash);
+      const isValid = compareSync(otp, otpRecord.otp_hash);
 
       if (isValid) {
         // Mark as verified
@@ -170,7 +170,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // ─── SEND MODE ───
     const otpCode = generateOTP();
-    const otpHash = await bcrypt.hash(otpCode);
+    const otpHash = hashSync(otpCode);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Delete any existing unverified OTPs for this phone
