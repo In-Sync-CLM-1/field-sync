@@ -426,9 +426,6 @@ const Landing = () => {
             <button onClick={goAuth} className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-[15px] font-semibold bg-[#01B8AA] text-[#0B1A1E] border-none cursor-pointer transition-all hover:-translate-y-0.5" style={{ boxShadow: "0 0 30px rgba(1,184,170,0.25), 0 4px 15px rgba(0,0,0,0.3)" }}>
               Start 14-Day Free Trial →
             </button>
-            <button onClick={goAuth} className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-[15px] font-semibold bg-transparent text-[#F0F4F5] border border-[#01B8AA]/15 cursor-pointer transition-all hover:border-[#01B8AA] hover:bg-[#01B8AA]/10" style={{ backdropFilter: "blur(10px)" }}>
-              Talk to Our Team
-            </button>
           </div>
         </div>
       </section>
