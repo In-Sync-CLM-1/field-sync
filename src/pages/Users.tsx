@@ -461,7 +461,7 @@ export default function Forms() {
         <div className="flex gap-2">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" className="font-bold text-base">
+              <Button size="lg" className="font-bold text-base" data-tour="add-user-button">
                 <UserPlus className="h-5 w-5 mr-2" />
                 Add User
               </Button>

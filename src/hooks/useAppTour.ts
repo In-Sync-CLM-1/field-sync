@@ -59,9 +59,9 @@ const tourSteps: TourStep[] = [
   {
     id: 'users-page',
     page: '/dashboard/users',
-    target: '[data-tour="users-header"]',
-    title: '👥 Build Your Team Here!',
-    description: 'Add at least 3 team members to unlock the full power of collaboration. Use the "Add User" button to get started!',
+    target: '[data-tour="add-user-button"]',
+    title: '🚀 Build Your Dream Team!',
+    description: 'This is where the magic begins! Tap this button to add your first 3 rockstar team members and supercharge your sales force.',
     position: 'bottom',
   },
   // Daily Planning steps
