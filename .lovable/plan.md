@@ -1,89 +1,36 @@
 
 
-# Replace "Commission" with "Incentives" and "Policy/Policies" with "Sales"
+# Seed Dummy Data for Team & Branches
 
 ## Overview
-This is a UI terminology update across the application. All user-facing text will be changed:
-- **Commission** becomes **Incentives** (everywhere it appears as a label)
-- **Policy / Policies** becomes **Sales / Sales** (in table headers, badges, card titles, chart titles, landing page copy, etc.)
+The 10 dummy team members already exist in the database with proper branch assignments and reporting hierarchy, but they have no `daily_plans` entries. This plan will insert daily plan records for all team members and fix two display issues.
 
-Database column names and internal variable names will NOT be changed — only the displayed text users see.
+## Data to Insert
 
-## Scope of Changes
+Insert `daily_plans` entries for all 10 dummy agents with varied targets and actuals across recent dates (Feb 7-9):
 
-### Files to Update
+| Agent | Branch | Prospects T/A | Quotes T/A | Sales T/A | Status |
+|-------|--------|--------------|------------|-----------|--------|
+| Rahul Sharma | Mumbai Central | 12/10 | 8/6 | 5/4 | approved |
+| Priya Patel | Delhi North | 15/14 | 10/9 | 6/5 | submitted |
+| Amit Kumar | Mumbai Central | 8/7 | 5/4 | 3/2 | approved |
+| Sneha Gupta | Mumbai Central | 10/9 | 6/5 | 4/3 | submitted |
+| Vikram Singh | Delhi North | 9/8 | 7/6 | 4/4 | approved |
+| Raj Deshmukh | Delhi North | 11/10 | 8/7 | 5/3 | corrected |
+| Anita Iyer | Delhi North | 7/6 | 4/3 | 2/2 | submitted |
+| Neha Reddy | Mumbai Central | 10/8 | 6/5 | 3/3 | draft |
+| Arjun Mehta | Mumbai Central | 13/12 | 9/8 | 5/4 | submitted |
+| Kavita Joshi | Delhi North | 8/7 | 5/4 | 3/2 | approved |
 
-**1. `src/pages/Planning.tsx`** (heaviest changes)
-- "Team Commission" → "Team Incentives"
-- "Commission" table header → "Incentives"
-- "Total Team Commission" → "Total Team Incentives"
-- "Monthly Commission" → "Monthly Incentives"
-- "Commission Earned" → "Incentives Earned"
-- "7 Policies" / "15 Policies" / "25 Policies" milestone labels → "7 Sales" / "15 Sales" / "25 Sales"
-- "Policies" row label in Target vs Achievement table → "Sales"
-- "polic{ies/y}" dynamic text → "sale(s)"
-- "Base (7 policies)" breakdown label → "Base (7 sales)"
+This will be inserted for 3 dates each (Feb 7, 8, 9) = 30 total records.
 
-**2. `src/pages/AnalyticsHub.tsx`**
-- "Team Commission" KPI card → "Team Incentives"
-- "Policy Issuance Trend (30 Days)" chart title → "Sales Trend (30 Days)"
-- "Policies: Target vs Actual" chart title → "Sales: Target vs Actual"
-- Tooltip formatter: "Policies" → "Sales"
-- "policies" label under top performer count → "sales"
-- "Policies (T/A/%)" table header → "Sales (T/A/%)"
-- "Commission" table header → "Incentives"
+## Bug Fixes
 
-**3. `src/pages/BranchAnalytics.tsx`**
-- "Team Commission" KPI card → "Team Incentives"
-- "Policy Issuance Trend (30 Days)" → "Sales Trend (30 Days)"
-- "Policies: Target vs Actual" → "Sales: Target vs Actual"
-- Tooltip: "Policies" → "Sales"
-- "Policies (T/A/%)" table header → "Sales (T/A/%)"
-- "Commission" table header → "Incentives"
-
-**4. `src/pages/TeamPlanning.tsx`**
-- "Policies" stat badge and table header → "Sales"
-
-**5. `src/pages/PlanningOverview.tsx`**
-- "Policies" in any summary badges or table headers → "Sales"
-
-**6. `src/pages/Landing.tsx`**
-- "commission tracking" → "incentive tracking"
-- "Commission tracking and milestone badges" → "Incentive tracking and milestone badges"
-- "track your commission progress" → "track your incentive progress"
-- "Commission tracking & milestone badges" pricing feature → "Incentive tracking & milestone badges"
-- "prospects, quotes, and policies" → "prospects, quotes, and sales"
-- "Policy Category" labels in feature descriptions remain unchanged (these refer to the category field name, not the terminology being replaced)
-
-**7. `src/pages/NewLead.tsx`**
-- "Policy Details" section header → "Sales Details"
-- "Policy Category" form label → "Sales Category"
-- "Policy Type" form label → "Sales Type"
-- "Enter policy type" placeholder → "Enter sales type"
-- POLICY_CATEGORIES constant labels can stay (Life Insurance, Health Insurance, etc. — these are category values)
-
-**8. `src/pages/LeadDetail.tsx`**
-- "Policy Details" section header → "Sales Details"
-- "Policy Type" label → "Sales Type"
-
-**9. `src/pages/Leads.tsx`**
-- No visible UI text changes needed (only internal status values like 'policy_issued' which are DB values)
-
-**10. `src/hooks/useMonthlyIncentive.ts`**
-- Code comments: "policies" → "sales" (minor, for consistency)
-
-## What Will NOT Change
-- Database column names (policies_target, policies_actual, policy_type, etc.)
-- Variable/property names in code (policiesTarget, policiesActual, etc.)
-- Internal status values like 'policy_issued'
-- "Privacy Policy" link text in footer (this is a legal term, not the same "policy")
-- RLS policies or database schema
+1. **"Policies" column header**: The Team Planning table still shows "Policies" in the header -- rename to "Sales" (missed in the earlier terminology update).
+2. **Your profile name**: Update your profile's `full_name` from "a@in-sync.co.in" to a proper display name so it doesn't show as a truncated ID.
 
 ## Steps
-1. Update Planning.tsx (commission → incentives, policies → sales in all UI text)
-2. Update AnalyticsHub.tsx (same replacements in charts, tables, KPI cards)
-3. Update BranchAnalytics.tsx (same replacements)
-4. Update TeamPlanning.tsx and PlanningOverview.tsx (table headers and badges)
-5. Update Landing.tsx (marketing copy)
-6. Update NewLead.tsx and LeadDetail.tsx (form labels and section headers)
-7. Update useMonthlyIncentive.ts comments
+1. Insert 30 `daily_plans` records for the 10 dummy agents across Feb 7-9
+2. Fix the "Policies" column header in `TeamAndBranches.tsx` to "Sales"
+3. Update your profile's `full_name` for better display
+
