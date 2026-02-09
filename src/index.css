@@ -782,3 +782,14 @@
   }
 
 }
+
+/* Hide scrollbars on mobile and tablet while keeping scroll functionality */
+@media (max-width: 1023px) {
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}
