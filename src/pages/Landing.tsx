@@ -150,8 +150,7 @@ const Landing = () => {
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6"
             style={{ textShadow: '0 2px 20px rgba(0, 0, 0, 0.5), 0 4px 40px rgba(1, 184, 170, 0.15)' }}
           >
-            Your Field.{" "}
-            <span className="text-white">Your Control.</span>
+            Your Field. Your Control.
           </h1>
 
           {/* Subheadline */}
