@@ -87,14 +87,14 @@ export default {
         mono: ['JetBrains Mono', 'SF Mono', 'monospace'],
       },
       fontSize: {
-        xs: ['0.75rem', { lineHeight: '1.4' }],      // 12px
-        sm: ['0.8125rem', { lineHeight: '1.5' }],   // 13px
-        base: ['0.875rem', { lineHeight: '1.5' }],  // 14px
-        lg: ['1rem', { lineHeight: '1.5' }],        // 16px
-        xl: ['1.125rem', { lineHeight: '1.3' }],    // 18px
-        '2xl': ['1.375rem', { lineHeight: '1.3' }], // 22px
-        '3xl': ['1.625rem', { lineHeight: '1.2' }], // 26px
-        '4xl': ['2rem', { lineHeight: '1.1' }],     // 32px
+        xs: ['0.875rem', { lineHeight: '1.4' }],     // 14px
+        sm: ['0.9375rem', { lineHeight: '1.5' }],    // 15px
+        base: ['1rem', { lineHeight: '1.5' }],       // 16px
+        lg: ['1.125rem', { lineHeight: '1.5' }],     // 18px
+        xl: ['1.25rem', { lineHeight: '1.3' }],      // 20px
+        '2xl': ['1.5rem', { lineHeight: '1.3' }],    // 24px
+        '3xl': ['1.75rem', { lineHeight: '1.2' }],   // 28px
+        '4xl': ['2.125rem', { lineHeight: '1.1' }],  // 34px
       },
       fontWeight: {
         light: '300',
