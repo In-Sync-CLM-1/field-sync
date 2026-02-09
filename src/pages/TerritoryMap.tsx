@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, MapPin, Route, ArrowLeft } from 'lucide-react';
+import { CalendarIcon, MapPin, Route, ArrowLeft, Users } from 'lucide-react';
 import { NearbyPlacesPanel } from '@/components/NearbyPlacesPanel';
+import { LiveAgentMarkers } from '@/components/LiveAgentMarkers';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,7 @@ export default function TerritoryMap() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<'sales_officer' | 'branch_manager' | 'admin'>('sales_officer');
   const [showRoutes, setShowRoutes] = useState(true);
+  const [showLiveAgents, setShowLiveAgents] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   // Check user role for hierarchy-based visibility
@@ -624,6 +626,22 @@ export default function TerritoryMap() {
             </Label>
           </div>
 
+          {/* Live Agents toggle (managers/admins only) */}
+          {userRole !== 'sales_officer' && (
+            <div className="flex items-center gap-1.5">
+              <Switch
+                id="show-live-agents"
+                checked={showLiveAgents}
+                onCheckedChange={setShowLiveAgents}
+                className="scale-75"
+              />
+              <Label htmlFor="show-live-agents" className="text-[10px] text-muted-foreground cursor-pointer">
+                <Users className="h-3 w-3 inline mr-0.5" />
+                Live Agents
+              </Label>
+            </div>
+          )}
+
           {/* Visit Count */}
           <div className="flex items-center px-1.5 py-0.5 bg-muted rounded text-[10px]">
             {loading ? '...' : `${visits.length} visits`}
@@ -633,6 +651,7 @@ export default function TerritoryMap() {
 
       <div className="flex-1 relative">
         <div ref={mapContainer} className="absolute inset-0" />
+        {showLiveAgents && <LiveAgentMarkers map={map.current} mapLoaded={mapLoaded} />}
         <NearbyPlacesPanel map={map.current} mapLoaded={mapLoaded} />
       </div>
     </div>
