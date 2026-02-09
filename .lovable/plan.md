@@ -1,50 +1,69 @@
 
+# WhatsApp OTP via Exotel Integration
 
-# Exotel SMS Integration for OTP Delivery
+## What Changes
 
-## What Will Change
+Replace the placeholder SMS logic in the `send-otp` backend function with Exotel's WhatsApp API, so users receive their OTP on WhatsApp instead of SMS.
 
-The send-otp backend function will be updated to actually send SMS messages via Exotel when a user chooses phone verification during registration.
+## Required Secrets
 
-## Required Credentials
+You'll need to provide **5 secrets** from your Exotel dashboard:
 
-You will need to provide 4 secrets from your Exotel dashboard (Settings > API Settings):
-
-1. **EXOTEL_API_KEY** -- Your API Key (SID)
-2. **EXOTEL_API_TOKEN** -- Your API Token
-3. **EXOTEL_SID** -- Your Account SID (e.g., "yourcompany1")
-4. **EXOTEL_SENDER_ID** -- Your ExoPhone number or Sender ID header (e.g., "INSYNC" or a virtual number)
+| Secret | Where to find it |
+|---|---|
+| `EXOTEL_API_KEY` | Exotel Dashboard > API Settings |
+| `EXOTEL_API_TOKEN` | Exotel Dashboard > API Settings |
+| `EXOTEL_SID` | Exotel Dashboard > Account SID |
+| `EXOTEL_SUBDOMAIN` | Your Exotel API subdomain (e.g. `api.exotel.com`) |
+| `WHATSAPP_FROM_NUMBER` | Your registered WhatsApp business number |
 
 ## Technical Details
 
-### File: `supabase/functions/send-otp/index.ts`
+### 1. Add secrets (5 new secrets)
 
-Replace the placeholder phone branch (lines 88-93) with an actual Exotel API call:
+Store the Exotel credentials securely so the backend function can access them.
 
-```text
-POST https://<EXOTEL_API_KEY>:<EXOTEL_API_TOKEN>@api.in.exotel.com/v1/Accounts/<EXOTEL_SID>/Sms/send
+### 2. Update `supabase/functions/send-otp/index.ts`
+
+Replace the placeholder phone branch (lines 88-93) with an Exotel WhatsApp API call:
+
+- Import bcrypt for hashing OTP before storage (enhanced security per your documentation)
+- When `identifier_type === "phone"`:
+  - Hash the OTP with bcrypt before storing in the database
+  - Format the phone number (strip non-digits, ensure proper format for Exotel -- digits only, no "+" prefix)
+  - Call Exotel's WhatsApp API:
+    - Endpoint: `https://{EXOTEL_SUBDOMAIN}/v2/accounts/{EXOTEL_SID}/messages`
+    - Auth: Basic auth with `EXOTEL_API_KEY:EXOTEL_API_TOKEN`
+    - Payload uses the approved `psotp1` template with the OTP in body and button components
+  - Throw error if WhatsApp send fails
+
+### 3. Update `supabase/functions/verify-otp/index.ts`
+
+Since the OTP will now be stored as a bcrypt hash for phone verification:
+
+- Import bcrypt
+- When `identifier_type === "phone"`, fetch the latest unverified/unexpired OTP for that phone (without matching on plaintext code)
+- Compare submitted code against the stored hash using bcrypt
+- Add attempt tracking: increment an `attempts` counter, reject if attempts >= 5
+
+Note: Email OTP will continue working as-is (plaintext match) to avoid breaking existing flow.
+
+### 4. Database migration
+
+Add an `attempts` column to `otp_verifications` table:
+
+```sql
+ALTER TABLE otp_verifications ADD COLUMN IF NOT EXISTS attempts integer DEFAULT 0;
 ```
 
-Parameters:
-- `From`: The EXOTEL_SENDER_ID
-- `To`: The user's phone number (with country code prefixed if not present)
-- `Body`: "Your InSync verification code is: {code}. Valid for 10 minutes."
+### 5. No frontend changes needed
 
-Authentication: HTTP Basic Auth using API Key and API Token.
+The existing `Auth.tsx` already sends the correct `identifier_type: "phone"` and calls `send-otp` / `verify-otp` properly. The success toast will say "Verification code sent to your phone" which is accurate for WhatsApp delivery.
 
-The function will:
-1. Read all 4 Exotel secrets from environment variables
-2. Format the phone number (ensure +91 prefix for Indian numbers)
-3. Make a POST request to Exotel's SMS API
-4. Log success/failure and throw an error if the SMS fails to send
+## Steps in order
 
-### No other files change
-- The frontend already handles phone OTP flow correctly
-- The `otp_verifications` table and `verify-otp` function already work
-
-## Steps
-
-1. Securely store the 4 Exotel credentials
-2. Update the `send-otp` edge function with the Exotel API call
-3. Deploy and test with a real phone number
-
+1. Add the 5 Exotel secrets
+2. Run database migration to add `attempts` column
+3. Update `send-otp` edge function with WhatsApp API call
+4. Update `verify-otp` edge function with bcrypt comparison and attempt tracking
+5. Deploy and test with a real phone number
