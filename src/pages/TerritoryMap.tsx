@@ -10,6 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarIcon, MapPin, Route, ArrowLeft } from 'lucide-react';
+import { NearbyPlacesPanel } from '@/components/NearbyPlacesPanel';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -632,6 +633,7 @@ export default function TerritoryMap() {
 
       <div className="flex-1 relative">
         <div ref={mapContainer} className="absolute inset-0" />
+        <NearbyPlacesPanel map={map.current} mapLoaded={mapLoaded} />
       </div>
     </div>
   );
