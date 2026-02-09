@@ -236,7 +236,7 @@ const Landing = () => {
         <div className="max-w-[1140px] mx-auto px-6 text-center">
           <span className="text-[13px] font-semibold tracking-[2.5px] uppercase text-[#01B8AA] mb-4 inline-block">Features</span>
           <h2 className="text-[clamp(32px,5vw,44px)] font-bold leading-[1.2] mb-[18px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Everything Your Field Team Needs</h2>
-          <p className="text-[17px] text-[#8FA3A8] max-w-[560px] mx-auto leading-relaxed">Purpose-built for field sales teams — from daily planning to commission tracking.</p>
+          <p className="text-[17px] text-[#8FA3A8] max-w-[560px] mx-auto leading-relaxed">Purpose-built for field sales teams — from daily planning to incentive tracking.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-[60px]">
             {[
               { icon: "📍", bg: "rgba(1,184,170,0.12)", title: "Know Where Your Agents Are — Live", desc: "Real-time GPS tracking with visit verification. See every agent's location on a territory map with role-based visibility — Sales Officers see their data, Managers see the branch, Admins see everything." },
@@ -270,7 +270,7 @@ const Landing = () => {
             <h2 className="text-[clamp(32px,5vw,44px)] font-bold leading-[1.2] mb-[18px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
               Gamify Performance.<br />Watch Closures Rise.
             </h2>
-            <p className="text-[17px] text-[#8FA3A8] max-w-[560px] leading-relaxed">Commission tracking and milestone badges turn routine fieldwork into a competitive, rewarding experience. Agents see their progress, earn recognition, and stay motivated month after month.</p>
+            <p className="text-[17px] text-[#8FA3A8] max-w-[560px] leading-relaxed">Incentive tracking and milestone badges turn routine fieldwork into a competitive, rewarding experience. Agents see their progress, earn recognition, and stay motivated month after month.</p>
             <div className="inline-flex items-center gap-2 mt-6 px-3.5 py-2 rounded-lg text-[13px] font-medium text-[#F2C80F]" style={{ background: "rgba(242,200,15,0.08)", border: "1px solid rgba(242,200,15,0.2)" }}>
               🇮🇳 Designed for Indian field sales culture
             </div>
@@ -303,7 +303,7 @@ const Landing = () => {
           <p className="text-[17px] text-[#8FA3A8] max-w-[560px] mx-auto leading-relaxed">Whether you manage 5 agents or 500 — In-Sync adapts to your role.</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-[60px]">
             {[
-              { emoji: "🏃", role: "Sales Officer", title: "Plan, Visit, Close", desc: "Plan your daily route, log GPS-verified visits, track your commission progress, and earn milestone badges. Works even without internet in the field." },
+              { emoji: "🏃", role: "Sales Officer", title: "Plan, Visit, Close", desc: "Plan your daily route, log GPS-verified visits, track your incentive progress, and earn milestone badges. Works even without internet in the field." },
               { emoji: "📋", role: "Branch Manager", title: "Coach & Optimize", desc: "See your entire branch's performance at a glance. Identify top performers, spot agents who need support, and track Life & Health targets against goals." },
               { emoji: "🏢", role: "Admin / Leadership", title: "Full Org Visibility", desc: "Organization-wide territory maps, cross-branch analytics, team management, and complete prospect pipeline visibility — all from a single dashboard." },
             ].map((c, i) => (
@@ -369,7 +369,7 @@ const Landing = () => {
                   "GPS visit tracking & territory maps",
                   "Daily planning & prospect management",
                   "Analytics hub with branch performance",
-                  "Commission tracking & milestone badges",
+                  "Incentive tracking & milestone badges",
                   "Offline-first with automatic sync",
                   "Role-based access (Officer → Manager → Admin)",
                   "Unlimited team members",

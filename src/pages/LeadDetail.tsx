@@ -186,7 +186,7 @@ export default function LeadDetail() {
               <div className="space-y-2">
                 <h3 className="text-sm font-medium flex items-center gap-2">
                   <IndianRupee className="h-4 w-4" />
-                  Policy Details
+                  Sales Details
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   {lead.premium_amount && (
@@ -197,7 +197,7 @@ export default function LeadDetail() {
                   )}
                   {lead.policy_type && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Policy Type</p>
+                      <p className="text-xs text-muted-foreground">Sales Type</p>
                       <p className="text-sm font-medium">{lead.policy_type}</p>
                     </div>
                   )}

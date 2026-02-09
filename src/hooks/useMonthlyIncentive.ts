@@ -21,7 +21,7 @@ interface MonthlyPolicyData {
   additionalIncentive: number;
 }
 
-// Calculate incentive based on policies issued
+// Calculate incentive based on sales closed
 // 1-6: ₹0, 7: ₹1500 flat, 8+: ₹1500 + ₹250 per additional beyond 7
 export const calculateIncentive = (policies: number): { total: number; base: number; additional: number } => {
   if (policies <= 6) {
@@ -30,7 +30,7 @@ export const calculateIncentive = (policies: number): { total: number; base: num
   if (policies === 7) {
     return { total: 1500, base: 1500, additional: 0 };
   }
-  // 8+: ₹1,500 base + ₹250 for each policy beyond 7
+  // 8+: ₹1,500 base + ₹250 for each sale beyond 7
   const additional = (policies - 7) * 250;
   return { total: 1500 + additional, base: 1500, additional };
 };
@@ -101,7 +101,7 @@ export function useMonthlyIncentiveTarget(month: Date) {
   };
 }
 
-// Hook to calculate monthly policies and incentive
+// Hook to calculate monthly sales and incentive
 export function useMonthlyEnrollments(month: Date) {
   const { user } = useAuth();
   const monthStart = startOfMonth(month);

@@ -285,7 +285,7 @@ export default function PlanningOverview() {
         <div className="stats-row">
           <div className="stat-badge bg-primary/10 text-primary">Prospects: {orgTotals.prospects}</div>
           <div className="stat-badge bg-primary/10 text-primary">Quotes: {orgTotals.quotes}</div>
-          <div className="stat-badge bg-primary/10 text-primary">Policies: {orgTotals.policies}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Sales: {orgTotals.policies}</div>
           <div className="stat-badge bg-success/10 text-success">Life: {orgTotals.lifeIns}</div>
           <div className="stat-badge bg-success/10 text-success">Health: {orgTotals.healthIns}</div>
         </div>
@@ -316,7 +316,7 @@ export default function PlanningOverview() {
                       <div className="stats-row">
                         <span className="stat-badge bg-muted text-muted-foreground">P:{group.totals.prospects}</span>
                         <span className="stat-badge bg-muted text-muted-foreground">Q:{group.totals.quotes}</span>
-                        <span className="stat-badge bg-muted text-muted-foreground">Po:{group.totals.policies}</span>
+                        <span className="stat-badge bg-muted text-muted-foreground">S:{group.totals.policies}</span>
                         <span className="stat-badge bg-success/10 text-success">Life:{group.totals.lifeIns}</span>
                         <span className="stat-badge bg-success/10 text-success">Health:{group.totals.healthIns}</span>
                       </div>
@@ -331,7 +331,7 @@ export default function PlanningOverview() {
                             <TableHead className="py-1.5 px-3 text-xs">Agent</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-right">Prospects</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-right">Quotes</TableHead>
-                            <TableHead className="py-1.5 px-3 text-xs text-right">Policies</TableHead>
+                            <TableHead className="py-1.5 px-3 text-xs text-right">Sales</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-right">Life</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-right">Health</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs">Status</TableHead>

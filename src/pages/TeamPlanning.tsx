@@ -205,7 +205,7 @@ export default function TeamPlanning() {
         <div className="stats-row">
           <div className="stat-badge bg-primary/10 text-primary">Prospects: {aggregates.prospects}</div>
           <div className="stat-badge bg-primary/10 text-primary">Quotes: {aggregates.quotes}</div>
-          <div className="stat-badge bg-primary/10 text-primary">Policies: {aggregates.policies}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Sales: {aggregates.policies}</div>
           <div className="stat-badge bg-success/10 text-success">Life: {aggregates.lifeIns + (myPlan?.lifeInsuranceTarget || 0)}</div>
           <div className="stat-badge bg-success/10 text-success">Health: {aggregates.healthIns + (myPlan?.healthInsuranceTarget || 0)}</div>
         </div>
@@ -225,7 +225,7 @@ export default function TeamPlanning() {
                   <TableHead className="py-2 px-3 text-xs">Agent</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-right">Prospects</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-right">Quotes</TableHead>
-                  <TableHead className="py-2 px-3 text-xs text-right">Policies</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right">Sales</TableHead>
                   <TableHead className="py-2 px-3 text-xs">Status</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-center">Sync</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-right w-20">Actions</TableHead>
