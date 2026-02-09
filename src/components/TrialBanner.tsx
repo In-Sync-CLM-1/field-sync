@@ -28,8 +28,10 @@ export function TrialBanner({ onUpgrade }: TrialBannerProps) {
   
   if (trial_ends_at) {
     const trialEnd = parseISO(trial_ends_at);
-    daysRemaining = differenceInDays(trialEnd, new Date());
-    isExpired = isExpired || daysRemaining < 0;
+    const diffTime = trialEnd.getTime() - new Date().getTime();
+    daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (daysRemaining < 0) daysRemaining = 0;
+    isExpired = isExpired || daysRemaining <= 0;
   }
 
   const isUrgent = daysRemaining <= 3 && !isExpired;
