@@ -79,8 +79,10 @@ export function AppSidebar() {
             className="h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105" 
           />
         </div>
-        {user?.email && (
-          <p className="text-xs text-muted-foreground mt-1 truncate text-center max-w-full">{user.email}</p>
+        {(user?.user_metadata?.full_name || user?.email) && (
+          <p className="text-xs text-muted-foreground mt-1 truncate text-center max-w-full">
+            {user?.user_metadata?.full_name || user?.email}
+          </p>
         )}
       </SidebarHeader>
       <SidebarContent>
