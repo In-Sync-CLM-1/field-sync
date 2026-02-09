@@ -194,10 +194,30 @@ export default function Onboarding() {
   const handleFinishOnboarding = async () => {
     setLoading(true);
     try {
-      // Send team invites (simulated)
-      teamMembers.forEach(member => {
-        toast.success(`📧 Invitation sent to ${member.email}`);
-      });
+      // Actually create team members via edge function
+      for (const member of teamMembers) {
+        try {
+          const tempPassword = `Welcome@${Math.random().toString(36).slice(-6)}`;
+          const { data, error } = await supabase.functions.invoke('create-user', {
+            body: {
+              email: member.email,
+              password: tempPassword,
+              fullName: member.name,
+              role: 'sales_officer',
+              organizationId: currentOrganization?.id,
+            },
+          });
+          if (error) {
+            console.error(`Failed to create user ${member.email}:`, error);
+            toast.error(`Could not add ${member.name}: ${error.message}`);
+          } else {
+            toast.success(`✅ ${member.name} added to your team!`);
+          }
+        } catch (err: any) {
+          console.error(`Error creating ${member.email}:`, err);
+          toast.error(`Could not add ${member.name}`);
+        }
+      }
 
       if (user) {
         const { error } = await supabase.from('profiles').update({ onboarding_completed: true }).eq('id', user.id);
