@@ -7,11 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { 
-  Loader2, Building2, Users, UserPlus, MapPin, Check, ChevronRight, 
+  Loader2, Building2, Users, MapPin, Check, ChevronRight, 
   ChevronLeft, Sparkles, Lightbulb, Target, Rocket,
-  ArrowRight, CheckCircle2, Star, Zap, Trophy, Send, Plus,
-  BarChart, Calendar, Flame, Crown, Shield, Swords, PartyPopper,
-  X, Phone, Mail
+  ArrowRight, CheckCircle2, Star, Zap, Trophy, Plus,
+  BarChart, Calendar, Flame, Crown, Swords, PartyPopper,
+  X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -22,11 +22,6 @@ interface OnboardingData {
   companyName: string;
   industry: string;
   address: string;
-}
-
-interface TeamMember {
-  name: string;
-  email: string;
 }
 
 interface Prospect {
@@ -70,7 +65,7 @@ const getLevel = (xp: number) => {
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user, currentOrganization, setCurrentOrganization } = useAuthStore();
-  const [phase, setPhase] = useState<'company' | 'portal-unlocked' | 'missions' | 'team-mission' | 'prospect-mission' | 'finale'>('company');
+  const [phase, setPhase] = useState<'company' | 'portal-unlocked' | 'prospect-mission' | 'finale'>('company');
   const [loading, setLoading] = useState(false);
   const [xp, setXp] = useState(0);
   const [showXpGain, setShowXpGain] = useState<number | null>(null);
@@ -80,15 +75,10 @@ export default function Onboarding() {
     address: '',
   });
 
-  // Team members list
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [currentMember, setCurrentMember] = useState<TeamMember>({ name: '', email: '' });
-  
   // Prospects list
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [currentProspect, setCurrentProspect] = useState<Prospect>({ name: '', phone: '', city: '' });
 
-  const TEAM_GOAL = 3;
   const PROSPECT_GOAL = 3;
 
   useEffect(() => {
@@ -126,33 +116,9 @@ export default function Onboarding() {
     } finally { setLoading(false); }
   };
 
-  const handleAddTeamMember = () => {
-    if (!currentMember.name.trim()) { toast.error('Name is required'); return; }
-    if (!currentMember.email.trim()) { toast.error('Email is required'); return; }
-    
-    const newMembers = [...teamMembers, { ...currentMember }];
-    setTeamMembers(newMembers);
-    setCurrentMember({ name: '', email: '' });
-    gainXp(25);
-    triggerMiniCelebration();
-    
-    if (newMembers.length >= TEAM_GOAL) {
-      toast.success('🎉 Team Challenge Complete! +50 XP Bonus!');
-      setTimeout(() => gainXp(50), 500);
-    } else {
-      toast.success(`🔥 ${TEAM_GOAL - newMembers.length} more to go!`);
-    }
-  };
-
-  const handleRemoveTeamMember = (index: number) => {
-    setTeamMembers(prev => prev.filter((_, i) => i !== index));
-    setXp(prev => Math.max(0, prev - 25));
-  };
-
   const handleAddProspect = async () => {
     if (!currentProspect.name.trim()) { toast.error('Name is required'); return; }
     
-    // Actually save to database
     if (currentOrganization) {
       try {
         const { error } = await supabase.from('leads').insert({
@@ -194,31 +160,6 @@ export default function Onboarding() {
   const handleFinishOnboarding = async () => {
     setLoading(true);
     try {
-      // Actually create team members via edge function
-      for (const member of teamMembers) {
-        try {
-          const tempPassword = `Welcome@${Math.random().toString(36).slice(-6)}`;
-          const { data, error } = await supabase.functions.invoke('create-user', {
-            body: {
-              email: member.email,
-              password: tempPassword,
-              fullName: member.name,
-              role: 'sales_officer',
-              organizationId: currentOrganization?.id,
-            },
-          });
-          if (error) {
-            console.error(`Failed to create user ${member.email}:`, error);
-            toast.error(`Could not add ${member.name}: ${error.message}`);
-          } else {
-            toast.success(`✅ ${member.name} added to your team!`);
-          }
-        } catch (err: any) {
-          console.error(`Error creating ${member.email}:`, err);
-          toast.error(`Could not add ${member.name}`);
-        }
-      }
-
       if (user) {
         const { error } = await supabase.from('profiles').update({ onboarding_completed: true }).eq('id', user.id);
         if (error) throw error;
@@ -309,10 +250,10 @@ export default function Onboarding() {
                 {levelInfo.title} — {xp} XP Earned!
               </div>
               <h1 className="text-3xl font-bold text-foreground animate-in slide-in-from-bottom duration-500">
-                🎉 You're a Legend!
+                🎉 You're All Set!
               </h1>
               <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                You've set up <strong className="text-primary">{teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''}</strong> and <strong className="text-primary">{prospects.length} prospect{prospects.length !== 1 ? 's' : ''}</strong>. Here's your arsenal:
+                You've added <strong className="text-primary">{prospects.length} prospect{prospects.length !== 1 ? 's' : ''}</strong>. Now add your team from the Dashboard! Here's your arsenal:
               </p>
             </div>
             <div className="space-y-2 text-left animate-in slide-in-from-bottom duration-500 delay-200">
@@ -369,305 +310,18 @@ export default function Onboarding() {
                 🎉 Portal Access Unlocked!
               </h1>
               <p className="text-lg text-muted-foreground max-w-sm mx-auto animate-in slide-in-from-bottom duration-500 delay-200">
-                Now it's time for the <strong className="text-primary">fun part</strong> — complete challenges to power up your workspace!
+                Now let's add your <strong className="text-primary">first prospects</strong> — every sale starts with a name!
               </p>
             </div>
             <div className="pt-4 space-y-3 animate-in slide-in-from-bottom duration-500 delay-300">
-              <Button onClick={() => setPhase('missions')} size="lg" className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg">
-                <Swords className="mr-2 h-5 w-5" />
-                Start Challenges!
+              <Button onClick={() => setPhase('prospect-mission')} size="lg" className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg">
+                <Target className="mr-2 h-5 w-5" />
+                Add Your First Prospects!
                 <Flame className="ml-2 h-5 w-5" />
               </Button>
               <button onClick={handleSkipToEnd} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 I'll explore on my own →
               </button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // ─── MISSION BOARD ──────────────────────────────
-  if (phase === 'missions') {
-    const teamComplete = teamMembers.length >= TEAM_GOAL;
-    const prospectComplete = prospects.length >= PROSPECT_GOAL;
-
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-muted/20 to-background">
-        <XpBar />
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-        </div>
-
-        <div className="w-full max-w-lg relative z-10 space-y-4 mt-14">
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
-              <Swords className="h-6 w-6 text-primary" />
-              Mission Board
-            </h1>
-            <p className="text-sm text-muted-foreground">Complete challenges to earn XP and level up!</p>
-          </div>
-
-          {/* Mission 1: Build Team */}
-          <Card 
-            className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-2 ${
-              teamComplete ? 'border-green-500/50 bg-green-500/5' : 'border-primary/30 hover:border-primary/60'
-            }`}
-            onClick={() => !teamComplete ? setPhase('team-mission') : null}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-xl ${teamComplete ? 'bg-green-500/20' : 'bg-gradient-to-br from-primary/20 to-accent/20'} shrink-0`}>
-                  {teamComplete ? (
-                    <CheckCircle2 className="h-8 w-8 text-green-500" />
-                  ) : (
-                    <Users className="h-8 w-8 text-primary" />
-                  )}
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-foreground text-lg">🛡️ Build Your Dream Team</h3>
-                    <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">
-                      +75 XP
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Add {TEAM_GOAL} team members to unlock the full power of collaboration!
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${teamComplete ? 'bg-green-500' : 'bg-gradient-to-r from-primary to-accent'}`}
-                        style={{ width: `${Math.min((teamMembers.length / TEAM_GOAL) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold text-foreground">{teamMembers.length}/{TEAM_GOAL}</span>
-                  </div>
-                  {!teamComplete && (
-                    <div className="flex items-center gap-1 text-xs text-primary font-medium pt-1">
-                      <ArrowRight className="h-3 w-3" />
-                      Tap to start this challenge
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Mission 2: Add Prospects */}
-          <Card 
-            className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-2 ${
-              prospectComplete ? 'border-green-500/50 bg-green-500/5' : 'border-accent/30 hover:border-accent/60'
-            }`}
-            onClick={() => !prospectComplete ? setPhase('prospect-mission') : null}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-xl ${prospectComplete ? 'bg-green-500/20' : 'bg-gradient-to-br from-accent/20 to-primary/20'} shrink-0`}>
-                  {prospectComplete ? (
-                    <CheckCircle2 className="h-8 w-8 text-green-500" />
-                  ) : (
-                    <Target className="h-8 w-8 text-accent" />
-                  )}
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-foreground text-lg">🎯 First Prospects</h3>
-                    <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-1 rounded-full">
-                      +75 XP
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Add {PROSPECT_GOAL} prospects — every sale starts with a name!
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${prospectComplete ? 'bg-green-500' : 'bg-gradient-to-r from-accent to-primary'}`}
-                        style={{ width: `${Math.min((prospects.length / PROSPECT_GOAL) * 100, 100)}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold text-foreground">{prospects.length}/{PROSPECT_GOAL}</span>
-                  </div>
-                  {!prospectComplete && (
-                    <div className="flex items-center gap-1 text-xs text-accent font-medium pt-1">
-                      <ArrowRight className="h-3 w-3" />
-                      Tap to start this challenge
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Complete button */}
-          <div className="pt-2 space-y-3">
-            <Button 
-              onClick={handleFinishOnboarding} 
-              disabled={loading}
-              size="lg" 
-              className={`w-full h-14 text-lg font-semibold shadow-lg transition-all ${
-                teamComplete && prospectComplete
-                  ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white'
-                  : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary'
-              }`}
-            >
-              {loading ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : teamComplete && prospectComplete ? (
-                <>
-                  <Crown className="mr-2 h-5 w-5" />
-                  Claim Your Rewards & Launch!
-                  <PartyPopper className="ml-2 h-5 w-5" />
-                </>
-              ) : (
-                <>
-                  <Rocket className="mr-2 h-5 w-5" />
-                  {teamMembers.length + prospects.length > 0 ? 'Continue to Dashboard' : 'Skip Challenges'}
-                </>
-              )}
-            </Button>
-            <div className="text-center">
-              <button onClick={handleSkipToEnd} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                I'll explore on my own →
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── TEAM MISSION ──────────────────────────────
-  if (phase === 'team-mission') {
-    const teamComplete = teamMembers.length >= TEAM_GOAL;
-
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-muted/20 to-background">
-        <XpBar />
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-        </div>
-
-        <Card className="w-full max-w-lg relative z-10 shadow-xl border-primary/30 mt-14">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
-          <CardContent className="pt-8 pb-6 space-y-5">
-            {/* Header */}
-            <div className="text-center space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                <Shield className="h-3.5 w-3.5" />
-                CHALLENGE 1 OF 2
-              </div>
-              <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
-                🛡️ Build Your Dream Team
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Great leaders build great teams — add <strong>{TEAM_GOAL} members</strong> to earn bonus XP!
-              </p>
-            </div>
-
-            {/* Progress */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border/50">
-              <div className="flex gap-1.5">
-                {Array.from({ length: TEAM_GOAL }).map((_, i) => (
-                  <div key={i} className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                    i < teamMembers.length
-                      ? 'bg-primary border-primary text-white scale-110'
-                      : 'bg-muted/50 border-dashed border-muted-foreground/30 text-muted-foreground/30'
-                  }`}>
-                    {i < teamMembers.length ? <Check className="h-5 w-5" /> : <UserPlus className="h-4 w-4" />}
-                  </div>
-                ))}
-              </div>
-              <div className="flex-1 text-right">
-                <span className="text-2xl font-black text-primary">{teamMembers.length}</span>
-                <span className="text-sm text-muted-foreground">/{TEAM_GOAL}</span>
-              </div>
-            </div>
-
-            {/* Added members */}
-            {teamMembers.length > 0 && (
-              <div className="space-y-2">
-                {teamMembers.map((member, i) => (
-                  <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-primary/5 border border-primary/10 animate-in slide-in-from-left duration-300">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold">
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{member.email}</p>
-                    </div>
-                    <button onClick={() => handleRemoveTeamMember(i)} className="p-1 rounded hover:bg-muted transition-colors">
-                      <X className="h-3.5 w-3.5 text-muted-foreground" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add form */}
-            {!teamComplete && (
-              <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/10">
-                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                  <Zap className="h-4 w-4" />
-                  <span>Add member #{teamMembers.length + 1}</span>
-                </div>
-                <div className="space-y-2">
-                  <Input
-                    value={currentMember.name}
-                    onChange={(e) => setCurrentMember({ ...currentMember, name: e.target.value })}
-                    placeholder="Full Name"
-                    className="h-11"
-                  />
-                  <Input
-                    type="email"
-                    value={currentMember.email}
-                    onChange={(e) => setCurrentMember({ ...currentMember, email: e.target.value })}
-                    placeholder="Email Address"
-                    className="h-11"
-                  />
-                </div>
-                <Button onClick={handleAddTeamMember} className="w-full h-11 gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add to Team (+25 XP)
-                </Button>
-              </div>
-            )}
-
-            {teamComplete && (
-              <div className="text-center py-4 space-y-2 animate-in zoom-in duration-500">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
-                <p className="text-lg font-bold text-green-600">Challenge Complete! 🎉</p>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setPhase('missions')} className="px-4">
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Back
-              </Button>
-              <Button onClick={() => setPhase('missions')} className="flex-1 h-12">
-                {teamComplete ? (
-                  <>
-                    <Trophy className="mr-2 h-4 w-4" />
-                    Back to Missions
-                  </>
-                ) : teamMembers.length > 0 ? (
-                  <>
-                    Save & Continue
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </>
-                ) : (
-                  <>
-                    Skip Challenge
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -694,7 +348,7 @@ export default function Onboarding() {
             <div className="text-center space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-bold">
                 <Target className="h-3.5 w-3.5" />
-                CHALLENGE 2 OF 2
+                QUICK CHALLENGE
               </div>
               <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
                 🎯 Add Your First Prospects
@@ -789,29 +443,42 @@ export default function Onboarding() {
             )}
 
             {/* Actions */}
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setPhase('missions')} className="px-4">
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Back
-              </Button>
-              <Button onClick={() => setPhase('missions')} className="flex-1 h-12">
-                {prospectComplete ? (
+            <div className="space-y-3">
+              <Button 
+                onClick={handleFinishOnboarding} 
+                disabled={loading}
+                size="lg" 
+                className={`w-full h-14 text-lg font-semibold shadow-lg transition-all ${
+                  prospectComplete
+                    ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white'
+                    : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary'
+                }`}
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : prospectComplete ? (
                   <>
-                    <Trophy className="mr-2 h-4 w-4" />
-                    Back to Missions
+                    <Crown className="mr-2 h-5 w-5" />
+                    Claim Your Rewards & Launch!
+                    <PartyPopper className="ml-2 h-5 w-5" />
                   </>
                 ) : prospects.length > 0 ? (
                   <>
-                    Save & Continue
-                    <ChevronRight className="ml-2 h-4 w-4" />
+                    <Rocket className="mr-2 h-5 w-5" />
+                    Continue to Dashboard
                   </>
                 ) : (
                   <>
+                    <Rocket className="mr-2 h-5 w-5" />
                     Skip Challenge
-                    <ChevronRight className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
+              <div className="text-center">
+                <button onClick={handleSkipToEnd} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  I'll explore on my own →
+                </button>
+              </div>
             </div>
           </CardContent>
         </Card>

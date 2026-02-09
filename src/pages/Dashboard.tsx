@@ -5,6 +5,7 @@ import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, Al
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RecentVisitsSection } from '@/components/dashboard/RecentVisitsSection';
+import { SetupChecklist } from '@/components/dashboard/SetupChecklist';
 import { useNavigate } from 'react-router-dom';
 import { AppTour, TourTriggerButton } from '@/components/AppTour';
 
@@ -252,6 +253,9 @@ export default function Dashboard() {
           <TourTriggerButton />
         </div>
       </div>
+
+      {/* Setup Checklist - shows for new users */}
+      <SetupChecklist />
 
       {/* Stats Grid - 2 columns on mobile */}
       <div data-tour="metrics" className="grid grid-cols-2 gap-2 lg:grid-cols-4">
