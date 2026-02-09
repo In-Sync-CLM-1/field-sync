@@ -1,30 +1,30 @@
 
 
-# Increase All Font Sizes by 2px
+# Hide Scrollbars on Mobile and Tablet
 
 ## What Changes
 
-Every font size in the Tailwind config will be bumped up by 2px, and the base body font size in CSS will be updated to match.
+Add CSS rules to hide all scrollbars (both native and custom) on screens smaller than 1024px (mobile + tablet breakpoints), while keeping scroll functionality intact.
 
 ## Changes
 
-### 1. `tailwind.config.ts` -- Update fontSize scale
+### `src/index.css` -- Add global scrollbar-hide rules
 
-| Token | Current | New |
-|-------|---------|-----|
-| xs | 0.75rem (12px) | 0.875rem (14px) |
-| sm | 0.8125rem (13px) | 0.9375rem (15px) |
-| base | 0.875rem (14px) | 1rem (16px) |
-| lg | 1rem (16px) | 1.125rem (18px) |
-| xl | 1.125rem (18px) | 1.25rem (20px) |
-| 2xl | 1.375rem (22px) | 1.5rem (24px) |
-| 3xl | 1.625rem (26px) | 1.75rem (28px) |
-| 4xl | 2rem (32px) | 2.125rem (34px) |
+Add the following CSS at the end of the base layer or as a global rule:
 
-### 2. `src/index.css` -- Update body base font-size
+```css
+@media (max-width: 1023px) {
+  * {
+    scrollbar-width: none;           /* Firefox */
+    -ms-overflow-style: none;        /* IE/Edge */
+  }
+  *::-webkit-scrollbar {
+    display: none;                   /* Chrome, Safari, Opera */
+  }
+}
+```
 
-Change `font-size: 0.875rem` (14px) to `font-size: 1rem` (16px) to match the new `base` size.
+This uses `max-width: 1023px` which covers all devices below the `lg` Tailwind breakpoint (mobile and tablet). Content remains scrollable -- only the visible scrollbar is hidden.
 
-### No other changes needed
+No other files need to change.
 
-All components use Tailwind's `text-xs`, `text-sm`, `text-base`, etc. classes, so updating the scale in one place propagates everywhere automatically.
