@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { 
   useTeamPlansOffline, 
@@ -172,9 +173,9 @@ function TeamPlanningTab() {
 
   const getSyncBadge = (syncStatus: string) => {
     switch (syncStatus) {
-      case 'synced': return <Cloud className="h-3 w-3 text-success" />;
-      case 'pending': return <CloudOff className="h-3 w-3 text-warning" />;
-      case 'failed': return <CloudOff className="h-3 w-3 text-destructive" />;
+      case 'synced': return <Tooltip><TooltipTrigger asChild><span><Cloud className="h-3 w-3 text-success" /></span></TooltipTrigger><TooltipContent>Synced</TooltipContent></Tooltip>;
+      case 'pending': return <Tooltip><TooltipTrigger asChild><span><CloudOff className="h-3 w-3 text-warning" /></span></TooltipTrigger><TooltipContent>Pending sync</TooltipContent></Tooltip>;
+      case 'failed': return <Tooltip><TooltipTrigger asChild><span><CloudOff className="h-3 w-3 text-destructive" /></span></TooltipTrigger><TooltipContent>Sync failed</TooltipContent></Tooltip>;
       default: return null;
     }
   };
@@ -236,6 +237,7 @@ function TeamPlanningTab() {
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-8 w-full" />)}
             </div>
           ) : teamPlans && teamPlans.length > 0 ? (
+            <TooltipProvider>
             <Table className="compact-table">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -275,23 +277,30 @@ function TeamPlanningTab() {
                     <TableCell className="py-1.5 px-3 text-right">
                       {editingPlanId === plan.id ? (
                         <div className="flex justify-end gap-1">
-                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleSaveEdit(plan)} disabled={correctPlan.isPending}>
-                            <Save className="h-3 w-3" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCancelEdit}>
-                            <X className="h-3 w-3" />
-                          </Button>
+                          <Tooltip><TooltipTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleSaveEdit(plan)} disabled={correctPlan.isPending}>
+                              <Save className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger><TooltipContent>Save changes</TooltipContent></Tooltip>
+                          <Tooltip><TooltipTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleCancelEdit}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger><TooltipContent>Cancel editing</TooltipContent></Tooltip>
                         </div>
                       ) : (
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleStartEdit(plan)}>
-                          <Edit2 className="h-3 w-3" />
-                        </Button>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleStartEdit(plan)}>
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Edit plan</TooltipContent></Tooltip>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+            </TooltipProvider>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-3 opacity-40" />
