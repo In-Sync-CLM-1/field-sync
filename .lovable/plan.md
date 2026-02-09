@@ -1,46 +1,50 @@
 
 
-# Remove Insurance-Specific Language from Landing Page
+# Exotel SMS Integration for OTP Delivery
 
-Make the landing page industry-agnostic so it can appeal to any business with field sales teams (FMCG, real estate, pharma, etc.), not just insurance.
+## What Will Change
 
-## Changes Summary
+The send-otp backend function will be updated to actually send SMS messages via Exotel when a user chooses phone verification during registration.
 
-All changes are in **`src/pages/Landing.tsx`** only. Here is every replacement:
+## Required Credentials
 
-| Location | Current Text | New Text |
-|----------|-------------|----------|
-| Hero badge (line 88) | "Built for Insurance Field Teams" | "Built for Field Sales Teams" |
-| Hero headline (line 95) | "Close More Policies." | "Close More Deals." |
-| Hero subtitle (line 98) | "...follow-up, and policy closure across..." | "...follow-up, and deal closure across..." |
-| Phone mockup stat (line 137) | "Policies MTD" | "Deals MTD" |
-| Gold badge card (line 172) | "25 Policies This Month" | "25 Deals This Month" |
-| Trust bar (line 193) | "Built for Indian Insurance Teams" | "Built for Indian Sales Teams" |
-| Features subtitle (line 238) | "Purpose-built for insurance sales teams..." | "Purpose-built for field sales teams..." |
-| Features - Prospects card (line 244) | "...insurance-specific fields: Policy Category (Life, Health, Motor, General), Premium Amount..." | "...industry-specific fields: Category, Deal Value, Source, Follow-up Date..." |
-| Gamification text (line 274) | "Designed for Indian insurance sales culture" | "Designed for Indian field sales culture" |
-| Badge requirements (lines 279-281) | "7/15/25 Policies / Month" | "7/15/25 Deals / Month" |
-| Testimonials heading (line 324) | "Trusted by Insurance Field Teams" | "Trusted by Field Sales Teams" |
-| Testimonial 1 role (line 327) | "Branch Manager, Life Insurance" | "Branch Manager" |
-| Testimonial 2 text (line 328) | "Our policy closures are up 28%..." | "Our deal closures are up 28%..." |
-| Testimonial 2 role (line 328) | "Regional Manager, Health Insurance" | "Regional Manager" |
-| Testimonial 3 role (line 329) | "Sales Officer, General Insurance" | "Sales Officer" |
-| Final CTA headline (line 422) | "Close More Policies?" | "Close More Deals?" |
-| Final CTA subtitle (line 424) | "Join insurance teams who've already..." | "Join field teams who've already..." |
-| FAQ - categories question (line 402) | "What insurance categories are supported?" / answer about Life, Health, Motor, General Insurance | "What industry categories are supported?" / answer about configurable categories for any industry |
+You will need to provide 4 secrets from your Exotel dashboard (Settings > API Settings):
 
-## Terminology Map
-
-- "Insurance" -> removed or replaced with "Sales" / "Field Sales"
-- "Policies" -> "Deals"
-- "Premium Amount" -> "Deal Value"
-- "Policy Category (Life, Health, Motor, General)" -> "Category"
-- Testimonial role suffixes like "Life Insurance", "Health Insurance", "General Insurance" -> removed
+1. **EXOTEL_API_KEY** -- Your API Key (SID)
+2. **EXOTEL_API_TOKEN** -- Your API Token
+3. **EXOTEL_SID** -- Your Account SID (e.g., "yourcompany1")
+4. **EXOTEL_SENDER_ID** -- Your ExoPhone number or Sender ID header (e.g., "INSYNC" or a virtual number)
 
 ## Technical Details
 
-- Single file edit: `src/pages/Landing.tsx`
-- ~18 string replacements across the file
-- No structural, layout, or styling changes
-- No database or backend changes needed
+### File: `supabase/functions/send-otp/index.ts`
+
+Replace the placeholder phone branch (lines 88-93) with an actual Exotel API call:
+
+```text
+POST https://<EXOTEL_API_KEY>:<EXOTEL_API_TOKEN>@api.in.exotel.com/v1/Accounts/<EXOTEL_SID>/Sms/send
+```
+
+Parameters:
+- `From`: The EXOTEL_SENDER_ID
+- `To`: The user's phone number (with country code prefixed if not present)
+- `Body`: "Your InSync verification code is: {code}. Valid for 10 minutes."
+
+Authentication: HTTP Basic Auth using API Key and API Token.
+
+The function will:
+1. Read all 4 Exotel secrets from environment variables
+2. Format the phone number (ensure +91 prefix for Indian numbers)
+3. Make a POST request to Exotel's SMS API
+4. Log success/failure and throw an error if the SMS fails to send
+
+### No other files change
+- The frontend already handles phone OTP flow correctly
+- The `otp_verifications` table and `verify-otp` function already work
+
+## Steps
+
+1. Securely store the 4 Exotel credentials
+2. Update the `send-otp` edge function with the Exotel API call
+3. Deploy and test with a real phone number
 
