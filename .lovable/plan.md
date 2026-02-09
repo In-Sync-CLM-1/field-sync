@@ -1,77 +1,89 @@
 
-# Live Agent Location Tracking
+
+# Replace "Commission" with "Incentives" and "Policy/Policies" with "Sales"
 
 ## Overview
-Agents will automatically share their GPS location while using the app, and admins/managers can see all active agents as live markers on the Territory Map.
+This is a UI terminology update across the application. All user-facing text will be changed:
+- **Commission** becomes **Incentives** (everywhere it appears as a label)
+- **Policy / Policies** becomes **Sales / Sales** (in table headers, badges, card titles, chart titles, landing page copy, etc.)
 
-## How It Works
+Database column names and internal variable names will NOT be changed — only the displayed text users see.
 
-**For Agents (Sales Officers):**
-- When they open the app and are logged in, their location is captured every 2 minutes in the background
-- A small indicator shows that location sharing is active
-- Location updates stop when they close the app or go offline
+## Scope of Changes
 
-**For Admins/Managers:**
-- A new "Live Agents" toggle on the Territory Map shows/hides agent location markers
-- Agent markers appear as distinct pulsing blue dots with the agent's name
-- Markers update in real-time (every 30 seconds refresh) -- no page reload needed
-- Clicking an agent marker shows their name, last update time, and battery-style "freshness" indicator
-- Managers see only their team; admins see all agents in the organization
+### Files to Update
 
-## Technical Details
+**1. `src/pages/Planning.tsx`** (heaviest changes)
+- "Team Commission" → "Team Incentives"
+- "Commission" table header → "Incentives"
+- "Total Team Commission" → "Total Team Incentives"
+- "Monthly Commission" → "Monthly Incentives"
+- "Commission Earned" → "Incentives Earned"
+- "7 Policies" / "15 Policies" / "25 Policies" milestone labels → "7 Sales" / "15 Sales" / "25 Sales"
+- "Policies" row label in Target vs Achievement table → "Sales"
+- "polic{ies/y}" dynamic text → "sale(s)"
+- "Base (7 policies)" breakdown label → "Base (7 sales)"
 
-### 1. Database: New `agent_locations` table
+**2. `src/pages/AnalyticsHub.tsx`**
+- "Team Commission" KPI card → "Team Incentives"
+- "Policy Issuance Trend (30 Days)" chart title → "Sales Trend (30 Days)"
+- "Policies: Target vs Actual" chart title → "Sales: Target vs Actual"
+- Tooltip formatter: "Policies" → "Sales"
+- "policies" label under top performer count → "sales"
+- "Policies (T/A/%)" table header → "Sales (T/A/%)"
+- "Commission" table header → "Incentives"
 
-```sql
-CREATE TABLE public.agent_locations (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  latitude double precision NOT NULL,
-  longitude double precision NOT NULL,
-  accuracy double precision,
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(user_id)
-);
-```
+**3. `src/pages/BranchAnalytics.tsx`**
+- "Team Commission" KPI card → "Team Incentives"
+- "Policy Issuance Trend (30 Days)" → "Sales Trend (30 Days)"
+- "Policies: Target vs Actual" → "Sales: Target vs Actual"
+- Tooltip: "Policies" → "Sales"
+- "Policies (T/A/%)" table header → "Sales (T/A/%)"
+- "Commission" table header → "Incentives"
 
-- Uses `UNIQUE(user_id)` so each agent has only one row that gets upserted (no history bloat)
-- RLS policies: agents can upsert their own row; managers/admins can read rows in their org
-- Enable realtime on this table for live updates
+**4. `src/pages/TeamPlanning.tsx`**
+- "Policies" stat badge and table header → "Sales"
 
-### 2. New Hook: `src/hooks/useAgentLocationTracker.ts`
+**5. `src/pages/PlanningOverview.tsx`**
+- "Policies" in any summary badges or table headers → "Sales"
 
-- Runs on app load for all authenticated users
-- Uses `navigator.geolocation.watchPosition` or `setInterval` with `getCurrentPosition` (every 2 minutes)
-- Upserts to `agent_locations` table with current lat/lng
-- Cleans up on unmount
+**6. `src/pages/Landing.tsx`**
+- "commission tracking" → "incentive tracking"
+- "Commission tracking and milestone badges" → "Incentive tracking and milestone badges"
+- "track your commission progress" → "track your incentive progress"
+- "Commission tracking & milestone badges" pricing feature → "Incentive tracking & milestone badges"
+- "prospects, quotes, and policies" → "prospects, quotes, and sales"
+- "Policy Category" labels in feature descriptions remain unchanged (these refer to the category field name, not the terminology being replaced)
 
-### 3. Integrate tracker in `src/components/Layout.tsx`
+**7. `src/pages/NewLead.tsx`**
+- "Policy Details" section header → "Sales Details"
+- "Policy Category" form label → "Sales Category"
+- "Policy Type" form label → "Sales Type"
+- "Enter policy type" placeholder → "Enter sales type"
+- POLICY_CATEGORIES constant labels can stay (Life Insurance, Health Insurance, etc. — these are category values)
 
-- Call `useAgentLocationTracker()` so it runs app-wide for logged-in users
+**8. `src/pages/LeadDetail.tsx`**
+- "Policy Details" section header → "Sales Details"
+- "Policy Type" label → "Sales Type"
 
-### 4. New Component: `src/components/LiveAgentMarkers.tsx`
+**9. `src/pages/Leads.tsx`**
+- No visible UI text changes needed (only internal status values like 'policy_issued' which are DB values)
 
-- Fetches all agent locations for the user's organization (respecting role hierarchy)
-- Subscribes to realtime changes on `agent_locations` table
-- Renders pulsing blue circle markers on the Mapbox map
-- Each marker has a popup with agent name and "last seen X minutes ago"
+**10. `src/hooks/useMonthlyIncentive.ts`**
+- Code comments: "policies" → "sales" (minor, for consistency)
 
-### 5. Update `src/pages/TerritoryMap.tsx`
-
-- Add a "Live Agents" toggle switch next to the existing "Routes" toggle
-- When enabled, render `LiveAgentMarkers` component with the map reference
-- Only visible to managers and admins (not sales officers viewing their own map)
-
-### 6. Auto-cleanup
-
-- Locations older than 30 minutes are considered "stale" and shown with a faded marker
-- A simple filter in the query: `updated_at > now() - interval '30 minutes'` for "active" agents
+## What Will NOT Change
+- Database column names (policies_target, policies_actual, policy_type, etc.)
+- Variable/property names in code (policiesTarget, policiesActual, etc.)
+- Internal status values like 'policy_issued'
+- "Privacy Policy" link text in footer (this is a legal term, not the same "policy")
+- RLS policies or database schema
 
 ## Steps
-
-1. Create `agent_locations` table with RLS policies and realtime enabled
-2. Create `useAgentLocationTracker` hook for background GPS reporting
-3. Integrate the tracker in Layout so all agents report location
-4. Create `LiveAgentMarkers` component for map visualization
-5. Add "Live Agents" toggle to Territory Map
+1. Update Planning.tsx (commission → incentives, policies → sales in all UI text)
+2. Update AnalyticsHub.tsx (same replacements in charts, tables, KPI cards)
+3. Update BranchAnalytics.tsx (same replacements)
+4. Update TeamPlanning.tsx and PlanningOverview.tsx (table headers and badges)
+5. Update Landing.tsx (marketing copy)
+6. Update NewLead.tsx and LeadDetail.tsx (form labels and section headers)
+7. Update useMonthlyIncentive.ts comments
