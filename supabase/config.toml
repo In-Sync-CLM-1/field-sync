@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.create-razorpay-subscription]
 verify_jwt = false
+
+[functions.nearby-places]
+verify_jwt = false
