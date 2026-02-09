@@ -104,22 +104,32 @@ export function useAppTour() {
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [hasCompletedTour, setHasCompletedTour] = useState(true);
+  const [hasCompletedTour, setHasCompletedTour] = useState(
+    () => localStorage.getItem(TOUR_STORAGE_KEY) === 'true'
+  );
   const [isNavigating, setIsNavigating] = useState(false);
 
-  // Load tour state
+  // Restore progress if tour was interrupted
   useEffect(() => {
     const completed = localStorage.getItem(TOUR_STORAGE_KEY);
-    setHasCompletedTour(completed === 'true');
-    
-    // Restore progress if tour was interrupted
     const savedProgress = localStorage.getItem(TOUR_PROGRESS_KEY);
-    if (savedProgress && !completed) {
+    if (savedProgress && completed !== 'true') {
       const progress = JSON.parse(savedProgress);
       if (progress.isActive) {
         setCurrentStep(progress.step);
         setIsActive(true);
       }
+    }
+
+    // Auto-start tour after onboarding
+    const autoStart = localStorage.getItem('insync_start_tour_after_onboarding');
+    if (autoStart === 'true') {
+      localStorage.removeItem('insync_start_tour_after_onboarding');
+      // Small delay to let Dashboard render
+      setTimeout(() => {
+        setCurrentStep(0);
+        setIsActive(true);
+      }, 500);
     }
   }, []);
 
