@@ -151,12 +151,14 @@ export default function Forms() {
 
   // Fetch users with their roles
   const { data: users = [], isLoading: isLoadingUsers, refetch: refetchUsers } = useQuery({
-    queryKey: ['users'],
+    queryKey: ['users', currentOrganization?.id],
     queryFn: async () => {
-      // First get all profiles with additional fields
+      // Get profiles filtered by current organization
+      if (!currentOrganization?.id) return [];
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, phone, is_active, branch_id, reporting_manager_id')
+        .eq('organization_id', currentOrganization.id)
         .order('full_name');
 
       if (profilesError) throw profilesError;
