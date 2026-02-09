@@ -162,7 +162,7 @@ export default function PlanningOverview() {
   };
 
   const getUserName = (plan: DailyPlanLocal) => {
-    return plan.userId.substring(0, 8) + '...';
+    return plan.agentFullName || plan.userId.substring(0, 8) + '...';
   };
 
   const getStatusBadge = (status: string) => {
@@ -452,7 +452,7 @@ export default function PlanningOverview() {
                 <div className="mt-2 p-2 bg-muted rounded text-sm">
                   <div><strong>Agent:</strong> {getUserName(planToDelete)}</div>
                   <div><strong>Date:</strong> {planToDelete.planDate}</div>
-                  <div><strong>Targets:</strong> Prospects: {planToDelete.prospectsTarget}, Quotes: {planToDelete.quotesTarget}, Policies: {planToDelete.policiesTarget}</div>
+                  <div><strong>Targets:</strong> Prospects: {planToDelete.prospectsTarget}, Quotes: {planToDelete.quotesTarget}, Sales: {planToDelete.policiesTarget}</div>
                 </div>
               )}
               This action cannot be undone.
