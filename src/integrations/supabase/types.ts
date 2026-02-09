@@ -697,30 +697,39 @@ export type Database = {
       }
       otp_verifications: {
         Row: {
+          attempts: number | null
           code: string
           created_at: string
           expires_at: string
           id: string
           identifier: string
           identifier_type: string
+          otp_hash: string | null
+          verified: boolean | null
           verified_at: string | null
         }
         Insert: {
+          attempts?: number | null
           code: string
           created_at?: string
           expires_at: string
           id?: string
           identifier: string
           identifier_type: string
+          otp_hash?: string | null
+          verified?: boolean | null
           verified_at?: string | null
         }
         Update: {
+          attempts?: number | null
           code?: string
           created_at?: string
           expires_at?: string
           id?: string
           identifier?: string
           identifier_type?: string
+          otp_hash?: string | null
+          verified?: boolean | null
           verified_at?: string | null
         }
         Relationships: []
