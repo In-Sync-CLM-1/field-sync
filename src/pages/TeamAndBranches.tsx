@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { 
-  CalendarIcon, Users, Edit2, Save, X, Cloud, CloudOff, ArrowLeft, 
+  CalendarIcon, Users, Edit2, Save, X, CloudOff, ArrowLeft, 
   Building2, Plus, MapPin, Phone, Mail, Trash2 
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -171,14 +171,6 @@ function TeamPlanningTab() {
     }
   };
 
-  const getSyncBadge = (syncStatus: string) => {
-    switch (syncStatus) {
-      case 'synced': return <Tooltip><TooltipTrigger asChild><span><Cloud className="h-3 w-3 text-success" /></span></TooltipTrigger><TooltipContent>Synced</TooltipContent></Tooltip>;
-      case 'pending': return <Tooltip><TooltipTrigger asChild><span><CloudOff className="h-3 w-3 text-warning" /></span></TooltipTrigger><TooltipContent>Pending sync</TooltipContent></Tooltip>;
-      case 'failed': return <Tooltip><TooltipTrigger asChild><span><CloudOff className="h-3 w-3 text-destructive" /></span></TooltipTrigger><TooltipContent>Sync failed</TooltipContent></Tooltip>;
-      default: return null;
-    }
-  };
 
   return (
     <div className="space-y-3">
@@ -246,7 +238,7 @@ function TeamPlanningTab() {
                   <TableHead className="py-2 px-3 text-xs text-right">Quotes</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-right">Sales</TableHead>
                   <TableHead className="py-2 px-3 text-xs">Status</TableHead>
-                  <TableHead className="py-2 px-3 text-xs text-center">Sync</TableHead>
+                  
                   <TableHead className="py-2 px-3 text-xs text-right w-20">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -273,7 +265,7 @@ function TeamPlanningTab() {
                       ) : plan.policiesTarget}
                     </TableCell>
                     <TableCell className="py-1.5 px-3">{getStatusBadge(plan.status)}</TableCell>
-                    <TableCell className="py-1.5 px-3 text-center">{getSyncBadge(plan.syncStatus)}</TableCell>
+                    
                     <TableCell className="py-1.5 px-3 text-right">
                       {editingPlanId === plan.id ? (
                         <div className="flex justify-end gap-1">
