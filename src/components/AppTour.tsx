@@ -29,17 +29,10 @@ export function AppTour() {
   } = useAppTour();
 
   const [position, setPosition] = useState<TooltipPosition | null>(null);
-  const [showWelcome, setShowWelcome] = useState(false);
   const [targetFound, setTargetFound] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // Show welcome dialog for new users
-  useEffect(() => {
-    if (!hasCompletedTour) {
-      const timer = setTimeout(() => setShowWelcome(true), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [hasCompletedTour]);
+  // Welcome popup removed — onboarding handles the intro now
 
   // Calculate tooltip position based on target element
   useEffect(() => {
@@ -114,68 +107,6 @@ export function AppTour() {
     };
   }, [isActive, currentStep, currentStepData, isNavigating]);
 
-  // Welcome dialog for new users
-  if (showWelcome && !isActive) {
-    return createPortal(
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-        <Card className="w-full max-w-md mx-4 shadow-2xl border-primary/20 overflow-hidden animate-in zoom-in-95 duration-300">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
-          <CardContent className="pt-8 pb-6 text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
-              <Lightbulb className="h-8 w-8 text-primary" />
-            </div>
-            
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">
-                Welcome to InSync! 🎉
-              </h2>
-              <p className="text-muted-foreground">
-                Take a quick tour to discover all the powerful features that'll help you succeed.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2 pt-2">
-                <Badge variant="outline" className="gap-1">
-                  <MapPin className="h-3 w-3" />
-                  Dashboard
-                </Badge>
-                <Badge variant="outline" className="gap-1">
-                  <MapPin className="h-3 w-3" />
-                  Daily Planning
-                </Badge>
-                <Badge variant="outline" className="gap-1">
-                  <MapPin className="h-3 w-3" />
-                  Prospects
-                </Badge>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowWelcome(false);
-                  skipTour();
-                }}
-                className="flex-1"
-              >
-                Skip for now
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowWelcome(false);
-                  startTour();
-                }}
-                className="flex-1 gap-2"
-              >
-                <Sparkles className="h-4 w-4" />
-                Start Tour
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>,
-      document.body
-    );
-  }
 
   // Navigating state
   if (isActive && isNavigating) {

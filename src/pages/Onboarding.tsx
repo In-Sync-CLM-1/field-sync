@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 import { 
   Loader2, Building2, Users, UserPlus, MapPin, Check, ChevronRight, 
   ChevronLeft, Sparkles, PartyPopper, Lightbulb, Target, Rocket,
-  ArrowRight, CheckCircle2, Star, Zap, Trophy, Send, Plus
+  ArrowRight, CheckCircle2, Star, Zap, Trophy, Send, Plus,
+  BarChart, Calendar
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -83,6 +84,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showPortalAccess, setShowPortalAccess] = useState(false);
+  const [showSystemIntro, setShowSystemIntro] = useState(false);
   const [data, setData] = useState<OnboardingData>({
     companyName: currentOrganization?.name || '',
     industry: '',
@@ -213,9 +215,12 @@ export default function Onboarding() {
         if (error) throw error;
       }
 
-      triggerBigCelebration();
-      toast.success('🚀 You\'re all set! Let\'s crush those sales!');
-      setTimeout(() => navigate('/dashboard'), 1500);
+      // Reset tour state so guided tour can trigger
+      localStorage.removeItem('insync_app_tour_completed');
+      localStorage.removeItem('insync_app_tour_progress');
+
+      triggerConfetti();
+      setShowSystemIntro(true);
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
       toast.error('Failed to complete setup');
@@ -244,6 +249,86 @@ export default function Onboarding() {
       setLoading(false);
     }
   };
+
+  const handleStartTour = () => {
+    localStorage.setItem('insync_start_tour_after_onboarding', 'true');
+    navigate('/dashboard');
+  };
+
+  const handleSkipIntro = () => {
+    navigate('/dashboard');
+  };
+
+  // System Introduction Screen
+  if (showSystemIntro) {
+    const features = [
+      { icon: BarChart, label: 'Dashboard', desc: 'Track daily performance at a glance' },
+      { icon: Calendar, label: 'Daily Planning', desc: 'Set targets for prospects, quotes, and sales' },
+      { icon: Users, label: 'Prospects', desc: 'Manage leads through the full sales cycle' },
+      { icon: Building2, label: 'Team Management', desc: 'Build teams and monitor performance' },
+      { icon: MapPin, label: 'Territory Map', desc: 'Visualize your coverage area' },
+    ];
+
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-accent/10">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" />
+        </div>
+
+        <Card className="w-full max-w-lg relative z-10 shadow-2xl border-primary/20 overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-accent to-primary" />
+          
+          <CardContent className="pt-10 pb-8 text-center space-y-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 mb-2 animate-in zoom-in duration-500">
+              <Rocket className="h-10 w-10 text-primary" />
+            </div>
+
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-foreground animate-in slide-in-from-bottom duration-500">
+                🎉 You're All Set!
+              </h1>
+              <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+                Here's what you can do with <strong className="text-primary">InSync</strong>
+              </p>
+            </div>
+
+            <div className="space-y-2 text-left animate-in slide-in-from-bottom duration-500 delay-200">
+              {features.map((f) => (
+                <div key={f.label} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+                  <div className="p-2 rounded-full bg-primary/10 shrink-0">
+                    <f.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-foreground">{f.label}</span>
+                    <p className="text-xs text-muted-foreground">{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 space-y-3 animate-in slide-in-from-bottom duration-500 delay-300">
+              <Button 
+                onClick={handleStartTour} 
+                size="lg"
+                className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg"
+              >
+                <Sparkles className="mr-2 h-5 w-5" />
+                Start Guided Tour
+              </Button>
+              
+              <button
+                onClick={handleSkipIntro}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Skip to Dashboard →
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Portal Access Celebration Screen
   if (showPortalAccess) {
