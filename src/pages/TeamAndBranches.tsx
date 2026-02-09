@@ -156,8 +156,7 @@ function TeamPlanningTab() {
   };
 
   const getUserName = (plan: DailyPlanLocal) => {
-    // For now use userId - in a full implementation we'd store user info locally
-    return plan.userId.substring(0, 8) + '...';
+    return plan.agentFullName || plan.userId.substring(0, 8) + '...';
   };
 
   const getStatusBadge = (status: string) => {

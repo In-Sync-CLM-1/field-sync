@@ -126,6 +126,7 @@ export interface DailyPlanLocal {
   status: string;
   correctedBy: string | null;
   originalValues: Record<string, unknown> | null;
+  agentFullName?: string;
   syncStatus: 'synced' | 'pending' | 'failed';
   lastSyncedAt?: Date;
   createdAt: Date;

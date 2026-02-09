@@ -38,6 +38,7 @@ const toLocalPlan = (plan: any): DailyPlanLocal => ({
   status: plan.status,
   correctedBy: plan.corrected_by,
   originalValues: plan.original_values,
+  agentFullName: plan.user?.full_name || plan.user?.first_name || '',
   syncStatus: 'synced',
   lastSyncedAt: new Date(),
   createdAt: new Date(plan.created_at),
