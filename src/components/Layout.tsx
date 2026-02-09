@@ -22,9 +22,11 @@ import inSyncLogo from '@/assets/in-sync-logo.png';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { swManager } from '@/lib/serviceWorker';
+import { useAgentLocationTracker } from '@/hooks/useAgentLocationTracker';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
+  useAgentLocationTracker();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
