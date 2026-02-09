@@ -1,13 +1,16 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 
 const TRACKING_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
 
+export type TrackingStatus = 'idle' | 'active' | 'error';
+
 export function useAgentLocationTracker() {
   const { user, currentOrganization } = useAuthStore();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastUpdateRef = useRef<number>(0);
+  const [status, setStatus] = useState<TrackingStatus>('idle');
 
   useEffect(() => {
     if (!user || !currentOrganization) return;
@@ -15,7 +18,6 @@ export function useAgentLocationTracker() {
 
     const upsertLocation = (position: GeolocationPosition) => {
       const now = Date.now();
-      // Debounce: don't update more than once per 90 seconds
       if (now - lastUpdateRef.current < 90_000) return;
       lastUpdateRef.current = now;
 
@@ -35,13 +37,19 @@ export function useAgentLocationTracker() {
           { onConflict: 'user_id' }
         )
         .then(({ error }) => {
-          if (error) console.error('Location upsert failed:', error);
+          if (error) {
+            console.error('Location upsert failed:', error);
+            setStatus('error');
+          } else {
+            setStatus('active');
+          }
         });
     };
 
     const requestLocation = () => {
       navigator.geolocation.getCurrentPosition(upsertLocation, (err) => {
         console.warn('Geolocation error:', err.message);
+        setStatus('error');
       }, {
         enableHighAccuracy: false,
         timeout: 10_000,
@@ -59,4 +67,6 @@ export function useAgentLocationTracker() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [user, currentOrganization]);
+
+  return status;
 }

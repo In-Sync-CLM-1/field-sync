@@ -16,7 +16,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { TrialBanner } from '@/components/TrialBanner';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
-import { Home, Users, MapPin, Map, LogOut, User, Activity, RefreshCw } from 'lucide-react';
+import { Home, Users, MapPin, Map, LogOut, User, Activity, RefreshCw, Locate } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import inSyncLogo from '@/assets/in-sync-logo.png';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -26,7 +26,7 @@ import { useAgentLocationTracker } from '@/hooks/useAgentLocationTracker';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
-  useAgentLocationTracker();
+  const trackingStatus = useAgentLocationTracker();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -102,6 +102,20 @@ export default function Layout() {
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Location tracking indicator */}
+                {trackingStatus !== 'idle' && (
+                  <div
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted text-[10px] text-muted-foreground"
+                    title={trackingStatus === 'active' ? 'Location sharing active' : 'Location sharing error'}
+                  >
+                    <Locate className="h-3 w-3" />
+                    <span
+                      className={`inline-block h-1.5 w-1.5 rounded-full ${
+                        trackingStatus === 'active' ? 'bg-green-500 animate-pulse' : 'bg-destructive'
+                      }`}
+                    />
+                  </div>
+                )}
                 {navigator.onLine && pendingCount > 0 && (
                   <Button
                     variant="outline"
