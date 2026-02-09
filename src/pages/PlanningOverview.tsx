@@ -42,7 +42,7 @@ interface ManagerGroup {
   managerId: string | null;
   managerName: string;
   plans: DailyPlanLocal[];
-  totals: { prospects: number; quotes: number; policies: number; lifeIns: number; healthIns: number };
+  totals: { prospects: number; quotes: number; policies: number };
 }
 
 interface EditValues {
@@ -127,7 +127,7 @@ export default function PlanningOverview() {
           managerId,
           managerName: 'All Team Members',
           plans: [],
-          totals: { prospects: 0, quotes: 0, policies: 0, lifeIns: 0, healthIns: 0 },
+          totals: { prospects: 0, quotes: 0, policies: 0 },
         });
       }
       
@@ -136,8 +136,6 @@ export default function PlanningOverview() {
       group.totals.prospects += plan.prospectsTarget;
       group.totals.quotes += plan.quotesTarget;
       group.totals.policies += plan.policiesTarget;
-      group.totals.lifeIns += plan.lifeInsuranceTarget || 0;
-      group.totals.healthIns += plan.healthInsuranceTarget || 0;
     });
 
     return Array.from(groups.values());
@@ -149,10 +147,8 @@ export default function PlanningOverview() {
         prospects: acc.prospects + group.totals.prospects,
         quotes: acc.quotes + group.totals.quotes,
         policies: acc.policies + group.totals.policies,
-        lifeIns: acc.lifeIns + group.totals.lifeIns,
-        healthIns: acc.healthIns + group.totals.healthIns,
       }),
-      { prospects: 0, quotes: 0, policies: 0, lifeIns: 0, healthIns: 0 }
+      { prospects: 0, quotes: 0, policies: 0 }
     );
   }, [managerGroups]);
 
@@ -286,8 +282,6 @@ export default function PlanningOverview() {
           <div className="stat-badge bg-primary/10 text-primary">Prospects: {orgTotals.prospects}</div>
           <div className="stat-badge bg-primary/10 text-primary">Quotes: {orgTotals.quotes}</div>
           <div className="stat-badge bg-primary/10 text-primary">Sales: {orgTotals.policies}</div>
-          <div className="stat-badge bg-success/10 text-success">Life: {orgTotals.lifeIns}</div>
-          <div className="stat-badge bg-success/10 text-success">Health: {orgTotals.healthIns}</div>
         </div>
       </div>
 
@@ -317,8 +311,6 @@ export default function PlanningOverview() {
                         <span className="stat-badge bg-muted text-muted-foreground">P:{group.totals.prospects}</span>
                         <span className="stat-badge bg-muted text-muted-foreground">Q:{group.totals.quotes}</span>
                         <span className="stat-badge bg-muted text-muted-foreground">S:{group.totals.policies}</span>
-                        <span className="stat-badge bg-success/10 text-success">Life:{group.totals.lifeIns}</span>
-                        <span className="stat-badge bg-success/10 text-success">Health:{group.totals.healthIns}</span>
                       </div>
                     </div>
                   </CollapsibleTrigger>
@@ -332,8 +324,6 @@ export default function PlanningOverview() {
                             <TableHead className="py-1.5 px-3 text-xs text-right">Prospects</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-right">Quotes</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-right">Sales</TableHead>
-                            <TableHead className="py-1.5 px-3 text-xs text-right">Life</TableHead>
-                            <TableHead className="py-1.5 px-3 text-xs text-right">Health</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs">Status</TableHead>
                             <TableHead className="py-1.5 px-3 text-xs text-center">Sync</TableHead>
                             {isAdmin && <TableHead className="py-1.5 px-3 text-xs text-center">Actions</TableHead>}
@@ -382,8 +372,6 @@ export default function PlanningOverview() {
                                     plan.policiesTarget
                                   )}
                                 </TableCell>
-                                <TableCell className="py-1 px-3 text-xs text-right">{plan.lifeInsuranceTarget || 0}</TableCell>
-                                <TableCell className="py-1 px-3 text-xs text-right">{plan.healthInsuranceTarget || 0}</TableCell>
                                 <TableCell className="py-1 px-3">{getStatusBadge(plan.status)}</TableCell>
                                 <TableCell className="py-1 px-3 text-center">{getSyncBadge(plan.syncStatus)}</TableCell>
                                 {isAdmin && (

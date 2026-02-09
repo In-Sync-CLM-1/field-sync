@@ -109,9 +109,7 @@ function TeamPlanningTab() {
     prospects: acc.prospects + plan.prospectsTarget,
     quotes: acc.quotes + plan.quotesTarget,
     policies: acc.policies + plan.policiesTarget,
-    lifeIns: acc.lifeIns + (plan.lifeInsuranceTarget || 0),
-    healthIns: acc.healthIns + (plan.healthInsuranceTarget || 0),
-  }), { prospects: 0, quotes: 0, policies: 0, lifeIns: 0, healthIns: 0 }) || { prospects: 0, quotes: 0, policies: 0, lifeIns: 0, healthIns: 0 };
+  }), { prospects: 0, quotes: 0, policies: 0 }) || { prospects: 0, quotes: 0, policies: 0 };
 
   const handleStartEdit = (plan: DailyPlanLocal) => {
     setEditingPlanId(plan.id);
@@ -206,27 +204,6 @@ function TeamPlanningTab() {
         </div>
         
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-muted/50 rounded px-2 py-1">
-            <Label className="text-xs">Life:</Label>
-            <Input
-              type="number"
-              min="0"
-              className="w-14 h-6 text-xs px-1"
-              value={managerTargets.life_insurance_target}
-              onChange={(e) => setManagerTargets(prev => ({ ...prev, life_insurance_target: parseInt(e.target.value) || 0 }))}
-            />
-            <Label className="text-xs">Health:</Label>
-            <Input
-              type="number"
-              min="0"
-              className="w-14 h-6 text-xs px-1"
-              value={managerTargets.health_insurance_target}
-              onChange={(e) => setManagerTargets(prev => ({ ...prev, health_insurance_target: parseInt(e.target.value) || 0 }))}
-            />
-            <Button size="sm" className="h-6 px-2 text-xs" onClick={handleSaveManagerTargets} disabled={updatePlan.isPending || createPlan.isPending}>
-              Save
-            </Button>
-          </div>
 
           <Popover>
             <PopoverTrigger asChild>
@@ -248,9 +225,7 @@ function TeamPlanningTab() {
         <div className="stats-row">
           <div className="stat-badge bg-primary/10 text-primary">Prospects: {aggregates.prospects}</div>
           <div className="stat-badge bg-primary/10 text-primary">Quotes: {aggregates.quotes}</div>
-          <div className="stat-badge bg-primary/10 text-primary">Policies: {aggregates.policies}</div>
-          <div className="stat-badge bg-success/10 text-success">Life: {aggregates.lifeIns + (myPlan?.lifeInsuranceTarget || 0)}</div>
-          <div className="stat-badge bg-success/10 text-success">Health: {aggregates.healthIns + (myPlan?.healthInsuranceTarget || 0)}</div>
+          <div className="stat-badge bg-primary/10 text-primary">Sales: {aggregates.policies}</div>
         </div>
       </div>
 

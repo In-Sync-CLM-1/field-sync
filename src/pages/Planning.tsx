@@ -344,42 +344,6 @@ export default function Planning() {
                         {teamAggregates ? getProgress(teamAggregates.policies_actual, teamAggregates.policies_target).percent : 0}%
                       </td>
                     </tr>
-                    {/* Life Insurance - Manager specific */}
-                    <tr className="border-t border-border/50 bg-primary/5">
-                      <td className="py-1.5 px-3 text-xs font-medium">Life Ins</td>
-                      <td className="py-1 px-2 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={managerTargets.life_insurance_target}
-                          onChange={(e) => setManagerTargets(prev => ({ ...prev, life_insurance_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-14 text-xs text-center mx-auto px-1"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.lifeInsuranceActual ?? 0}</td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        plan ? getProgress(plan.lifeInsuranceActual || 0, managerTargets.life_insurance_target).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.lifeInsuranceActual || 0, managerTargets.life_insurance_target).percent : 0}%
-                      </td>
-                    </tr>
-                    {/* Health Insurance - Manager specific */}
-                    <tr className="border-t border-border/50 bg-primary/5">
-                      <td className="py-1.5 px-3 text-xs font-medium">Health Ins</td>
-                      <td className="py-1 px-2 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={managerTargets.health_insurance_target}
-                          onChange={(e) => setManagerTargets(prev => ({ ...prev, health_insurance_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-14 text-xs text-center mx-auto px-1"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{plan?.healthInsuranceActual ?? 0}</td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        plan ? getProgress(plan.healthInsuranceActual || 0, managerTargets.health_insurance_target).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.healthInsuranceActual || 0, managerTargets.health_insurance_target).percent : 0}%
-                      </td>
-                    </tr>
                   </tbody>
                 </table>
               </div>
