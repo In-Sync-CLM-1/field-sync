@@ -1,62 +1,77 @@
 
-# Google Places Nearby Search Integration
+# Live Agent Location Tracking
 
-## What Changes
+## Overview
+Agents will automatically share their GPS location while using the app, and admins/managers can see all active agents as live markers on the Territory Map.
 
-Add a "Nearby Places" feature that works in two places:
-1. **Territory Map** -- A button to search for nearby businesses around the current map center and display them as markers
-2. **Lead Discovery** -- Ability to import discovered places directly as new prospects/leads
+## How It Works
 
-## Prerequisites
+**For Agents (Sales Officers):**
+- When they open the app and are logged in, their location is captured every 2 minutes in the background
+- A small indicator shows that location sharing is active
+- Location updates stop when they close the app or go offline
 
-You'll need to provide a **Google Maps API key** with the Places API (New) enabled. This will be stored as a secret called `GOOGLE_PLACES_API_KEY`.
+**For Admins/Managers:**
+- A new "Live Agents" toggle on the Territory Map shows/hides agent location markers
+- Agent markers appear as distinct pulsing blue dots with the agent's name
+- Markers update in real-time (every 30 seconds refresh) -- no page reload needed
+- Clicking an agent marker shows their name, last update time, and battery-style "freshness" indicator
+- Managers see only their team; admins see all agents in the organization
 
 ## Technical Details
 
-### 1. Add secret
+### 1. Database: New `agent_locations` table
 
-Store `GOOGLE_PLACES_API_KEY` securely so the backend function can access it.
+```sql
+CREATE TABLE public.agent_locations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  latitude double precision NOT NULL,
+  longitude double precision NOT NULL,
+  accuracy double precision,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(user_id)
+);
+```
 
-### 2. Create Edge Function: `supabase/functions/nearby-places/index.ts`
+- Uses `UNIQUE(user_id)` so each agent has only one row that gets upserted (no history bloat)
+- RLS policies: agents can upsert their own row; managers/admins can read rows in their org
+- Enable realtime on this table for live updates
 
-A backend function that proxies requests to the Google Places Nearby Search API. This keeps the API key secure on the server side.
+### 2. New Hook: `src/hooks/useAgentLocationTracker.ts`
 
-- Accepts: `latitude`, `longitude`, `radius` (meters, default 5000), `includedTypes` (e.g. `["insurance_agency", "bank", "finance"]`), `maxResultCount` (default 20)
-- Calls: `POST https://places.googleapis.com/v1/places:searchNearby` with `X-Goog-Api-Key` and `X-Goog-FieldMask` headers
-- Returns: Array of places with `displayName`, `formattedAddress`, `location` (lat/lng), `primaryType`, `phoneNumbers`
+- Runs on app load for all authenticated users
+- Uses `navigator.geolocation.watchPosition` or `setInterval` with `getCurrentPosition` (every 2 minutes)
+- Upserts to `agent_locations` table with current lat/lng
+- Cleans up on unmount
 
-### 3. Update Territory Map (`src/pages/TerritoryMap.tsx`)
+### 3. Integrate tracker in `src/components/Layout.tsx`
 
-Add a "Discover Nearby" button panel:
+- Call `useAgentLocationTracker()` so it runs app-wide for logged-in users
 
-- A floating button/panel on the map with a "Search Nearby" button
-- A type filter dropdown (Insurance Agency, Bank, Hospital, School, etc.)
-- A radius selector (1km, 2km, 5km, 10km)
-- Calls the edge function with the current map center coordinates
-- Displays results as distinct markers (e.g., purple diamonds) separate from visit markers
-- Each marker popup shows place name, address, type, and an "Add as Prospect" button
+### 4. New Component: `src/components/LiveAgentMarkers.tsx`
 
-### 4. Add "Add as Prospect" flow
+- Fetches all agent locations for the user's organization (respecting role hierarchy)
+- Subscribes to realtime changes on `agent_locations` table
+- Renders pulsing blue circle markers on the Mapbox map
+- Each marker has a popup with agent name and "last seen X minutes ago"
 
-When clicking "Add as Prospect" on a nearby place marker popup:
+### 5. Update `src/pages/TerritoryMap.tsx`
 
-- Pre-fills a new lead with:
-  - `name` from `displayName`
-  - `village_city` from the formatted address
-  - `latitude` / `longitude` from the place location
-  - `mobile_no` from phone number (if available)
-  - `lead_source` set to "Google Places"
-- Inserts directly into the leads table via existing `useLeads` hook
-- Shows a success toast
+- Add a "Live Agents" toggle switch next to the existing "Routes" toggle
+- When enabled, render `LiveAgentMarkers` component with the map reference
+- Only visible to managers and admins (not sales officers viewing their own map)
 
-### 5. No database migration needed
+### 6. Auto-cleanup
 
-The existing `leads` table already has `latitude`, `longitude`, `name`, `village_city`, `mobile_no`, and `lead_source` columns -- everything needed to store discovered places.
+- Locations older than 30 minutes are considered "stale" and shown with a faded marker
+- A simple filter in the query: `updated_at > now() - interval '30 minutes'` for "active" agents
 
-## Steps in order
+## Steps
 
-1. Request and store the `GOOGLE_PLACES_API_KEY` secret
-2. Create the `nearby-places` edge function
-3. Add the Nearby Places UI panel and markers to Territory Map
-4. Add the "Add as Prospect" action from place markers
-5. Deploy and test
+1. Create `agent_locations` table with RLS policies and realtime enabled
+2. Create `useAgentLocationTracker` hook for background GPS reporting
+3. Integrate the tracker in Layout so all agents report location
+4. Create `LiveAgentMarkers` component for map visualization
+5. Add "Live Agents" toggle to Territory Map
