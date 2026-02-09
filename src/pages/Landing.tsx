@@ -85,17 +85,17 @@ const Landing = () => {
           <div className="max-w-[560px] lg:text-left text-center mx-auto lg:mx-0">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#01B8AA]/15 text-[13px] font-medium text-[#01B8AA] mb-7" style={{ background: "rgba(1,184,170,0.1)", animation: "fadeInUp 0.6s ease both" }}>
               <span className="w-2 h-2 rounded-full bg-[#01B8AA] animate-pulse" />
-              Built for Insurance Field Teams
+              Built for Field Sales Teams
             </div>
             <h1
               className="text-[clamp(38px,5.5vw,56px)] font-extrabold leading-[1.12] mb-6"
               style={{ fontFamily: "'Playfair Display', Georgia, serif", animation: "fadeInUp 0.6s ease 0.1s both" }}
             >
               Track Every Visit.<br />
-              <span className="text-[#01B8AA]">Close More Policies.</span>
+              <span className="text-[#01B8AA]">Close More Deals.</span>
             </h1>
             <p className="text-lg text-[#8FA3A8] leading-relaxed mb-9 max-w-[480px] lg:mx-0 mx-auto" style={{ animation: "fadeInUp 0.6s ease 0.2s both" }}>
-              Your field agents make dozens of visits daily — but how many actually convert? Get real-time visibility into every meeting, follow-up, and policy closure across your entire team.
+              Your field agents make dozens of visits daily — but how many actually convert? Get real-time visibility into every meeting, follow-up, and deal closure across your entire team.
             </p>
             <div className="flex gap-4 flex-wrap mb-10 lg:justify-start justify-center" style={{ animation: "fadeInUp 0.6s ease 0.3s both" }}>
               <button onClick={goAuth} className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-[15px] font-semibold bg-[#01B8AA] text-[#0B1A1E] border-none cursor-pointer transition-all hover:-translate-y-0.5" style={{ boxShadow: "0 0 30px rgba(1,184,170,0.25), 0 4px 15px rgba(0,0,0,0.3)" }}>
@@ -134,7 +134,7 @@ const Landing = () => {
                     {[
                       { v: "8", l: "Visits Today", c: "#01B8AA" },
                       { v: "₹4.2L", l: "Pipeline", c: "#01B8AA" },
-                      { v: "15", l: "Policies MTD", c: "#01B8AA" },
+                      { v: "15", l: "Deals MTD", c: "#01B8AA" },
                       { v: "3", l: "Overdue", c: "#FD625E" },
                     ].map((s, i) => (
                       <div key={i} className="rounded-xl p-3 border border-[#01B8AA]/15" style={{ background: "#12282E" }}>
@@ -169,7 +169,7 @@ const Landing = () => {
               <div className="absolute top-[60px] right-[-20px] rounded-[14px] px-[18px] py-[14px] border border-[#01B8AA]/15" style={{ background: "#12282E", boxShadow: "0 10px 40px rgba(0,0,0,0.3)", animation: "float 6s ease-in-out infinite", backdropFilter: "blur(10px)" }}>
                 <div className="text-xl mb-1">🏆</div>
                 <div className="text-xs font-semibold text-[#F2C80F]">Gold Badge!</div>
-                <div className="text-[10px] text-[#5F6B6D]">25 Policies This Month</div>
+                <div className="text-[10px] text-[#5F6B6D]">25 Deals This Month</div>
               </div>
               <div className="absolute bottom-[100px] left-[-30px] rounded-[14px] px-[18px] py-[14px] border border-[#01B8AA]/15" style={{ background: "#12282E", boxShadow: "0 10px 40px rgba(0,0,0,0.3)", animation: "float 6s ease-in-out infinite 2s", backdropFilter: "blur(10px)" }}>
                 <div className="text-xl mb-1">📍</div>
@@ -190,7 +190,7 @@ const Landing = () => {
       <div className="py-[50px] border-y border-[#01B8AA]/15" style={{ background: "rgba(1,184,170,0.02)" }}>
         <div className="max-w-[1140px] mx-auto px-6 flex items-center justify-center gap-10 flex-wrap">
           {[
-            { icon: "🇮🇳", bold: "Built for Indian", rest: " Insurance Teams" },
+            { icon: "🇮🇳", bold: "Built for Indian", rest: " Sales Teams" },
             { icon: "🔒", bold: "Enterprise-Grade", rest: " Data Security" },
             { icon: "📱", bold: "Works Offline", rest: " — Syncs Automatically" },
             { icon: "⚡", bold: "Setup in 10 Min", rest: " — No IT Team Needed" },
@@ -235,13 +235,13 @@ const Landing = () => {
         <div className="max-w-[1140px] mx-auto px-6 text-center">
           <span className="text-[13px] font-semibold tracking-[2.5px] uppercase text-[#01B8AA] mb-4 inline-block">Features</span>
           <h2 className="text-[clamp(32px,5vw,44px)] font-bold leading-[1.2] mb-[18px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Everything Your Field Team Needs</h2>
-          <p className="text-[17px] text-[#8FA3A8] max-w-[560px] mx-auto leading-relaxed">Purpose-built for insurance sales teams — from daily planning to commission tracking.</p>
+          <p className="text-[17px] text-[#8FA3A8] max-w-[560px] mx-auto leading-relaxed">Purpose-built for field sales teams — from daily planning to commission tracking.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-[60px]">
             {[
               { icon: "📍", bg: "rgba(1,184,170,0.12)", title: "Know Where Your Agents Are — Live", desc: "Real-time GPS tracking with visit verification. See every agent's location on a territory map with role-based visibility — Sales Officers see their data, Managers see the branch, Admins see everything." },
               { icon: "📊", bg: "rgba(253,98,94,0.12)", title: "Spot Top Performers Instantly", desc: "Unified analytics with visit trends, completion rates, and branch-level KPIs. Trophy and medal rankings make it easy to identify who's excelling and who needs coaching." },
               { icon: "📋", bg: "rgba(242,200,15,0.12)", title: "Plan the Day in 60 Seconds", desc: "Agents set daily targets for prospects, quotes, and policies. Managers track Life & Health branch targets in real time. Works offline-first — syncs the moment connectivity returns." },
-              { icon: "👥", bg: "rgba(254,150,102,0.12)", title: "Manage Prospects End-to-End", desc: "Full prospect lifecycle with insurance-specific fields: Policy Category (Life, Health, Motor, General), Premium Amount, Source, Follow-up Date — with automatic location capture on every interaction." },
+              { icon: "👥", bg: "rgba(254,150,102,0.12)", title: "Manage Prospects End-to-End", desc: "Full prospect lifecycle with industry-specific fields: Category, Deal Value, Source, Follow-up Date — with automatic location capture on every interaction." },
               { icon: "📱", bg: "rgba(138,212,235,0.12)", title: "Works Offline, Syncs Automatically", desc: "Built for areas with patchy connectivity. Agents work uninterrupted with IndexedDB-powered offline mode. Data syncs seamlessly the instant they're back online." },
               { icon: "👨‍💼", bg: "rgba(166,105,153,0.12)", title: "Role-Based Team Control", desc: "Three-tier hierarchy: Sales Officer → Branch Manager → Admin. Assign reporting managers, toggle active/inactive status, and control exactly who sees what across your organization." },
             ].map((f, i) => (
@@ -271,14 +271,14 @@ const Landing = () => {
             </h2>
             <p className="text-[17px] text-[#8FA3A8] max-w-[560px] leading-relaxed">Commission tracking and milestone badges turn routine fieldwork into a competitive, rewarding experience. Agents see their progress, earn recognition, and stay motivated month after month.</p>
             <div className="inline-flex items-center gap-2 mt-6 px-3.5 py-2 rounded-lg text-[13px] font-medium text-[#F2C80F]" style={{ background: "rgba(242,200,15,0.08)", border: "1px solid rgba(242,200,15,0.2)" }}>
-              🇮🇳 Designed for Indian insurance sales culture
+              🇮🇳 Designed for Indian field sales culture
             </div>
           </div>
           <div className="anim-scroll opacity-0 translate-y-6 transition-all duration-700 flex justify-center gap-5 flex-wrap">
             {[
-              { emoji: "🥉", name: "Bronze", req: "7 Policies / Month", borderColor: "rgba(181,149,37,0.3)", shadow: "" },
-              { emoji: "🥈", name: "Silver", req: "15 Policies / Month", borderColor: "rgba(138,212,235,0.3)", shadow: "", offset: true },
-              { emoji: "🏆", name: "Gold", req: "25 Policies / Month", borderColor: "rgba(242,200,15,0.4)", shadow: "0 0 30px rgba(242,200,15,0.1)" },
+              { emoji: "🥉", name: "Bronze", req: "7 Deals / Month", borderColor: "rgba(181,149,37,0.3)", shadow: "" },
+              { emoji: "🥈", name: "Silver", req: "15 Deals / Month", borderColor: "rgba(138,212,235,0.3)", shadow: "", offset: true },
+              { emoji: "🏆", name: "Gold", req: "25 Deals / Month", borderColor: "rgba(242,200,15,0.4)", shadow: "0 0 30px rgba(242,200,15,0.1)" },
             ].map((b, i) => (
               <div
                 key={i}
@@ -321,12 +321,12 @@ const Landing = () => {
       <section className="py-[100px] max-md:py-[70px]" style={{ background: "rgba(1,184,170,0.02)" }}>
         <div className="max-w-[1140px] mx-auto px-6 text-center">
           <span className="text-[13px] font-semibold tracking-[2.5px] uppercase text-[#01B8AA] mb-4 inline-block">What Teams Say</span>
-          <h2 className="text-[clamp(32px,5vw,44px)] font-bold leading-[1.2] mb-[18px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Trusted by Insurance Field Teams</h2>
+          <h2 className="text-[clamp(32px,5vw,44px)] font-bold leading-[1.2] mb-[18px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Trusted by Field Sales Teams</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-[60px]">
             {[
-              { quote: "We reduced missed follow-ups by nearly 40% in the first month itself. My agents now plan their day properly and I can see exactly where they are.", initials: "SK", name: "Suresh Kumar", role: "Branch Manager, Life Insurance", avatarBg: "#01B8AA" },
-              { quote: "The badge system has completely changed how my team approaches targets. Everyone wants to hit Gold now. Our policy closures are up 28% since we started using In-Sync.", initials: "MP", name: "Meena Patel", role: "Regional Manager, Health Insurance", avatarBg: "#F2C80F" },
-              { quote: "Finally an app that works when there's no network! I can log visits in rural areas and everything syncs when I'm back in range. The GPS verification builds trust with my manager.", initials: "RV", name: "Rahul Verma", role: "Sales Officer, General Insurance", avatarBg: "#FD625E" },
+              { quote: "We reduced missed follow-ups by nearly 40% in the first month itself. My agents now plan their day properly and I can see exactly where they are.", initials: "SK", name: "Suresh Kumar", role: "Branch Manager", avatarBg: "#01B8AA" },
+              { quote: "The badge system has completely changed how my team approaches targets. Everyone wants to hit Gold now. Our deal closures are up 28% since we started using In-Sync.", initials: "MP", name: "Meena Patel", role: "Regional Manager", avatarBg: "#F2C80F" },
+              { quote: "Finally an app that works when there's no network! I can log visits in rural areas and everything syncs when I'm back in range. The GPS verification builds trust with my manager.", initials: "RV", name: "Rahul Verma", role: "Sales Officer", avatarBg: "#FD625E" },
             ].map((t, i) => (
               <div key={i} className="anim-scroll opacity-0 translate-y-6 transition-all duration-700 text-left rounded-[18px] p-8 border border-[#01B8AA]/15" style={{ background: "#12282E" }}>
                 <div className="text-[26px] text-[#01B8AA] opacity-40 leading-none mb-3" style={{ fontFamily: "Georgia, serif" }}>"</div>
@@ -399,7 +399,7 @@ const Landing = () => {
               { q: "Can I track agents across multiple branches?", a: "Absolutely. Admins get org-wide visibility across all branches on a single territory map. Branch Managers see their branch, and Sales Officers see their own data — all role-based and automatic." },
               { q: "Is my data secure?", a: "Enterprise-grade security with encrypted data storage and HTTPS-only connections. Your prospect data and visit logs are fully protected with role-based access controls at every level." },
               { q: "How long does setup take?", a: "Under 10 minutes. Create your account, invite team members via email, and they download the app and log in. No IT team needed, no complex configuration. Start tracking visits the same day." },
-              { q: "What insurance categories are supported?", a: "All major categories: Life, Health, Motor, and General Insurance. Every prospect and visit can be tagged with the relevant policy category for accurate pipeline tracking and analytics." },
+              { q: "What industry categories are supported?", a: "Categories are fully configurable to match your industry — whether it's FMCG, pharma, real estate, or any other vertical. Every prospect and visit can be tagged with the relevant category for accurate pipeline tracking and analytics." },
               { q: "Can agents fake their GPS location?", a: "GPS verification is built into every visit log. The system captures the precise coordinates and timestamp when a visit is logged, creating a verifiable record that builds trust between agents and managers." },
             ].map((f, i) => (
               <div key={i} className="anim-scroll opacity-0 translate-y-6 transition-all duration-700 rounded-[14px] p-7 border border-[#01B8AA]/15 hover:border-[#01B8AA]/30 cursor-default" style={{ background: "#12282E", transition: "all 0.3s" }}>
@@ -419,9 +419,9 @@ const Landing = () => {
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 60% 60% at 50% 80%, rgba(1,184,170,0.1) 0%, transparent 60%)" }} />
         <div className="relative z-10 max-w-[1140px] mx-auto px-6">
           <h2 className="text-[clamp(30px,4.5vw,46px)] font-bold mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-            Ready to See Every Visit,<br /><span className="text-[#01B8AA]">Close More Policies?</span>
+            Ready to See Every Visit,<br /><span className="text-[#01B8AA]">Close More Deals?</span>
           </h2>
-          <p className="text-[17px] text-[#8FA3A8] mb-9 max-w-[500px] mx-auto">Join insurance teams who've already transformed their field operations. Start your free trial today — no credit card needed.</p>
+          <p className="text-[17px] text-[#8FA3A8] mb-9 max-w-[500px] mx-auto">Join field teams who've already transformed their field operations. Start your free trial today — no credit card needed.</p>
           <div className="flex gap-4 justify-center flex-wrap">
             <button onClick={goAuth} className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-[15px] font-semibold bg-[#01B8AA] text-[#0B1A1E] border-none cursor-pointer transition-all hover:-translate-y-0.5" style={{ boxShadow: "0 0 30px rgba(1,184,170,0.25), 0 4px 15px rgba(0,0,0,0.3)" }}>
               Start 14-Day Free Trial →
