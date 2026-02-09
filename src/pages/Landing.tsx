@@ -61,6 +61,7 @@ const Landing = () => {
             <li><button onClick={() => scrollTo("use-cases")} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">Who It's For</button></li>
             <li><button onClick={() => scrollTo("pricing")} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">Pricing</button></li>
             <li><button onClick={() => scrollTo("faq")} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">FAQ</button></li>
+            <li><button onClick={goAuth} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">Sign In</button></li>
             <li>
               <button
                 onClick={goAuth}
