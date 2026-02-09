@@ -243,7 +243,7 @@ function TeamPlanningTab() {
                   <TableHead className="py-2 px-3 text-xs">Agent</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-right">Prospects</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-right">Quotes</TableHead>
-                  <TableHead className="py-2 px-3 text-xs text-right">Policies</TableHead>
+                  <TableHead className="py-2 px-3 text-xs text-right">Sales</TableHead>
                   <TableHead className="py-2 px-3 text-xs">Status</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-center">Sync</TableHead>
                   <TableHead className="py-2 px-3 text-xs text-right w-20">Actions</TableHead>
