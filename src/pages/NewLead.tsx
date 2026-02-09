@@ -220,14 +220,14 @@ const NewLead = () => {
 
               {/* Policy Details */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Policy Details</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Sales Details</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="policyTypeCategory"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Policy Category</FormLabel>
+                        <FormLabel>Sales Category</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -251,9 +251,9 @@ const NewLead = () => {
                     name="policyType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Policy Type</FormLabel>
+                        <FormLabel>Sales Type</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter policy type" {...field} />
+                          <Input placeholder="Enter sales type" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

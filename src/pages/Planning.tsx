@@ -336,7 +336,7 @@ export default function Planning() {
                     </tr>
                     {/* Policies */}
                     <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Policies</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Sales</td>
                       <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.policies_target || 0}</td>
                       <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.policies_actual || 0}</td>
                       <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
@@ -405,7 +405,7 @@ export default function Planning() {
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-yellow-500" />
-                Team Commission - {format(selectedDate, 'MMM yyyy')}
+                Team Incentives - {format(selectedDate, 'MMM yyyy')}
               </span>
             </CardTitle>
           </CardHeader>
@@ -419,8 +419,8 @@ export default function Planning() {
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="py-2 px-3 text-xs w-8">#</TableHead>
                       <TableHead className="py-2 px-3 text-xs">Agent</TableHead>
-                      <TableHead className="py-2 px-3 text-xs text-center">Policies</TableHead>
-                      <TableHead className="py-2 px-3 text-xs text-right">Commission</TableHead>
+                      <TableHead className="py-2 px-3 text-xs text-center">Sales</TableHead>
+                      <TableHead className="py-2 px-3 text-xs text-right">Incentives</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -465,7 +465,7 @@ export default function Planning() {
             {/* Total Team Commission */}
             {teamToppers && teamToppers.length > 0 && (
               <div className="mt-3 p-3 bg-primary/5 border border-primary/10 rounded flex items-center justify-between">
-                <span className="text-sm font-medium">Total Team Commission</span>
+                <span className="text-sm font-medium">Total Team Incentives</span>
                 <span className="text-lg font-bold text-success">
                   ₹{teamToppers.reduce((sum, m) => sum + m.incentive_earned, 0).toLocaleString('en-IN')}
                 </span>
@@ -506,13 +506,13 @@ export default function Planning() {
         </div>
       </div>
 
-      {/* Monthly Commission Card - First */}
+      {/* Monthly Incentives Card - First */}
       <Card className="glass-card" data-tour="planning-incentive">
         <CardHeader className="compact-header pb-1">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             <span className="flex items-center gap-2">
               <IndianRupee className="h-4 w-4 text-success" />
-              Monthly Commission
+              Monthly Incentives
             </span>
             <Badge variant="outline" className="text-xs h-5">
               {format(selectedDate, 'MMM yyyy')}
@@ -582,7 +582,7 @@ export default function Planning() {
                 "text-[10px] font-bold",
                 monthlyData.totalPoliciesIssued >= 7 ? "text-amber-600" : "text-muted-foreground"
               )}>BRONZE</span>
-              <span className="text-[9px] text-muted-foreground">7 Policies</span>
+              <span className="text-[9px] text-muted-foreground">7 Sales</span>
             </div>
 
             {/* Silver - 15 policies */}
@@ -600,7 +600,7 @@ export default function Planning() {
                 "text-[10px] font-bold",
                 monthlyData.totalPoliciesIssued >= 15 ? "text-slate-400" : "text-muted-foreground"
               )}>SILVER</span>
-              <span className="text-[9px] text-muted-foreground">15 Policies</span>
+              <span className="text-[9px] text-muted-foreground">15 Sales</span>
             </div>
 
             {/* Gold - 25 policies */}
@@ -618,7 +618,7 @@ export default function Planning() {
                 "text-[10px] font-bold",
                 monthlyData.totalPoliciesIssued >= 25 ? "text-yellow-500" : "text-muted-foreground"
               )}>GOLD</span>
-              <span className="text-[9px] text-muted-foreground">25 Policies</span>
+              <span className="text-[9px] text-muted-foreground">25 Sales</span>
             </div>
           </div>
 
@@ -631,7 +631,7 @@ export default function Planning() {
           )}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                Commission Earned
+                Incentives Earned
                 {monthlyData.incentiveEarned > 0 && (
                   <Sparkles className="h-4 w-4 text-success animate-pulse" />
                 )}
@@ -648,7 +648,7 @@ export default function Planning() {
             {monthlyData.incentiveEarned > 0 && (
               <div className="mt-3 pt-3 border-t border-success/30 space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Base (7 policies)</span>
+                  <span className="text-muted-foreground">Base (7 sales)</span>
                   <span className="font-medium">₹{monthlyData.baseIncentive.toLocaleString('en-IN')}</span>
                 </div>
                 {monthlyData.additionalIncentive > 0 && (
@@ -666,7 +666,7 @@ export default function Planning() {
             <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded text-xs">
               <TrendingUp className="h-3.5 w-3.5 text-primary" />
               <span>
-                <strong>{getNextTierHint()?.needed} more</strong> polic{getNextTierHint()!.needed > 1 ? 'ies' : 'y'} to earn {getNextTierHint()?.reward}!
+                <strong>{getNextTierHint()?.needed} more</strong> sale{getNextTierHint()!.needed > 1 ? 's' : ''} to earn {getNextTierHint()?.reward}!
               </span>
             </div>
           )}
@@ -759,7 +759,7 @@ export default function Planning() {
                     
                     {/* Policies Row */}
                     <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Policies</td>
+                      <td className="py-1.5 px-3 text-xs font-medium">Sales</td>
                       <td className="py-1 px-2 text-center">
                         <Input
                           type="number"

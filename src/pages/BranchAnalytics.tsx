@@ -82,7 +82,7 @@ const BranchAnalytics = () => {
           <CardContent className="p-3">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] text-muted-foreground">Total Policies Issued</p>
+                <p className="text-[10px] text-muted-foreground">Total Sales</p>
                 <p className="text-xl font-bold">{kpis.totalPolicies}</p>
               </div>
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -104,7 +104,7 @@ const BranchAnalytics = () => {
           <CardContent className="p-3">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] text-muted-foreground">Team Commission</p>
+                <p className="text-[10px] text-muted-foreground">Team Incentives</p>
                 <p className="text-xl font-bold">₹{kpis.totalIncentive.toLocaleString()}</p>
               </div>
               <IndianRupee className="h-4 w-4 text-amber-600" />
@@ -129,7 +129,7 @@ const BranchAnalytics = () => {
         {/* Policy Trend */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Policy Issuance Trend (30 Days)</CardTitle>
+            <CardTitle className="text-lg">Sales Trend (30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
@@ -144,7 +144,7 @@ const BranchAnalytics = () => {
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip 
                     labelFormatter={(value) => format(new Date(value), 'dd MMM yyyy')}
-                    formatter={(value: number) => [value, 'Policies']}
+                    formatter={(value: number) => [value, 'Sales']}
                   />
                   <Line 
                     type="monotone" 
@@ -162,7 +162,7 @@ const BranchAnalytics = () => {
         {/* Target vs Achievement */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Policies: Target vs Actual</CardTitle>
+            <CardTitle className="text-lg">Sales: Target vs Actual</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
@@ -210,7 +210,7 @@ const BranchAnalytics = () => {
                     <Icon className={cn("h-8 w-8 mb-2", colors[index])} />
                     <p className="font-semibold text-center">{topper.name}</p>
                     <p className="text-2xl font-bold">{topper.policies}</p>
-                    <p className="text-sm text-muted-foreground">policies</p>
+                    <p className="text-sm text-muted-foreground">sales</p>
                     <p className="text-lg font-semibold text-green-600 mt-1">₹{topper.incentive.toLocaleString()}</p>
                     {badge && (
                       <Badge className={cn("mt-2", badge.className)}>{badge.label}</Badge>
@@ -236,8 +236,8 @@ const BranchAnalytics = () => {
                   <TableHead>Officer</TableHead>
                   <TableHead className="text-center">Prospects (T/A/%)</TableHead>
                   <TableHead className="text-center">Quotes (T/A/%)</TableHead>
-                  <TableHead className="text-center">Policies (T/A/%)</TableHead>
-                  <TableHead className="text-right">Commission</TableHead>
+                  <TableHead className="text-center">Sales (T/A/%)</TableHead>
+                  <TableHead className="text-right">Incentives</TableHead>
                   <TableHead className="text-center">Badge</TableHead>
                 </TableRow>
               </TableHeader>
