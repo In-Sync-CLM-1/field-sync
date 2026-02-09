@@ -192,22 +192,34 @@ export default function Auth() {
     }
 
     if (verificationType === 'phone' && !signUpData.phone) {
-      toast.error('Phone number is required for phone verification');
+      toast.error('Phone number is required for WhatsApp verification');
       return;
     }
 
     setSendingOTP(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-otp', {
-        body: {
-          identifier: verificationType === 'phone' ? signUpData.phone.replace(/\D/g, '') : identifier,
-          identifier_type: verificationType,
-        },
-      });
-
-      if (error) throw error;
+      if (verificationType === 'phone') {
+        // Use WhatsApp OTP via send-public-otp
+        const { data, error } = await supabase.functions.invoke('send-public-otp', {
+          body: {
+            phone: signUpData.phone.replace(/\D/g, ''),
+            channel: 'whatsapp',
+          },
+        });
+        if (error) throw error;
+        toast.success('Verification code sent to your WhatsApp');
+      } else {
+        // Use email OTP via existing send-otp
+        const { data, error } = await supabase.functions.invoke('send-otp', {
+          body: {
+            identifier: signUpData.email,
+            identifier_type: 'email',
+          },
+        });
+        if (error) throw error;
+        toast.success('Verification code sent to your email');
+      }
       
-      toast.success(`Verification code sent to your ${verificationType}`);
       setRegistrationStep('otp');
       setResendCooldown(60);
     } catch (error: any) {
@@ -224,27 +236,44 @@ export default function Auth() {
       return;
     }
 
-    const identifier = verificationType === 'email' ? signUpData.email : signUpData.phone.replace(/\D/g, '');
-
     setVerifyingOTP(true);
     try {
-      const { data, error } = await supabase.functions.invoke('verify-otp', {
-        body: {
-          identifier,
-          identifier_type: verificationType,
-          code: otpCode,
-        },
-      });
-
-      if (error) throw error;
-      
-      if (data.success) {
-        setOtpVerified(true);
-        toast.success('Verification successful!');
-        // Proceed with registration
-        await completeRegistration();
+      if (verificationType === 'phone') {
+        // Verify via send-public-otp
+        const { data, error } = await supabase.functions.invoke('send-public-otp', {
+          body: {
+            phone: signUpData.phone.replace(/\D/g, ''),
+            otp: otpCode,
+            action: 'verify',
+          },
+        });
+        if (error) throw error;
+        
+        if (data.verified) {
+          setOtpVerified(true);
+          toast.success('WhatsApp verification successful!');
+          await completeRegistration();
+        } else {
+          toast.error(data.error || 'Invalid verification code');
+        }
       } else {
-        toast.error(data.error || 'Invalid verification code');
+        // Verify via existing verify-otp
+        const { data, error } = await supabase.functions.invoke('verify-otp', {
+          body: {
+            identifier: signUpData.email,
+            identifier_type: 'email',
+            code: otpCode,
+          },
+        });
+        if (error) throw error;
+        
+        if (data.success) {
+          setOtpVerified(true);
+          toast.success('Verification successful!');
+          await completeRegistration();
+        } else {
+          toast.error(data.error || 'Invalid verification code');
+        }
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error);
@@ -443,7 +472,7 @@ export default function Auth() {
                   <Phone size={20} />
                 </div>
                 <div className="text-left flex-1">
-                  <p className="font-medium text-foreground">Phone</p>
+                  <p className="font-medium text-foreground">WhatsApp</p>
                   <p className="text-sm text-muted-foreground">
                     {signUpData.phone || 'No phone number provided'}
                   </p>
