@@ -151,7 +151,7 @@ const Landing = () => {
             style={{ textShadow: '0 2px 20px rgba(0, 0, 0, 0.5), 0 4px 40px rgba(1, 184, 170, 0.15)' }}
           >
             Your Field.{" "}
-            <span className="text-[#01B8AA]" style={{ textShadow: '0 2px 20px rgba(1, 184, 170, 0.4)' }}>Your Control.</span>
+            <span className="text-white">Your Control.</span>
           </h1>
 
           {/* Subheadline */}
