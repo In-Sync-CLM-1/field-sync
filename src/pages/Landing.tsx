@@ -241,7 +241,7 @@ const Landing = () => {
             {[
               { icon: "📍", bg: "rgba(1,184,170,0.12)", title: "Know Where Your Agents Are — Live", desc: "Real-time GPS tracking with visit verification. See every agent's location on a territory map with role-based visibility — Sales Officers see their data, Managers see the branch, Admins see everything." },
               { icon: "📊", bg: "rgba(253,98,94,0.12)", title: "Spot Top Performers Instantly", desc: "Unified analytics with visit trends, completion rates, and branch-level KPIs. Trophy and medal rankings make it easy to identify who's excelling and who needs coaching." },
-              { icon: "📋", bg: "rgba(242,200,15,0.12)", title: "Plan the Day in 60 Seconds", desc: "Agents set daily targets for prospects, quotes, and policies. Managers track Life & Health branch targets in real time. Works offline-first — syncs the moment connectivity returns." },
+              { icon: "📋", bg: "rgba(242,200,15,0.12)", title: "Plan the Day in 60 Seconds", desc: "Agents set daily targets for prospects, quotes, and sales. Managers track branch targets in real time. Works offline-first — syncs the moment connectivity returns." },
               { icon: "👥", bg: "rgba(254,150,102,0.12)", title: "Manage Prospects End-to-End", desc: "Full prospect lifecycle with industry-specific fields: Category, Deal Value, Source, Follow-up Date — with automatic location capture on every interaction." },
               { icon: "📱", bg: "rgba(138,212,235,0.12)", title: "Works Offline, Syncs Automatically", desc: "Built for areas with patchy connectivity. Agents work uninterrupted with IndexedDB-powered offline mode. Data syncs seamlessly the instant they're back online." },
               { icon: "👨‍💼", bg: "rgba(166,105,153,0.12)", title: "Role-Based Team Control", desc: "Three-tier hierarchy: Sales Officer → Branch Manager → Admin. Assign reporting managers, toggle active/inactive status, and control exactly who sees what across your organization." },
@@ -304,7 +304,7 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-[60px]">
             {[
               { emoji: "🏃", role: "Sales Officer", title: "Plan, Visit, Close", desc: "Plan your daily route, log GPS-verified visits, track your incentive progress, and earn milestone badges. Works even without internet in the field." },
-              { emoji: "📋", role: "Branch Manager", title: "Coach & Optimize", desc: "See your entire branch's performance at a glance. Identify top performers, spot agents who need support, and track Life & Health targets against goals." },
+              { emoji: "📋", role: "Branch Manager", title: "Coach & Optimize", desc: "See your entire branch's performance at a glance. Identify top performers, spot agents who need support, and track targets against goals." },
               { emoji: "🏢", role: "Admin / Leadership", title: "Full Org Visibility", desc: "Organization-wide territory maps, cross-branch analytics, team management, and complete prospect pipeline visibility — all from a single dashboard." },
             ].map((c, i) => (
               <div key={i} className="anim-scroll opacity-0 translate-y-6 transition-all duration-700 text-center rounded-[18px] py-9 px-7 border border-[#01B8AA]/15 hover:border-[#01B8AA]/30 hover:-translate-y-1" style={{ background: "#12282E", transition: "all 0.3s" }}>
