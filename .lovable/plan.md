@@ -1,36 +1,29 @@
 
 
-# Seed Dummy Data for Team & Branches
+# Fix Agent Column to Show Full Names
 
-## Overview
-The 10 dummy team members already exist in the database with proper branch assignments and reporting hierarchy, but they have no `daily_plans` entries. This plan will insert daily plan records for all team members and fix two display issues.
+## Problem
+The `getUserName` function in both `TeamAndBranches.tsx` and `PlanningOverview.tsx` truncates the user ID (`plan.userId.substring(0, 8) + '...'`) instead of showing the agent's full name. The profile data IS fetched from the server (with a join on `profiles`), but `toLocalPlan()` discards it, and the `DailyPlanLocal` interface has no field for it.
 
-## Data to Insert
+## Solution
+Add an `agentFullName` field to `DailyPlanLocal`, populate it during sync, and use it in the display functions.
 
-Insert `daily_plans` entries for all 10 dummy agents with varied targets and actuals across recent dates (Feb 7-9):
+## Changes
 
-| Agent | Branch | Prospects T/A | Quotes T/A | Sales T/A | Status |
-|-------|--------|--------------|------------|-----------|--------|
-| Rahul Sharma | Mumbai Central | 12/10 | 8/6 | 5/4 | approved |
-| Priya Patel | Delhi North | 15/14 | 10/9 | 6/5 | submitted |
-| Amit Kumar | Mumbai Central | 8/7 | 5/4 | 3/2 | approved |
-| Sneha Gupta | Mumbai Central | 10/9 | 6/5 | 4/3 | submitted |
-| Vikram Singh | Delhi North | 9/8 | 7/6 | 4/4 | approved |
-| Raj Deshmukh | Delhi North | 11/10 | 8/7 | 5/3 | corrected |
-| Anita Iyer | Delhi North | 7/6 | 4/3 | 2/2 | submitted |
-| Neha Reddy | Mumbai Central | 10/8 | 6/5 | 3/3 | draft |
-| Arjun Mehta | Mumbai Central | 13/12 | 9/8 | 5/4 | submitted |
-| Kavita Joshi | Delhi North | 8/7 | 5/4 | 3/2 | approved |
+### 1. `src/lib/db.ts` -- Add `agentFullName` to `DailyPlanLocal`
+- Add optional field: `agentFullName?: string`
 
-This will be inserted for 3 dates each (Feb 7, 8, 9) = 30 total records.
+### 2. `src/hooks/useDailyPlansOffline.ts` -- Cache agent name during sync
+- In `toLocalPlan()`, extract the joined profile data:
+  ```
+  agentFullName: plan.user?.full_name || plan.user?.first_name || ''
+  ```
+- This preserves the name in IndexedDB for offline access.
 
-## Bug Fixes
+### 3. `src/pages/TeamAndBranches.tsx` -- Use cached name
+- Update `getUserName()` to: `return plan.agentFullName || plan.userId.substring(0, 8) + '...'`
 
-1. **"Policies" column header**: The Team Planning table still shows "Policies" in the header -- rename to "Sales" (missed in the earlier terminology update).
-2. **Your profile name**: Update your profile's `full_name` from "a@in-sync.co.in" to a proper display name so it doesn't show as a truncated ID.
-
-## Steps
-1. Insert 30 `daily_plans` records for the 10 dummy agents across Feb 7-9
-2. Fix the "Policies" column header in `TeamAndBranches.tsx` to "Sales"
-3. Update your profile's `full_name` for better display
+### 4. `src/pages/PlanningOverview.tsx` -- Use cached name
+- Same update to `getUserName()` as above.
+- Also fix the delete confirmation text that still says "Policies" (line 455) to "Sales".
 
