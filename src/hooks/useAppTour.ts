@@ -16,6 +16,14 @@ export interface TourStep {
 const tourSteps: TourStep[] = [
   // Dashboard steps
   {
+    id: 'dashboard-setup',
+    page: '/dashboard',
+    target: '[data-tour="setup-checklist"]',
+    title: '🚀 Your Getting Started Guide',
+    description: 'Complete these tasks to set up your workspace — add team members and prospects to get rolling!',
+    position: 'bottom',
+  },
+  {
     id: 'dashboard-metrics',
     page: '/dashboard',
     target: '[data-tour="metrics"]',
@@ -46,6 +54,15 @@ const tourSteps: TourStep[] = [
     title: '🧭 Navigation Menu',
     description: 'Access Daily Planning, Team Management, Analytics, and more from the sidebar.',
     position: 'right',
+  },
+  // Users page step
+  {
+    id: 'users-page',
+    page: '/dashboard/users',
+    target: '[data-tour="users-header"]',
+    title: '👥 Build Your Team Here!',
+    description: 'Add at least 3 team members to unlock the full power of collaboration. Use the "Add User" button to get started!',
+    position: 'bottom',
   },
   // Daily Planning steps
   {
@@ -219,13 +236,13 @@ export function useAppTour() {
 
   // Get page-specific info for progress display
   const getPageInfo = useCallback(() => {
-    const pages = ['Dashboard', 'Daily Planning', 'Prospects'];
     const currentStepData = tourSteps[currentStep];
     if (!currentStepData) return { pageName: '', pageIndex: 0 };
     
     if (currentStepData.page === '/dashboard') return { pageName: 'Dashboard', pageIndex: 0 };
-    if (currentStepData.page === '/dashboard/planning') return { pageName: 'Daily Planning', pageIndex: 1 };
-    if (currentStepData.page === '/dashboard/leads') return { pageName: 'Prospects', pageIndex: 2 };
+    if (currentStepData.page === '/dashboard/users') return { pageName: 'Users', pageIndex: 1 };
+    if (currentStepData.page === '/dashboard/planning') return { pageName: 'Daily Planning', pageIndex: 2 };
+    if (currentStepData.page === '/dashboard/leads') return { pageName: 'Prospects', pageIndex: 3 };
     return { pageName: '', pageIndex: 0 };
   }, [currentStep]);
 
