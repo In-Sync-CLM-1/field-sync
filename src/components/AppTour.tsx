@@ -185,7 +185,7 @@ export function AppTour() {
               <Progress value={progress} className="h-1.5" />
               {/* Page indicators */}
               <div className="flex justify-center gap-1 pt-1">
-                {['Dashboard', 'Planning', 'Prospects'].map((page, idx) => (
+                {['Dashboard', 'Users', 'Planning', 'Prospects'].map((page, idx) => (
                   <div 
                     key={page}
                     className={`h-1 rounded-full transition-all ${
