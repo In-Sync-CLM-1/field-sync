@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { 
   ArrowLeft,
   Building2, 
@@ -20,7 +22,8 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  IndianRupee
+  IndianRupee,
+  Trash2
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -49,6 +52,27 @@ export default function OrganizationsDashboard() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [deleteOrgId, setDeleteOrgId] = useState<string | null>(null);
+  const [deleteOrgName, setDeleteOrgName] = useState('');
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (orgId: string) => {
+      const { data, error } = await supabase.functions.invoke('delete-organization', {
+        body: { organization_id: orgId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Organization deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['platform-admin-organizations'] });
+      setDeleteOrgId(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete organization');
+    },
+  });
 
   const { data: organizations, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['platform-admin-organizations'],
@@ -236,12 +260,13 @@ export default function OrganizationsDashboard() {
                       <TableHead className="hidden md:table-cell">Trial Ends</TableHead>
                       <TableHead className="hidden lg:table-cell">Created</TableHead>
                       <TableHead className="hidden lg:table-cell">Billing Email</TableHead>
+                      <TableHead className="w-[60px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredOrganizations?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           No organizations found
                         </TableCell>
                       </TableRow>
@@ -296,6 +321,20 @@ export default function OrganizationsDashboard() {
                             <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
                               {org.billing_email || '—'}
                             </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteOrgId(org.id);
+                                  setDeleteOrgName(org.name);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         );
                       })
@@ -307,6 +346,28 @@ export default function OrganizationsDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteOrgId} onOpenChange={(open) => !open && setDeleteOrgId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Organization</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete <strong>{deleteOrgName}</strong>? This will remove all users, leads, visits, plans, and related data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteOrgId && deleteMutation.mutate(deleteOrgId)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete Organization'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
