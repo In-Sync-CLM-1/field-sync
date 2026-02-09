@@ -1,29 +1,16 @@
 
 
-# Fix Agent Column to Show Full Names
+# Remove Sync Column from Team Planning
 
 ## Problem
-The `getUserName` function in both `TeamAndBranches.tsx` and `PlanningOverview.tsx` truncates the user ID (`plan.userId.substring(0, 8) + '...'`) instead of showing the agent's full name. The profile data IS fetched from the server (with a join on `profiles`), but `toLocalPlan()` discards it, and the `DailyPlanLocal` interface has no field for it.
+The "Sync" column showing cloud sync status icons is unnecessary -- data synchronization should happen automatically in the background without exposing internal sync state to users.
 
-## Solution
-Add an `agentFullName` field to `DailyPlanLocal`, populate it during sync, and use it in the display functions.
+## Change
 
-## Changes
+### `src/pages/TeamAndBranches.tsx`
+- Remove the "Sync" `<TableHead>` column header
+- Remove the `<TableCell>` containing `getSyncBadge(plan.syncStatus)` from each row
+- The `getSyncBadge` function can be removed as well since it will no longer be used
 
-### 1. `src/lib/db.ts` -- Add `agentFullName` to `DailyPlanLocal`
-- Add optional field: `agentFullName?: string`
-
-### 2. `src/hooks/useDailyPlansOffline.ts` -- Cache agent name during sync
-- In `toLocalPlan()`, extract the joined profile data:
-  ```
-  agentFullName: plan.user?.full_name || plan.user?.first_name || ''
-  ```
-- This preserves the name in IndexedDB for offline access.
-
-### 3. `src/pages/TeamAndBranches.tsx` -- Use cached name
-- Update `getUserName()` to: `return plan.agentFullName || plan.userId.substring(0, 8) + '...'`
-
-### 4. `src/pages/PlanningOverview.tsx` -- Use cached name
-- Same update to `getUserName()` as above.
-- Also fix the delete confirmation text that still says "Policies" (line 455) to "Sales".
+This is a simple column removal with no impact on functionality -- sync continues to work automatically behind the scenes.
 
