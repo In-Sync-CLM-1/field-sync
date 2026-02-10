@@ -1,84 +1,148 @@
 
-# Make Daily Plan Creation More Obvious
+# Enhanced Visit Management - All 5 Features
 
-## Problem
-The Daily Planning page has all the functionality to create a plan, but the "Submit" button is small (h-6) and placed at the very bottom of the form, making it hard to discover. First-time users don't realize they need to fill in the target numbers and scroll down to submit.
+## Overview
+This plan adds five major features to the visit management system: Calendar View, Route Optimization, Bulk Visit Creation, Visit Checklist Templates, and Reschedule/Cancel functionality.
 
-## Solution
-Make the plan creation flow more intuitive with these changes:
+---
 
-### 1. Add a Prominent "Create Today's Plan" Call-to-Action (when no plan exists)
-When there's no plan for the selected date, show a highlighted banner/card above the target table with a clear message like:
-- "Set Your Targets for Today" with a brief instruction: "Enter your Prospects, Quotes, and Sales targets below, then tap Save Plan"
-- Use the brand's primary color to draw attention
+## 1. Database Changes
 
-### 2. Make the Submit/Save Button More Prominent
-- Increase button size from `h-6` to `h-9` (standard button height)
-- Make it full-width when creating a new plan
-- Use clear label: "Save Plan" (instead of "Submit")
-- Add a `PlusCircle` icon when creating, `Save` icon when updating
-- Use a success/primary color accent so it stands out
+### New columns on `visits` table:
+- `purpose` (text, nullable) -- e.g. Meeting, Follow-up, Delivery, etc.
+- `scheduled_date` (date, nullable) -- for scheduled/planned visits
+- `scheduled_time` (time, nullable) -- planned time
+- `status` (text, default 'in_progress') -- values: scheduled, in_progress, completed, cancelled, rescheduled
+- `cancelled_at` (timestamptz, nullable)
+- `cancel_reason` (text, nullable)
+- `rescheduled_from` (uuid, nullable, FK to visits.id) -- links to original visit
+- `checklist` (jsonb, nullable) -- stores checklist items and completion state
 
-### 3. Show an Empty State Guide (when no plan exists for the date)
-Before the user enters any targets, highlight the input fields with a subtle pulsing border or accent color to guide attention to them.
+### New table: `visit_checklist_templates`
+- `id` (uuid, PK)
+- `organization_id` (uuid, NOT NULL)
+- `name` (text, NOT NULL)
+- `items` (jsonb, NOT NULL) -- array of {label, required}
+- `is_active` (boolean, default true)
+- `created_at`, `updated_at`
+- RLS: org-scoped read for all users, admin-only write
+
+---
+
+## 2. Calendar View for Scheduling Visits
+
+### New page: `src/pages/VisitCalendar.tsx`
+- Monthly calendar grid showing visits per day (color-coded by status)
+- Click a day to see that day's visits in a side panel
+- Click a visit to navigate to its detail page
+- "Schedule Visit" button to create a future-dated visit
+- Toggle between Calendar and List view on the Visits page
+
+### Changes:
+- **`src/pages/Visits.tsx`**: Add a toggle (List | Calendar) at the top. When "Calendar" is selected, render the new calendar component
+- **`src/App.tsx`**: Add route `/dashboard/visits/calendar`
+- Uses existing `Calendar` component from shadcn as the base
+
+---
+
+## 3. Route Optimization for Field Agents
+
+### New component: `src/components/RouteOptimizer.tsx`
+- Takes a list of scheduled visits for a day
+- Calculates optimized order using nearest-neighbor algorithm (client-side, using the Haversine formula already in `NewVisit.tsx`)
+- Shows ordered list with estimated distances between stops
+- "Open in Google Maps" button that generates a multi-stop directions URL
+- Accessible from the Calendar day view and Planning page
+
+### How it works:
+- Fetches all visits scheduled for a given day
+- Gets customer locations from the leads/customers table
+- Sorts them by nearest-neighbor from agent's current location
+- Generates Google Maps URL with waypoints
+
+---
+
+## 4. Bulk Visit Creation
+
+### New component: `src/components/BulkVisitCreator.tsx`
+- Modal/dialog accessible from the Visits page
+- Multi-select leads/customers from a searchable list
+- Set common fields: scheduled date, purpose, notes
+- Preview selected leads before creating
+- Creates multiple visit records with `status: 'scheduled'`
+
+### Changes:
+- **`src/pages/Visits.tsx`**: Add "Bulk Schedule" button next to the existing "+" button
+- **`src/hooks/useVisits.tsx`**: Add `bulkCreateVisits` mutation
+
+---
+
+## 5. Visit Checklist Templates
+
+### Admin: `src/components/ChecklistTemplateManager.tsx`
+- Admin-only UI to create/edit checklist templates
+- Each template has a name and list of items (label + required flag)
+- Accessible from a settings/admin area
+
+### Agent usage:
+- **`src/pages/NewVisit.tsx`**: Add optional checklist template selector
+- **`src/pages/VisitDetail.tsx`**: Show checklist items with checkboxes, saved to `visits.checklist` as JSONB
+- Agents tick off items during the visit; completion state persists
+
+---
+
+## 6. Reschedule/Cancel Functionality
+
+### Changes to `src/pages/VisitDetail.tsx`:
+- Add "Reschedule" button (for scheduled/in-progress visits)
+  - Opens a dialog to pick a new date/time
+  - Creates a new visit record linked via `rescheduled_from`
+  - Marks original as `status: 'rescheduled'`
+- Add "Cancel" button
+  - Opens a dialog for cancel reason
+  - Sets `status: 'cancelled'`, `cancelled_at`, `cancel_reason`
+
+### Changes to `src/hooks/useVisits.tsx`:
+- Add `rescheduleVisit` and `cancelVisit` mutations
+- Update queries to filter by status
 
 ---
 
 ## Technical Details
 
-### File: `src/pages/Planning.tsx`
+### Files to Create:
+1. `src/pages/VisitCalendar.tsx` -- Calendar view page
+2. `src/components/RouteOptimizer.tsx` -- Route optimization component
+3. `src/components/BulkVisitCreator.tsx` -- Bulk visit creation dialog
+4. `src/components/ChecklistTemplateManager.tsx` -- Admin checklist template CRUD
+5. `src/components/VisitChecklist.tsx` -- Checklist display/interaction for agents
+6. `src/components/RescheduleDialog.tsx` -- Reschedule dialog
+7. `src/components/CancelVisitDialog.tsx` -- Cancel dialog
 
-**Changes to the Agent View section (lines 444-853):**
+### Files to Modify:
+1. `src/pages/Visits.tsx` -- Add calendar toggle, bulk schedule button
+2. `src/pages/NewVisit.tsx` -- Add scheduled date, purpose, checklist template selector
+3. `src/pages/VisitDetail.tsx` -- Add checklist, reschedule/cancel buttons, status display
+4. `src/hooks/useVisits.tsx` -- Add new mutations and update interfaces
+5. `src/App.tsx` -- Add calendar route
 
-1. Add a motivational banner above the Target vs Achievement card when `!plan`:
-```tsx
-{!plan && !isLoading && (
-  <Card className="border-primary/30 bg-primary/5">
-    <CardContent className="p-4 flex items-center gap-3">
-      <div className="icon-circle icon-circle-primary h-10 w-10 shrink-0">
-        <Target className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-foreground">
-          Set Your Targets for {format(selectedDate, 'MMM d, yyyy')}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Enter your Prospects, Quotes & Sales targets below and tap Save Plan
-        </p>
-      </div>
-    </CardContent>
-  </Card>
-)}
+### Database Migration:
+- ALTER `visits` table with new columns
+- CREATE `visit_checklist_templates` table with RLS policies
+
+### Visit Status Flow:
+```text
+scheduled --> in_progress --> completed
+    |              |
+    v              v
+cancelled     cancelled
+    |
+    v
+rescheduled (new visit created)
 ```
 
-2. Update the Submit button (lines 826-835) to be larger and more prominent:
-```tsx
-<div className="mt-3">
-  <Button 
-    size="default"
-    className="w-full h-9 text-sm font-medium gap-2"
-    type="submit"
-    disabled={createPlan.isPending || updatePlan.isPending}
-  >
-    {plan ? (
-      <>
-        <CheckCircle className="h-4 w-4" />
-        Update Plan
-      </>
-    ) : (
-      <>
-        <PlusCircle className="h-4 w-4" />
-        Save Plan
-      </>
-    )}
-  </Button>
-</div>
-```
-
-3. Import `PlusCircle` from lucide-react (add to existing import on line 4).
-
-### Summary of Changes
-- **1 file modified**: `src/pages/Planning.tsx`
-- Adds a guidance banner when no plan exists for the selected date
-- Makes the Save/Submit button full-width and larger with an icon
-- No database or backend changes needed
+### Route Optimization Algorithm:
+- Nearest-neighbor heuristic (greedy, O(n^2))
+- Start from agent's current GPS location
+- Pick closest unvisited customer, repeat
+- Good enough for typical daily routes (5-15 stops)
