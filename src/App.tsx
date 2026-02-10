@@ -36,6 +36,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
+import Profile from "./pages/Profile";
 import OrganizationsDashboard from "./pages/PlatformAdmin/OrganizationsDashboard";
 import OrganizationDetail from "./pages/PlatformAdmin/OrganizationDetail";
 
@@ -136,6 +137,7 @@ const App = () => (
                     <SubscriptionManagement />
                   </AdminRoute>
                 } />
+                <Route path="profile" element={<Profile />} />
                 
               </Route>
               <Route path="*" element={<NotFound />} />
