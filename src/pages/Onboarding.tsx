@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import {
   ChevronLeft, Sparkles, Lightbulb, Target, Rocket,
   ArrowRight, CheckCircle2, Star, Zap, Trophy, Plus,
   BarChart, Calendar, Flame, Crown, Swords, PartyPopper,
-  X
+  X, Upload, Camera
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -75,6 +75,27 @@ export default function Onboarding() {
     address: '',
   });
 
+  // Logo upload
+  const [orgLogo, setOrgLogo] = useState<File | null>(null);
+  const [orgLogoPreview, setOrgLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please select an image file'); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error('Image must be under 2MB'); return; }
+    setOrgLogo(file);
+    setOrgLogoPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveLogo = () => {
+    setOrgLogo(null);
+    if (orgLogoPreview) URL.revokeObjectURL(orgLogoPreview);
+    setOrgLogoPreview(null);
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
+
   // Prospects list
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [currentProspect, setCurrentProspect] = useState<Prospect>({ name: '', phone: '', city: '' });
@@ -103,9 +124,25 @@ export default function Onboarding() {
     try {
       if (currentOrganization) {
         const settings = { ...(currentOrganization.settings || {}), industry: data.industry, address: data.address };
-        const { error } = await supabase.from('organizations').update({ name: data.companyName.trim(), settings }).eq('id', currentOrganization.id);
+        const updatePayload: Record<string, any> = { name: data.companyName.trim(), settings };
+
+        // Upload logo if selected
+        if (orgLogo) {
+          const ext = orgLogo.name.split('.').pop() || 'png';
+          const filePath = `${currentOrganization.id}/logo.${ext}`;
+          const { error: uploadError } = await supabase.storage.from('org-logos').upload(filePath, orgLogo, { upsert: true });
+          if (uploadError) {
+            console.error('Logo upload error:', uploadError);
+            toast.error('Logo upload failed, but continuing setup');
+          } else {
+            const { data: publicUrlData } = supabase.storage.from('org-logos').getPublicUrl(filePath);
+            updatePayload.logo_url = publicUrlData.publicUrl;
+          }
+        }
+
+        const { error } = await supabase.from('organizations').update(updatePayload).eq('id', currentOrganization.id);
         if (error) throw error;
-        setCurrentOrganization({ ...currentOrganization, name: data.companyName.trim(), settings });
+        setCurrentOrganization({ ...currentOrganization, name: data.companyName.trim(), settings, ...(updatePayload.logo_url ? { logo_url: updatePayload.logo_url } : {}) });
       }
       gainXp(50);
       setPhase('portal-unlocked');
@@ -513,6 +550,41 @@ export default function Onboarding() {
             <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/10">
               <Building2 className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium">Company Profile</span>
+            </div>
+
+            {/* Logo Upload */}
+            <div className="flex flex-col items-center gap-2">
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoSelect}
+                className="hidden"
+              />
+              {orgLogoPreview ? (
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary/30 shadow-md">
+                    <img src={orgLogoPreview} alt="Logo preview" className="w-full h-full object-cover" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-sm hover:bg-destructive/90 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="w-20 h-20 rounded-full border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer"
+                >
+                  <Camera className="h-5 w-5 text-muted-foreground/50" />
+                  <span className="text-[10px] text-muted-foreground/50 font-medium">Upload Logo</span>
+                </button>
+              )}
+              <p className="text-xs text-muted-foreground">Optional • Max 2MB</p>
             </div>
 
             <div className="space-y-2">
