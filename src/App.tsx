@@ -37,6 +37,7 @@ import Onboarding from "./pages/Onboarding";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 import Profile from "./pages/Profile";
+import Attendance from "./pages/Attendance";
 import OrganizationsDashboard from "./pages/PlatformAdmin/OrganizationsDashboard";
 import OrganizationDetail from "./pages/PlatformAdmin/OrganizationDetail";
 
@@ -138,6 +139,7 @@ const App = () => (
                     <SubscriptionManagement />
                   </AdminRoute>
                 } />
+                <Route path="attendance" element={<Attendance />} />
                 <Route path="profile" element={<Profile />} />
                 
               </Route>
