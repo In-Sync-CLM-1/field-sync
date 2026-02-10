@@ -1,26 +1,26 @@
 
 
-## Fix: WhatsApp OTP Not Delivering
+## Fix: Wrong WhatsApp Template Name
 
-### Root Cause
-Two mismatches between the code and your Exotel template configuration:
+### Problem
+The edge function sends the template name `"psotp1"` (line 46 of `send-public-otp/index.ts`), but your Exotel/Meta dashboard shows the approved Authentication template is named **"otp"**. Exotel accepts the request (returns 202) but silently fails delivery because the template name doesn't exist.
 
-1. **Wrong template name**: Code sends `psotp1`, but your Exotel template is named `otp`
-2. **Possible language code mismatch**: Code sends `en_US`, but your template may use `en` (English)
-3. **Extra button component**: Code sends a URL button parameter, but your template appears to only have a body text with one parameter (`{{1}}`)
+### Solution
+A single-line change in `supabase/functions/send-public-otp/index.ts`:
 
-### Changes
+- **Line 46**: Change `name: "psotp1"` to `name: "otp"`
 
-**File: `supabase/functions/send-public-otp/index.ts`**
+### Technical Details
 
-Update the WhatsApp message payload to match your actual Exotel template:
+The template "otp" in your Exotel dashboard:
+- Category: Authentication
+- Language: English
+- Status: Active - quality pending
+- Body: `"{{1}} is your verification code. For your security..."`
 
-- Change template name from `"psotp1"` to `"otp"`
-- Change language from `"en_US"` to `"en"` 
-- Remove the URL button component (index 0) since your template only has a body parameter
-- Keep the body component with the OTP code as parameter `{{1}}`
+The `components` array structure (body param + URL button param) and `language.code: "en_US"` will remain unchanged since these match the Authentication template format.
 
-### After Deployment
-
-Once deployed, the function will automatically be available. You can test by requesting an OTP on the auth page to verify WhatsApp delivery works.
+### After the fix
+- Redeploy the `send-public-otp` edge function (automatic)
+- Test OTP delivery end-to-end on the `/auth` page
 
