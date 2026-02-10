@@ -94,13 +94,16 @@ export function AppTour() {
       target.classList.add('tour-highlight');
     };
 
-    // Wait for page to render
-    const timer = setTimeout(updatePosition, 300);
+    // Wait for page to fully render before positioning
+    const timer = setTimeout(updatePosition, 500);
+    // Re-check position periodically in case elements load late
+    const retryTimer = setTimeout(updatePosition, 1000);
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition);
 
     return () => {
       clearTimeout(timer);
+      clearTimeout(retryTimer);
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition);
       document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
