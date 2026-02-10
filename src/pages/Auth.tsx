@@ -200,27 +200,14 @@ export default function Auth() {
 
     setSendingOTP(true);
     try {
-      if (verificationType === 'phone') {
-        // Use WhatsApp OTP via send-public-otp
-        const { data, error } = await supabase.functions.invoke('send-public-otp', {
-          body: {
-            phone: signUpData.phone.replace(/\D/g, ''),
-            channel: 'whatsapp',
-          },
-        });
-        if (error) throw error;
-        toast.success('Verification code sent to your WhatsApp');
-      } else {
-        // Use email OTP via existing send-otp
-        const { data, error } = await supabase.functions.invoke('send-otp', {
-          body: {
-            identifier: signUpData.email,
-            identifier_type: 'email',
-          },
-        });
-        if (error) throw error;
-        toast.success('Verification code sent to your email');
-      }
+      const isPhone = verificationType === 'phone';
+      const { data, error } = await supabase.functions.invoke('send-public-otp', {
+        body: isPhone
+          ? { action: 'send', channel: 'whatsapp', phone: signUpData.phone.replace(/\D/g, '') }
+          : { action: 'send', channel: 'email', email: signUpData.email },
+      });
+      if (error) throw error;
+      toast.success(isPhone ? 'Verification code sent to your WhatsApp' : 'Verification code sent to your email');
       
       setRegistrationStep('otp');
       setResendCooldown(60);
@@ -240,42 +227,20 @@ export default function Auth() {
 
     setVerifyingOTP(true);
     try {
-      if (verificationType === 'phone') {
-        // Verify via send-public-otp
-        const { data, error } = await supabase.functions.invoke('send-public-otp', {
-          body: {
-            phone: signUpData.phone.replace(/\D/g, ''),
-            otp: otpCode,
-            action: 'verify',
-          },
-        });
-        if (error) throw error;
-        
-        if (data.verified) {
-          setOtpVerified(true);
-          toast.success('WhatsApp verification successful!');
-          await completeRegistration();
-        } else {
-          toast.error(data.error || 'Invalid verification code');
-        }
+      const isPhone = verificationType === 'phone';
+      const { data, error } = await supabase.functions.invoke('send-public-otp', {
+        body: isPhone
+          ? { action: 'verify', channel: 'whatsapp', phone: signUpData.phone.replace(/\D/g, ''), otp: otpCode }
+          : { action: 'verify', channel: 'email', email: signUpData.email, otp: otpCode },
+      });
+      if (error) throw error;
+      
+      if (data.verified) {
+        setOtpVerified(true);
+        toast.success('Verification successful!');
+        await completeRegistration();
       } else {
-        // Verify via existing verify-otp
-        const { data, error } = await supabase.functions.invoke('verify-otp', {
-          body: {
-            identifier: signUpData.email,
-            identifier_type: 'email',
-            code: otpCode,
-          },
-        });
-        if (error) throw error;
-        
-        if (data.success) {
-          setOtpVerified(true);
-          toast.success('Verification successful!');
-          await completeRegistration();
-        } else {
-          toast.error(data.error || 'Invalid verification code');
-        }
+        toast.error(data.error || 'Invalid verification code');
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error);

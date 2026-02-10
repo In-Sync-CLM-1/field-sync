@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { hashSync, compareSync } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,9 +14,7 @@ function generateOTP(): string {
 }
 
 function normalizePhone(phone: string): string {
-  // Strip all non-digits
   const digits = phone.replace(/\D/g, "");
-  // Ensure +91 prefix for storage
   if (digits.startsWith("91") && digits.length === 12) return `+${digits}`;
   if (digits.length === 10) return `+91${digits}`;
   return `+${digits}`;
@@ -28,7 +27,6 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
   const subdomain = Deno.env.get("EXOTEL_SUBDOMAIN")!;
   const whatsappFrom = Deno.env.get("WHATSAPP_FROM_NUMBER")!;
 
-  // Phone for Exotel: digits only, no "+" prefix
   const toPhone = phone.replace(/^\+/, "");
   const fromPhone = whatsappFrom.replace(/^\+/, "");
 
@@ -44,23 +42,17 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
             type: "template",
             template: {
               name: "otp",
-              language: {
-                code: "en_US",
-              },
+              language: { code: "en_US" },
               components: [
                 {
                   type: "body",
-                  parameters: [
-                    { type: "text", text: otp },
-                  ],
+                  parameters: [{ type: "text", text: otp }],
                 },
                 {
                   type: "button",
                   sub_type: "url",
                   index: "0",
-                  parameters: [
-                    { type: "text", text: otp },
-                  ],
+                  parameters: [{ type: "text", text: otp }],
                 },
               ],
             },
@@ -73,12 +65,6 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
   const url = `https://${subdomain}/v2/accounts/${sid}/messages`;
   const auth = btoa(`${apiKey}:${apiToken}`);
 
-  console.log("Exotel request URL:", url);
-  console.log("Exotel from number:", fromPhone);
-  console.log("Exotel to number:", toPhone);
-  console.log("Exotel SID:", sid);
-  console.log("Exotel payload:", JSON.stringify(payload, null, 2));
-
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -90,20 +76,38 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
 
   const responseText = await response.text();
 
-  console.log("Exotel response status:", response.status);
-  console.log("Exotel response body:", responseText);
-  console.log("Exotel response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
-
   if (!response.ok) {
     console.error("Exotel API error:", response.status, responseText);
     throw new Error(`WhatsApp send failed: ${response.status} - ${responseText}`);
   }
 
-  if (!responseText || responseText.trim() === "") {
-    console.warn("Exotel returned 200 but empty body - message may not have been sent");
-  }
+  console.log("WhatsApp OTP sent successfully");
+}
 
-  console.log("WhatsApp OTP sent successfully:", responseText);
+async function sendEmailOTP(email: string, otp: string): Promise<void> {
+  const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+
+  const emailResponse = await resend.emails.send({
+    from: "InSync <noreply@in-sync.co.in>",
+    to: [email],
+    subject: "Your InSync Verification Code",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+        <h1 style="color: #333; font-size: 24px; margin-bottom: 16px;">Verify Your Account</h1>
+        <p style="color: #666; font-size: 16px; margin-bottom: 24px;">
+          Your verification code is:
+        </p>
+        <div style="background: #f5f5f5; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
+          <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #333;">${otp}</span>
+        </div>
+        <p style="color: #999; font-size: 14px;">
+          This code expires in 10 minutes. If you didn't request this, please ignore this email.
+        </p>
+      </div>
+    `,
+  });
+
+  console.log("Email OTP sent successfully:", emailResponse);
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -113,29 +117,33 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const body = await req.json();
-    const { phone, channel, otp, action } = body;
-
-    if (!phone) {
-      throw new Error("Phone number is required");
-    }
+    const { action, channel, phone, email, otp } = body;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const normalizedPhone = normalizePhone(phone);
+    // Determine identifier and type
+    const isPhone = channel === "whatsapp" || (!channel && phone && !email);
+    const identifierType = isPhone ? "phone" : "email";
+    const rawIdentifier = isPhone ? phone : email;
+
+    if (!rawIdentifier) {
+      throw new Error(`${identifierType === "phone" ? "Phone number" : "Email"} is required`);
+    }
+
+    const identifier = isPhone ? normalizePhone(rawIdentifier) : rawIdentifier.trim().toLowerCase();
 
     // ─── VERIFY MODE ───
     if (action === "verify") {
       if (!otp) throw new Error("OTP is required for verification");
 
-      // Find latest unverified, non-expired OTP for this phone
       const { data: otpRecord, error: fetchError } = await supabase
         .from("otp_verifications")
         .select("*")
-        .eq("identifier", normalizedPhone)
-        .eq("identifier_type", "phone")
+        .eq("identifier", identifier)
+        .eq("identifier_type", identifierType)
         .eq("verified", false)
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
@@ -154,7 +162,6 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Check attempt limit
       if ((otpRecord.attempts || 0) >= 5) {
         return new Response(
           JSON.stringify({ verified: false, error: "Too many attempts. Please request a new OTP." }),
@@ -162,11 +169,9 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
 
-      // Compare OTP against bcrypt hash
       const isValid = compareSync(otp, otpRecord.otp_hash);
 
       if (isValid) {
-        // Mark as verified
         await supabase
           .from("otp_verifications")
           .update({ verified: true, verified_at: new Date().toISOString() })
@@ -177,7 +182,6 @@ const handler = async (req: Request): Promise<Response> => {
           { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       } else {
-        // Increment attempts
         await supabase
           .from("otp_verifications")
           .update({ attempts: (otpRecord.attempts || 0) + 1 })
@@ -193,23 +197,23 @@ const handler = async (req: Request): Promise<Response> => {
     // ─── SEND MODE ───
     const otpCode = generateOTP();
     const otpHash = hashSync(otpCode);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Delete any existing unverified OTPs for this phone
+    // Delete any existing unverified OTPs for this identifier
     await supabase
       .from("otp_verifications")
       .delete()
-      .eq("identifier", normalizedPhone)
-      .eq("identifier_type", "phone")
+      .eq("identifier", identifier)
+      .eq("identifier_type", identifierType)
       .eq("verified", false);
 
-    // Insert new OTP record
+    // Insert new OTP record with bcrypt hash
     const { error: insertError } = await supabase
       .from("otp_verifications")
       .insert({
-        identifier: normalizedPhone,
-        identifier_type: "phone",
-        code: "hashed", // placeholder since column is NOT NULL
+        identifier,
+        identifier_type: identifierType,
+        code: "hashed",
         otp_hash: otpHash,
         expires_at: expiresAt.toISOString(),
         verified: false,
@@ -221,16 +225,15 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to create OTP");
     }
 
-    // Send via WhatsApp (default) or SMS
-    if (channel === "whatsapp" || !channel) {
-      await sendWhatsAppOTP(normalizedPhone, otpCode);
+    // Send via appropriate channel
+    if (isPhone) {
+      await sendWhatsAppOTP(identifier, otpCode);
     } else {
-      // SMS fallback - log for now
-      console.log(`SMS OTP for ${normalizedPhone}: ${otpCode}`);
+      await sendEmailOTP(identifier, otpCode);
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: `OTP sent via ${channel || "whatsapp"}` }),
+      JSON.stringify({ success: true, message: `OTP sent via ${isPhone ? "whatsapp" : "email"}` }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
