@@ -1,49 +1,60 @@
 
+# Consolidate 3 OTP Functions into 1
 
-# Fix: Stop Repeated "Synced 3 prospects" Toast
+## Current Problem
+There are 3 separate edge functions for OTP:
+- `send-otp` -- sends email OTP (plain text, insecure)
+- `send-public-otp` -- sends WhatsApp OTP + verifies (bcrypt, secure)
+- `verify-otp` -- verifies email OTP (plain text, insecure)
 
-## Problem
-Every time you interact with the New Visit page (e.g., selecting a lead), the "Synced 3 prospects" toast keeps appearing. This happens because the sync effect re-triggers on every render cycle.
+This creates duplication, inconsistent security (email uses plain text, WhatsApp uses bcrypt), and maintenance overhead.
 
-The current code syncs whenever `leads.length === 0`, but after syncing, the leads array updates (length changes from 0 to 3), causing re-renders. Due to timing issues with IndexedDB live queries, this can re-trigger or appear redundant.
+## Plan
 
-## Solution
-Replace the current sync effect with a one-time sync that runs only once when the component mounts and the organization is available -- not on every leads length change.
+### 1. Create a single unified `send-public-otp` function
+Keep `send-public-otp` as the sole function, extending it to handle both channels:
 
-## Changes
+- **Send OTP**: `{ action: "send", channel: "whatsapp" | "email", phone?: string, email?: string }`
+  - WhatsApp: sends via Exotel (already working)
+  - Email: sends via Resend (ported from `send-otp`)
+  - Both use bcrypt hashing for security
 
-### File: `src/pages/NewVisit.tsx`
-- Replace the current `useEffect` that watches `leads.length` with one that:
-  - Watches `currentOrganization?.id` instead
-  - Uses a `ref` flag (`hasSynced`) to ensure it only syncs once per mount
-  - Calls `syncFromDatabase()` silently (the toast in `useLeads` will still show once)
+- **Verify OTP**: `{ action: "verify", phone?: string, email?: string, otp: string }`
+  - Unified bcrypt verification for both channels
+  - 5-attempt limit, 10-minute expiry
 
-```typescript
-// Before (causes repeated syncing):
-useEffect(() => {
-  if (leads.length === 0) {
-    syncFromDatabase();
-  }
-}, [leads.length]);
+### 2. Update `Auth.tsx` frontend calls
+- Replace `supabase.functions.invoke('send-otp', ...)` with `supabase.functions.invoke('send-public-otp', { body: { action: "send", channel: "email", email: ... } })`
+- Replace `supabase.functions.invoke('verify-otp', ...)` with `supabase.functions.invoke('send-public-otp', { body: { action: "verify", email: ..., otp: ... } })`
 
-// After (syncs exactly once on mount):
-const hasSynced = useRef(false);
-useEffect(() => {
-  if (!hasSynced.current && currentOrganization?.id) {
-    hasSynced.current = true;
-    syncFromDatabase();
-  }
-}, [currentOrganization?.id]);
+### 3. Delete the redundant functions
+- Delete `supabase/functions/send-otp/index.ts`
+- Delete `supabase/functions/verify-otp/index.ts`
+- Remove their entries from `supabase/config.toml` if present
+
+## Technical Details
+
+### Unified function interface:
+
+```
+// SEND
+POST send-public-otp
+{ action: "send", channel: "whatsapp", phone: "9876543210" }
+{ action: "send", channel: "email", email: "user@example.com" }
+
+// VERIFY
+POST send-public-otp
+{ action: "verify", phone: "9876543210", otp: "123456" }
+{ action: "verify", email: "user@example.com", otp: "123456" }
 ```
 
-## About the "Enter address manually" prompt
-This is expected behavior -- lead "A" was created without GPS coordinates, so the app correctly warns you. You can either:
-- Enter the address manually using the fields provided
-- Or go back and add location data to the lead record
+### Email sending addition
+- Import Resend in `send-public-otp`
+- Port the email HTML template from existing `send-otp`
+- Use bcrypt hashing (already in place for WhatsApp)
 
-No changes needed for this part.
-
-## Technical Notes
-- Only `src/pages/NewVisit.tsx` needs to be modified (lines 78-83)
-- Requires adding `useRef` to the React import
-- Need to get `currentOrganization` from the auth store (already imported via `useLeads` but may need direct access)
+### Files changed
+- `supabase/functions/send-public-otp/index.ts` -- add email channel support
+- `src/pages/Auth.tsx` -- update all 3 function invocations to use `send-public-otp`
+- `supabase/functions/send-otp/` -- delete entirely
+- `supabase/functions/verify-otp/` -- delete entirely
