@@ -42,7 +42,7 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
             type: "template",
             template: {
               name: "otp",
-              language: { code: "en_US" },
+              language: { code: "en" },
               components: [
                 {
                   type: "body",
