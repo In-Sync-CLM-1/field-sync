@@ -30,28 +30,35 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
 
   // Phone for Exotel: digits only, no "+" prefix
   const toPhone = phone.replace(/^\+/, "");
+  const fromPhone = whatsappFrom.replace(/^\+/, "");
 
   const payload = {
-    custom_field: phone,
+    custom_data: phone,
     status_callback: "",
-    to: toPhone,
-    from: whatsappFrom,
     whatsapp: {
-      content_type: "template",
-      template: {
-        name: "psotp1",
-        language: "en_US",
-        body_values: {
-          "1": otp,
-        },
-        buttons: {
-          "0": {
-            sub_type: "url",
-            index: "0",
-            parameters: [otp],
+      messages: [
+        {
+          from: fromPhone,
+          to: toPhone,
+          content: {
+            content_type: "template",
+            template: {
+              name: "psotp1",
+              language: "en_US",
+              body_values: {
+                "1": otp,
+              },
+              buttons: {
+                "0": {
+                  sub_type: "url",
+                  index: "0",
+                  parameters: [otp],
+                },
+              },
+            },
           },
         },
-      },
+      ],
     },
   };
 
@@ -59,10 +66,10 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
   const auth = btoa(`${apiKey}:${apiToken}`);
 
   console.log("Exotel request URL:", url);
-  console.log("Exotel from number:", whatsappFrom);
+  console.log("Exotel from number:", fromPhone);
   console.log("Exotel to number:", toPhone);
   console.log("Exotel SID:", sid);
-  console.log("Exotel subdomain:", subdomain);
+  console.log("Exotel payload:", JSON.stringify(payload, null, 2));
 
   const response = await fetch(url, {
     method: "POST",
