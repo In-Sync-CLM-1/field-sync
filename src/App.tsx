@@ -118,6 +118,7 @@ const App = () => (
                 <Route path="leads/new" element={<NewLead />} />
                 <Route path="leads/:id" element={<LeadDetail />} />
                 <Route path="visits" element={<Visits />} />
+                <Route path="visits/calendar" element={<Visits />} />
                 <Route path="visits/map" element={<TerritoryMap />} />
                 <Route path="visits/new" element={<NewVisit />} />
                 <Route path="visits/new-checkin" element={<VisitDetail />} />

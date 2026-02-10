@@ -7,7 +7,8 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Clock, ArrowLeft } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Clock, ArrowLeft, CalendarDays, List, Route } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -18,33 +19,40 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { format } from 'date-fns';
+import VisitCalendar from '@/pages/VisitCalendar';
+import { BulkVisitCreator } from '@/components/BulkVisitCreator';
+import { RouteOptimizer } from '@/components/RouteOptimizer';
+
+const statusConfig: Record<string, { label: string; className: string }> = {
+  scheduled: { label: 'SCHEDULED', className: 'bg-blue-500 text-white border-0' },
+  in_progress: { label: 'IN PROGRESS', className: 'status-badge-warning' },
+  completed: { label: 'COMPLETED', className: 'status-badge-success' },
+  cancelled: { label: 'CANCELLED', className: 'bg-destructive text-destructive-foreground border-0' },
+  rescheduled: { label: 'RESCHEDULED', className: 'bg-purple-500 text-white border-0' },
+};
 
 export default function Visits() {
   const navigate = useNavigate();
   const { visits, isLoading } = useVisits();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [showRoute, setShowRoute] = useState(false);
 
-  // Filter visits
   const filteredVisits = visits.filter((visit) => {
     const matchesSearch =
       !searchQuery ||
-      visit.lead?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      visit.lead?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       visit.notes?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const status = visit.check_out_time ? 'completed' : 'in_progress';
-    const matchesStatus = statusFilter === 'all' || status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || visit.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
   const getStatusBadge = (visit: any) => {
-    const isCompleted = !!visit.check_out_time;
-    return (
-      <Badge className={isCompleted ? 'status-badge-success' : 'status-badge-warning'}>
-        {isCompleted ? 'COMPLETED' : 'IN PROGRESS'}
-      </Badge>
-    );
+    const config = statusConfig[visit.status] || statusConfig.in_progress;
+    return <Badge className={config.className}>{config.label}</Badge>;
   };
 
   const formatDuration = (checkIn: string, checkOut?: string) => {
@@ -93,131 +101,193 @@ export default function Visits() {
               <p className="text-xs text-muted-foreground">Manage field visits</p>
             </div>
           </div>
-          <Button size="icon" onClick={() => navigate('/dashboard/visits/new')} className="btn-gradient-primary text-primary-foreground">
-            <Plus className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <BulkVisitCreator>
+              <Button size="sm" variant="outline" className="gap-1 hidden sm:flex">
+                <CalendarDays className="h-4 w-4" />
+                Bulk
+              </Button>
+            </BulkVisitCreator>
+            <Button size="icon" onClick={() => navigate('/dashboard/visits/new')} className="btn-gradient-primary text-primary-foreground">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="flex gap-2 mb-3">
-        <Input
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-xs h-5 text-sm"
-        />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px] h-5 text-sm">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        {totalItems > 0 && (
-          <p className="text-xs text-muted-foreground">
-            {startIndex}-{endIndex} of {totalItems}
-          </p>
-        )}
-
-        <div className="grid gap-2">
-          {visits.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <p className="text-muted-foreground mb-3 text-sm">No visits found</p>
-                <Button size="sm" onClick={() => navigate('/dashboard/visits/new')}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Create First Visit
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            paginatedItems.map((visit) => (
-              <Card
-                key={visit.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/dashboard/visits/${visit.id}`)}
-              >
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between mb-1">
-                    <CardTitle className="text-sm font-medium">
-                      {visit.lead?.name || 'Unknown Lead'}
-                    </CardTitle>
-                    {getStatusBadge(visit)}
-                  </div>
-                  {visit.notes && (
-                    <p className="text-xs text-muted-foreground mb-1 line-clamp-1">{visit.notes}</p>
-                  )}
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {format(new Date(visit.check_in_time), 'PP')}
-                    </span>
-                    <span>{formatDuration(visit.check_in_time, visit.check_out_time)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+      {/* View Toggle & Filters */}
+      <div className="flex flex-col gap-2 mb-3">
+        <div className="flex items-center justify-between gap-2">
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-auto">
+            <TabsList className="h-8">
+              <TabsTrigger value="list" className="gap-1 text-xs px-3">
+                <List className="h-3 w-3" /> List
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-1 text-xs px-3">
+                <CalendarDays className="h-3 w-3" /> Calendar
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {viewMode === 'list' && (
+            <Button
+              size="sm"
+              variant={showRoute ? 'default' : 'outline'}
+              className="gap-1 text-xs"
+              onClick={() => setShowRoute(!showRoute)}
+            >
+              <Route className="h-3 w-3" />
+              Route
+            </Button>
           )}
         </div>
 
-        {totalPages > 1 && (
-          <Pagination className="mt-6">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={previousPage}
-                  className={!canGoPrevious ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                />
-              </PaginationItem>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                const showPage = 
-                  page === 1 || 
-                  page === totalPages || 
-                  (page >= currentPage - 1 && page <= currentPage + 1);
-                
-                const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
-                const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
-
-                if (showEllipsisBefore || showEllipsisAfter) {
-                  return (
-                    <PaginationItem key={page}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  );
-                }
-
-                if (!showPage) return null;
-
-                return (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => goToPage(page)}
-                      isActive={currentPage === page}
-                      className="cursor-pointer"
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              })}
-
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={nextPage}
-                  className={!canGoNext ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+        {viewMode === 'list' && (
+          <div className="flex gap-2">
+            <Input
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-xs h-5 text-sm"
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px] h-5 text-sm">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="rescheduled">Rescheduled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         )}
       </div>
+
+      {/* Route Optimizer */}
+      {viewMode === 'list' && showRoute && (
+        <div className="mb-3">
+          <RouteOptimizer visits={visits} />
+        </div>
+      )}
+
+      {/* Content */}
+      {viewMode === 'calendar' ? (
+        <VisitCalendar />
+      ) : (
+        <div className="space-y-2">
+          {totalItems > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {startIndex}-{endIndex} of {totalItems}
+            </p>
+          )}
+
+          <div className="grid gap-2">
+            {filteredVisits.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <p className="text-muted-foreground mb-3 text-sm">No visits found</p>
+                  <Button size="sm" onClick={() => navigate('/dashboard/visits/new')}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Create First Visit
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              paginatedItems.map((visit) => (
+                <Card
+                  key={visit.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => navigate(`/dashboard/visits/${visit.id}`)}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="min-w-0">
+                        <CardTitle className="text-sm font-medium">
+                          {visit.lead?.name || 'Unknown Lead'}
+                        </CardTitle>
+                        {visit.purpose && (
+                          <p className="text-xs text-muted-foreground capitalize">{visit.purpose}</p>
+                        )}
+                      </div>
+                      {getStatusBadge(visit)}
+                    </div>
+                    {visit.notes && (
+                      <p className="text-xs text-muted-foreground mb-1 line-clamp-1">{visit.notes}</p>
+                    )}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {visit.scheduled_date
+                          ? format(new Date(visit.scheduled_date), 'PP')
+                          : format(new Date(visit.check_in_time), 'PP')}
+                      </span>
+                      {visit.scheduled_time && <span>{visit.scheduled_time}</span>}
+                      {!visit.scheduled_date && (
+                        <span>{formatDuration(visit.check_in_time, visit.check_out_time)}</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {totalPages > 1 && (
+            <Pagination className="mt-6">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={previousPage}
+                    className={!canGoPrevious ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  const showPage = 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1);
+                  
+                  const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
+                  const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
+
+                  if (showEllipsisBefore || showEllipsisAfter) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+
+                  if (!showPage) return null;
+
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => goToPage(page)}
+                        isActive={currentPage === page}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={nextPage}
+                    className={!canGoNext ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </div>
+      )}
     </div>
   );
 }

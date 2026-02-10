@@ -1084,49 +1084,111 @@ export type Database = {
           },
         ]
       }
+      visit_checklist_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          items: Json
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          items?: Json
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          items?: Json
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_checklist_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visits: {
         Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
           check_in_latitude: number | null
           check_in_longitude: number | null
           check_in_time: string
           check_out_latitude: number | null
           check_out_longitude: number | null
           check_out_time: string | null
+          checklist: Json | null
           created_at: string
           customer_id: string
           id: string
           notes: string | null
           organization_id: string
+          purpose: string | null
+          rescheduled_from: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           check_in_latitude?: number | null
           check_in_longitude?: number | null
           check_in_time?: string
           check_out_latitude?: number | null
           check_out_longitude?: number | null
           check_out_time?: string | null
+          checklist?: Json | null
           created_at?: string
           customer_id: string
           id?: string
           notes?: string | null
           organization_id: string
+          purpose?: string | null
+          rescheduled_from?: string | null
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           check_in_latitude?: number | null
           check_in_longitude?: number | null
           check_in_time?: string
           check_out_latitude?: number | null
           check_out_longitude?: number | null
           check_out_time?: string | null
+          checklist?: Json | null
           created_at?: string
           customer_id?: string
           id?: string
           notes?: string | null
           organization_id?: string
+          purpose?: string | null
+          rescheduled_from?: string | null
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -1143,6 +1205,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_rescheduled_from_fkey"
+            columns: ["rescheduled_from"]
+            isOneToOne: false
+            referencedRelation: "visits"
             referencedColumns: ["id"]
           },
         ]
