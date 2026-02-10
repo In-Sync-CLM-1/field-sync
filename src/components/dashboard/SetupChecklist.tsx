@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
+import { useTourContext } from '@/contexts/TourContext';
 import { 
   Users, Target, CheckCircle2, ChevronRight, Sparkles, 
   X, Rocket, Trophy
@@ -27,6 +28,7 @@ interface ChecklistItem {
 export function SetupChecklist() {
   const navigate = useNavigate();
   const { currentOrganization, user } = useAuthStore();
+  const { isActive: isTourActive } = useTourContext();
   const [dismissed, setDismissed] = useState(false);
   const [teamCount, setTeamCount] = useState(0);
   const [prospectCount, setProspectCount] = useState(0);
@@ -63,7 +65,7 @@ export function SetupChecklist() {
     }
   };
 
-  if (dismissed || loading) return null;
+  if (dismissed || loading || isTourActive) return null;
 
   const TEAM_GOAL = 3;
   const PROSPECT_GOAL = 3;
