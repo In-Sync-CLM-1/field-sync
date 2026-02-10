@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { X, ChevronLeft, ChevronRight, Sparkles, Lightbulb, Loader2 } from 'lucide-react';
 import { useAppTour } from '@/hooks/useAppTour';
+import { useSidebar } from '@/components/ui/sidebar';
 
 interface TooltipPosition {
   top: number;
@@ -66,109 +67,208 @@ export function AppTour() {
     skipTour,
   } = useAppTour();
 
+  const { isMobile, setOpenMobile } = useSidebar();
+
   const [position, setPosition] = useState<TooltipPosition | null>(null);
   const [targetFound, setTargetFound] = useState(false);
+  const [searching, setSearching] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<MutationObserver | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const debounceRef = useRef<number>(0);
+  const prevStepRef = useRef<number>(-1);
 
   const updatePositionForTarget = useCallback((target: Element) => {
     if (!currentStepData) return;
     requestAnimationFrame(() => {
       setPosition(computePosition(target, currentStepData.position));
       setTargetFound(true);
+      setSearching(false);
       // Highlight
-      document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
+      document.querySelectorAll('.tour-highlight').forEach(el => {
+        (el as HTMLElement).style.removeProperty('position');
+        (el as HTMLElement).style.removeProperty('z-index');
+        el.classList.remove('tour-highlight');
+      });
       target.classList.add('tour-highlight');
+      // Force z-index via inline style for reliable layering
+      (target as HTMLElement).style.position = 'relative';
+      (target as HTMLElement).style.zIndex = '101';
     });
   }, [currentStepData]);
 
-  // MutationObserver-based positioning
+  // Handle sidebar open/close for sidebar step
+  useEffect(() => {
+    if (!isActive || !currentStepData) return;
+
+    if (currentStepData.requiresSidebar && isMobile) {
+      setOpenMobile(true);
+      return () => {
+        setOpenMobile(false);
+      };
+    }
+  }, [isActive, currentStep, currentStepData, isMobile, setOpenMobile]);
+
+  // MutationObserver-based positioning with debounce
   useEffect(() => {
     if (!isActive || !currentStepData || isNavigating) {
       setPosition(null);
       setTargetFound(false);
+      setSearching(false);
       return;
+    }
+
+    // Clean up previous highlights
+    if (prevStepRef.current !== currentStep) {
+      document.querySelectorAll('.tour-highlight').forEach(el => {
+        (el as HTMLElement).style.removeProperty('position');
+        (el as HTMLElement).style.removeProperty('z-index');
+        el.classList.remove('tour-highlight');
+      });
+      prevStepRef.current = currentStep;
     }
 
     // Cleanup previous observers
     observerRef.current?.disconnect();
     resizeObserverRef.current?.disconnect();
+    clearTimeout(debounceRef.current);
 
     const selector = currentStepData.target;
 
-    // Try to find immediately
-    const existing = document.querySelector(selector);
-    if (existing) {
-      updatePositionForTarget(existing);
-      // Watch for resize
-      resizeObserverRef.current = new ResizeObserver(() => {
-        const el = document.querySelector(selector);
-        if (el) updatePositionForTarget(el);
-      });
-      resizeObserverRef.current.observe(existing);
-    } else {
-      setTargetFound(false);
-    }
-
-    // MutationObserver to detect when element appears or changes
-    const mo = new MutationObserver(() => {
-      const el = document.querySelector(selector);
-      if (el) {
+    const scrollAndPosition = (el: Element) => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
         updatePositionForTarget(el);
-        // Start watching resize once found
+        // Watch for resize only
         resizeObserverRef.current?.disconnect();
         resizeObserverRef.current = new ResizeObserver(() => {
           const t = document.querySelector(selector);
           if (t) updatePositionForTarget(t);
         });
         resizeObserverRef.current.observe(el);
-      }
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-    observerRef.current = mo;
+      }, 250);
+    };
 
-    // Fallback timeout — 3s max wait
-    const fallbackTimer = setTimeout(() => {
-      if (!document.querySelector(selector)) {
-        setTargetFound(false);
-      }
-    }, 3000);
+    // Try to find immediately
+    const existing = document.querySelector(selector);
+    if (existing) {
+      scrollAndPosition(existing);
+    } else {
+      setTargetFound(false);
+      // Show searching state after 300ms (skip for fast transitions)
+      const searchTimer = setTimeout(() => setSearching(true), 300);
 
-    // Reposition on scroll/resize
+      // Debounced MutationObserver
+      const mo = new MutationObserver(() => {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = window.setTimeout(() => {
+          const el = document.querySelector(selector);
+          if (el) {
+            clearTimeout(searchTimer);
+            mo.disconnect();
+            scrollAndPosition(el);
+          }
+        }, 150);
+      });
+      mo.observe(document.body, { childList: true, subtree: true });
+      observerRef.current = mo;
+
+      // Fallback timeout — 3s max wait
+      const fallbackTimer = setTimeout(() => {
+        if (!document.querySelector(selector)) {
+          clearTimeout(searchTimer);
+          setSearching(false);
+          setTargetFound(false);
+        }
+      }, 3000);
+
+      // Reposition on scroll/resize
+      const handleReposition = () => {
+        const el = document.querySelector(selector);
+        if (el) updatePositionForTarget(el);
+      };
+      window.addEventListener('resize', handleReposition);
+      window.addEventListener('scroll', handleReposition, true);
+
+      return () => {
+        clearTimeout(fallbackTimer);
+        clearTimeout(searchTimer);
+        clearTimeout(debounceRef.current);
+        mo.disconnect();
+        resizeObserverRef.current?.disconnect();
+        window.removeEventListener('resize', handleReposition);
+        window.removeEventListener('scroll', handleReposition, true);
+        document.querySelectorAll('.tour-highlight').forEach(el => {
+          (el as HTMLElement).style.removeProperty('position');
+          (el as HTMLElement).style.removeProperty('z-index');
+          el.classList.remove('tour-highlight');
+        });
+      };
+    }
+
+    // Reposition on scroll/resize (for the immediate-found case)
     const handleReposition = () => {
       const el = document.querySelector(selector);
       if (el) updatePositionForTarget(el);
     };
     window.addEventListener('resize', handleReposition);
-    window.addEventListener('scroll', handleReposition);
+    window.addEventListener('scroll', handleReposition, true);
 
     return () => {
-      clearTimeout(fallbackTimer);
-      mo.disconnect();
+      clearTimeout(debounceRef.current);
+      observerRef.current?.disconnect();
       resizeObserverRef.current?.disconnect();
       window.removeEventListener('resize', handleReposition);
-      window.removeEventListener('scroll', handleReposition);
-      document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
+      window.removeEventListener('scroll', handleReposition, true);
+      document.querySelectorAll('.tour-highlight').forEach(el => {
+        (el as HTMLElement).style.removeProperty('position');
+        (el as HTMLElement).style.removeProperty('z-index');
+        el.classList.remove('tour-highlight');
+      });
     };
   }, [isActive, currentStep, currentStepData, isNavigating, updatePositionForTarget]);
 
-  // Navigating state
-  if (isActive && isNavigating) {
+  // Clean up highlights on tour end
+  useEffect(() => {
+    if (!isActive) {
+      document.querySelectorAll('.tour-highlight').forEach(el => {
+        (el as HTMLElement).style.removeProperty('position');
+        (el as HTMLElement).style.removeProperty('z-index');
+        el.classList.remove('tour-highlight');
+      });
+    }
+  }, [isActive]);
+
+  if (!isActive) return null;
+
+  // Show inline searching state (no full-screen overlay)
+  if (isNavigating || (searching && !targetFound)) {
     return createPortal(
-      <div className="fixed inset-0 z-[99] flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-        <Card className="shadow-xl border-primary/20">
-          <CardContent className="py-8 px-12 text-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-            <p className="text-sm text-muted-foreground">Navigating to next section...</p>
-          </CardContent>
-        </Card>
-      </div>,
+      <>
+        <div
+          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200"
+          onClick={skipTour}
+        />
+        <div
+          className="fixed z-[102] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px]"
+          style={{ willChange: 'transform' }}
+        >
+          <Card className="shadow-2xl border-primary/30">
+            <CardContent className="py-6 px-6 text-center space-y-3">
+              <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
+              <p className="text-sm text-muted-foreground">Finding next element...</p>
+              <Button variant="ghost" size="sm" onClick={skipTour} className="text-xs">
+                Skip Tour
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </>,
       document.body
     );
   }
 
-  if (!isActive || !currentStepData || !position || !targetFound) return null;
+  if (!currentStepData || !position || !targetFound) return null;
 
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
@@ -176,14 +276,14 @@ export function AppTour() {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-[99] bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200"
+        className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200"
         onClick={skipTour}
       />
 
       {/* Tooltip */}
       <div
         ref={tooltipRef}
-        className="fixed z-[100] w-[340px] animate-in fade-in slide-in-from-bottom-2 duration-300"
+        className="fixed z-[102] w-[340px] animate-in fade-in slide-in-from-bottom-2 duration-300"
         style={{ top: position.top, left: position.left, willChange: 'transform' }}
       >
         <Card className="shadow-2xl border-primary/30 overflow-hidden">
