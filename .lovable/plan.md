@@ -1,26 +1,26 @@
 
-# Make the Users Page Tour Step More Exciting
 
-## What Changes
-The current tour step on the Users page is generic -- it just highlights the page header with a plain message. We'll make it more engaging and actionable by:
+## Fix: WhatsApp OTP Not Delivering
 
-1. **Targeting the "Add User" button directly** instead of the generic header, so the user's eye is drawn exactly where they need to click.
-2. **Rewriting the tour copy** to be energetic and inspiring -- "Build Your Dream Team" with motivational language.
-3. **Adding a `data-tour` attribute to the Add User button** so the tooltip points right at it.
+### Root Cause
+Two mismatches between the code and your Exotel template configuration:
 
-## Technical Details
+1. **Wrong template name**: Code sends `psotp1`, but your Exotel template is named `otp`
+2. **Possible language code mismatch**: Code sends `en_US`, but your template may use `en` (English)
+3. **Extra button component**: Code sends a URL button parameter, but your template appears to only have a body text with one parameter (`{{1}}`)
 
-### File: `src/pages/Users.tsx`
-- Add `data-tour="add-user-button"` to the "Add User" `<Button>` element (around line 464).
+### Changes
 
-### File: `src/hooks/useAppTour.ts`
-- Update the `users-page` tour step (lines 59-66):
-  - Change `target` from `[data-tour="users-header"]` to `[data-tour="add-user-button"]`
-  - Change `title` to something like: `"Build Your Dream Team!"`
-  - Change `description` to something like: `"This is where the magic begins! Tap this button to add your first 3 rockstar team members and supercharge your sales force."`
-  - Keep `position: 'bottom'`
+**File: `supabase/functions/send-public-otp/index.ts`**
 
-### File: `src/components/AppTour.tsx`
-- Update the page indicators array (line 188) to include 'Users' between 'Dashboard' and 'Planning' since it's now a distinct tour page: `['Dashboard', 'Users', 'Planning', 'Prospects']`
+Update the WhatsApp message payload to match your actual Exotel template:
 
-These are small, focused changes -- just copy updates and one added HTML attribute.
+- Change template name from `"psotp1"` to `"otp"`
+- Change language from `"en_US"` to `"en"` 
+- Remove the URL button component (index 0) since your template only has a body parameter
+- Keep the body component with the OTP code as parameter `{{1}}`
+
+### After Deployment
+
+Once deployed, the function will automatically be available. You can test by requesting an OTP on the auth page to verify WhatsApp delivery works.
+
