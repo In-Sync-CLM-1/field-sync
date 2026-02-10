@@ -57,8 +57,9 @@ export function AppSidebar() {
   const dashboards = [
     { icon: Home, label: 'My Dashboard', path: '/dashboard', roles: ['all'] },
     { icon: ClipboardList, label: 'Daily Plan', path: '/dashboard/planning', roles: ['sales_officer', 'branch_manager'] },
-    { icon: Users, label: 'Team & Branches', path: '/dashboard/team', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: ClipboardList, label: 'Planning Overview', path: '/dashboard/planning/overview', roles: ['branch_manager'] },
+    { icon: Building2, label: 'Branches', path: '/dashboard/branches', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: Users, label: 'Teams', path: '/dashboard/teams', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
+    { icon: ClipboardList, label: 'Planning Overview', path: '/dashboard/planning/overview', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: Clock, label: 'Attendance', path: '/dashboard/attendance', roles: ['all'] },
     { icon: Globe, label: 'Territory', path: '/dashboard/territory', roles: ['all'] },
