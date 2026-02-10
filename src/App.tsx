@@ -20,6 +20,7 @@ import TeamAndBranches from "./pages/TeamAndBranches";
 import AnalyticsHub from "./pages/AnalyticsHub";
 import TerritoryMap from "./pages/TerritoryMap";
 import PerformanceBoard from "./pages/PerformanceBoard";
+import PerformanceReview from "./pages/PerformanceReview";
 import Leads from "./pages/Leads";
 import LeadDetail from "./pages/LeadDetail";
 import Visits from "./pages/Visits";
@@ -113,6 +114,11 @@ const App = () => (
                 <Route path="performance" element={
                   <AdminRoute>
                     <PerformanceBoard />
+                  </AdminRoute>
+                } />
+                <Route path="performance-review" element={
+                  <AdminRoute>
+                    <PerformanceReview />
                   </AdminRoute>
                 } />
                 <Route path="leads" element={<Leads />} />
