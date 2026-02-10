@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from 'sonner';
-import { Loader2, Eye, EyeOff, Plus, Mail, Phone, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Plus, Mail, Phone, ArrowLeft, CheckCircle2, Upload, X } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -85,6 +85,31 @@ export default function Auth() {
     newOrgName: '',
     createNewOrg: false
   });
+  const [orgLogo, setOrgLogo] = useState<File | null>(null);
+  const [orgLogoPreview, setOrgLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Logo must be under 2MB');
+      return;
+    }
+    setOrgLogo(file);
+    setOrgLogoPreview(URL.createObjectURL(file));
+  };
+
+  const clearLogo = () => {
+    setOrgLogo(null);
+    if (orgLogoPreview) URL.revokeObjectURL(orgLogoPreview);
+    setOrgLogoPreview(null);
+    if (logoInputRef.current) logoInputRef.current.value = '';
+  };
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -325,6 +350,29 @@ export default function Auth() {
           }
 
           organizationId = newOrg.id;
+
+          // Upload logo if provided
+          if (orgLogo) {
+            const fileExt = orgLogo.name.split('.').pop();
+            const filePath = `${newOrg.id}/logo.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+              .from('org-logos')
+              .upload(filePath, orgLogo, { upsert: true });
+
+            if (!uploadError) {
+              const { data: publicUrl } = supabase.storage
+                .from('org-logos')
+                .getPublicUrl(filePath);
+
+              await supabase
+                .from('organizations')
+                .update({ logo_url: publicUrl.publicUrl })
+                .eq('id', newOrg.id);
+            } else {
+              console.error('Logo upload error:', uploadError);
+              // Non-blocking — org still created
+            }
+          }
 
           // Assign admin role to the creator
           const { error: roleError } = await supabase
@@ -690,7 +738,7 @@ export default function Auth() {
               </Select>
               
               {signUpData.createNewOrg && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Input 
                     type="text" 
                     placeholder="Enter your organization name" 
@@ -700,6 +748,39 @@ export default function Auth() {
                     className="h-9 text-sm" 
                     autoFocus
                   />
+                  
+                  {/* Logo Upload */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm text-foreground">Organization Logo <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoSelect}
+                      className="hidden"
+                    />
+                    {orgLogoPreview ? (
+                      <div className="flex items-center gap-3 p-2 border border-border rounded-md bg-muted/30">
+                        <img src={orgLogoPreview} alt="Logo preview" className="h-10 w-10 rounded object-contain bg-background" />
+                        <span className="text-sm text-foreground truncate flex-1">{orgLogo?.name}</span>
+                        <button type="button" onClick={clearLogo} className="text-muted-foreground hover:text-destructive transition-colors">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={loading}
+                        className="w-full h-9 text-sm border border-dashed border-border rounded-md flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+                      >
+                        <Upload size={14} />
+                        Upload Logo
+                      </button>
+                    )}
+                    <p className="text-xs text-muted-foreground">Max 2MB. PNG, JPG or SVG recommended.</p>
+                  </div>
+
                   <p className="text-xs text-muted-foreground">
                     You'll be assigned as the admin of this organization.
                   </p>
