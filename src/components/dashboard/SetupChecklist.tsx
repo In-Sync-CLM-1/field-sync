@@ -18,6 +18,8 @@ interface ChecklistItem {
   icon: typeof Users;
   title: string;
   description: string;
+  completedTitle: string;
+  completedDescription: string;
   target: number;
   current: number;
   route: string;
@@ -76,6 +78,8 @@ export function SetupChecklist() {
       icon: Users,
       title: '🛡️ Build Your Team',
       description: `Add ${TEAM_GOAL} team members to unlock collaboration`,
+      completedTitle: '🎉 Dream Team Assembled!',
+      completedDescription: 'Your team is growing — keep the momentum going!',
       target: TEAM_GOAL,
       current: Math.min(teamCount, TEAM_GOAL),
       route: '/dashboard/users',
@@ -87,6 +91,8 @@ export function SetupChecklist() {
       icon: Target,
       title: '🎯 Add Prospects',
       description: `Add ${PROSPECT_GOAL} prospects to start selling`,
+      completedTitle: '🔥 Pipeline is Hot!',
+      completedDescription: `${prospectCount} prospects added — many more deals to close!`,
       target: PROSPECT_GOAL,
       current: Math.min(prospectCount, PROSPECT_GOAL),
       route: '/dashboard/leads',
@@ -185,9 +191,12 @@ export function SetupChecklist() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold ${item.complete ? 'text-green-700 dark:text-green-400 line-through' : 'text-foreground'}`}>
-                    {item.title}
+                  <p className={`text-sm font-semibold ${item.complete ? 'text-green-700 dark:text-green-400' : 'text-foreground'}`}>
+                    {item.complete ? item.completedTitle : item.title}
                   </p>
+                  {item.complete && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">{item.completedDescription}</p>
+                  )}
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden max-w-[120px]">
                       <div 
