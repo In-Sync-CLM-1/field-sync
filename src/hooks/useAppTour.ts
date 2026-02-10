@@ -160,13 +160,15 @@ export function useAppTour() {
     }
   }, [isActive, currentStep]);
 
-  // Handle navigation between pages
+  // Handle navigation between pages — wait for route + DOM settle
   useEffect(() => {
     if (!isActive || !isNavigating) return;
     
     const currentStepData = tourSteps[currentStep];
     if (currentStepData && location.pathname === currentStepData.page) {
-      setIsNavigating(false);
+      // Give the page time to fully render before dismissing the loader
+      const timer = setTimeout(() => setIsNavigating(false), 600);
+      return () => clearTimeout(timer);
     }
   }, [location.pathname, isActive, currentStep, isNavigating]);
 
@@ -192,6 +194,7 @@ export function useAppTour() {
       // Check if we need to navigate to a different page
       if (nextStepData.page !== currentStepData.page) {
         setIsNavigating(true);
+        window.scrollTo({ top: 0, behavior: 'instant' });
         navigate(nextStepData.page);
       }
       
@@ -209,6 +212,7 @@ export function useAppTour() {
       // Check if we need to navigate to a different page
       if (prevStepData.page !== currentStepData.page) {
         setIsNavigating(true);
+        window.scrollTo({ top: 0, behavior: 'instant' });
         navigate(prevStepData.page);
       }
       
