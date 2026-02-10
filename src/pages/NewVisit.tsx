@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLeads } from '@/hooks/useLeads';
 import { useVisits, useChecklistTemplates, ChecklistItem } from '@/hooks/useVisits';
@@ -75,12 +75,14 @@ export default function NewVisit() {
     getCurrentLocation();
   }, []);
 
-  // Sync leads when organization is available
+  // Sync leads once on mount when organization is available
+  const hasSynced = useRef(false);
   useEffect(() => {
-    if (leads.length === 0) {
+    if (!hasSynced.current) {
+      hasSynced.current = true;
       syncFromDatabase();
     }
-  }, [leads.length]);
+  }, []);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
