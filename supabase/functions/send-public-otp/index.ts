@@ -34,15 +34,17 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
   const payload = {
     custom_data: toPhone,
     status_callback: "",
-    to: toPhone,
-    from: whatsappFrom,
     whatsapp: {
       messages: [
         {
+          from: whatsappFrom,
+          to: `+${toPhone}`,
           content: {
+            recipient_type: "individual",
+            type: "template",
             template: {
               name: "otp",
-              language: "en",
+              language: { policy: "deterministic", code: "en" },
               components: [
                 {
                   type: "body",
