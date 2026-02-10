@@ -135,7 +135,53 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log(`User ${email} created successfully with role ${role}`)
+    // Insert pre-verified OTP records for both email and phone (admin-created users are trusted)
+    const now = new Date().toISOString()
+    const otpRecords: Array<Record<string, unknown>> = []
+
+    // Pre-verified email record
+    otpRecords.push({
+      identifier: email.trim().toLowerCase(),
+      identifier_type: 'email',
+      code: 'admin-verified',
+      otp_hash: null,
+      expires_at: now,
+      verified: true,
+      verified_at: now,
+      attempts: 0,
+    })
+
+    // Pre-verified phone record if phone provided
+    if (phone) {
+      const digits = phone.replace(/\D/g, '')
+      const normalizedPhone = digits.startsWith('91') && digits.length === 12
+        ? `+${digits}`
+        : digits.length === 10
+          ? `+91${digits}`
+          : `+${digits}`
+
+      otpRecords.push({
+        identifier: normalizedPhone,
+        identifier_type: 'phone',
+        code: 'admin-verified',
+        otp_hash: null,
+        expires_at: now,
+        verified: true,
+        verified_at: now,
+        attempts: 0,
+      })
+    }
+
+    const { error: otpError } = await supabaseAdmin
+      .from('otp_verifications')
+      .insert(otpRecords)
+
+    if (otpError) {
+      console.error('OTP pre-verification insert error:', otpError)
+      // Non-critical, don't fail the operation
+    }
+
+    console.log(`User ${email} created successfully with role ${role}, pre-verified OTP records inserted`)
 
     return new Response(
       JSON.stringify({ 

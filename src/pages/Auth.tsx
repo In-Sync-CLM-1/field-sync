@@ -25,8 +25,8 @@ const signInSchema = z.object({
 const signUpSchema = z.object({
   fullName: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
   email: z.string().trim().email('Invalid email address'),
-  phone: z.string().optional().refine(
-    (val) => !val || /^[0-9]{10,15}$/.test(val.replace(/\D/g, '')),
+  phone: z.string().refine(
+    (val) => /^[0-9]{10,15}$/.test(val.replace(/\D/g, '')),
     'Invalid phone number'
   ),
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -47,8 +47,7 @@ const signUpSchema = z.object({
   path: ["organizationId"],
 });
 
-type RegistrationStep = 'details' | 'verify-method' | 'otp' | 'complete';
-type VerificationType = 'email' | 'phone';
+type RegistrationStep = 'details' | 'otp-phone' | 'otp-email' | 'complete';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -67,11 +66,11 @@ export default function Auth() {
 
   // OTP verification states
   const [registrationStep, setRegistrationStep] = useState<RegistrationStep>('details');
-  const [verificationType, setVerificationType] = useState<VerificationType>('email');
   const [otpCode, setOtpCode] = useState('');
   const [sendingOTP, setSendingOTP] = useState(false);
   const [verifyingOTP, setVerifyingOTP] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const [signInData, setSignInData] = useState({ email: '', password: '', organizationId: '' });
@@ -85,8 +84,6 @@ export default function Auth() {
     newOrgName: '',
     createNewOrg: false
   });
-
-
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -176,8 +173,8 @@ export default function Auth() {
     e.preventDefault();
     try {
       signUpSchema.parse(signUpData);
-      // Move to verification method selection
-      setRegistrationStep('verify-method');
+      // Send WhatsApp OTP automatically
+      await sendOTPForChannel('phone');
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -185,22 +182,10 @@ export default function Auth() {
     }
   };
 
-  const sendOTP = async () => {
-    const identifier = verificationType === 'email' ? signUpData.email : signUpData.phone;
-    
-    if (!identifier) {
-      toast.error(`Please provide a valid ${verificationType}`);
-      return;
-    }
-
-    if (verificationType === 'phone' && !signUpData.phone) {
-      toast.error('Phone number is required for WhatsApp verification');
-      return;
-    }
-
+  const sendOTPForChannel = async (channel: 'phone' | 'email') => {
     setSendingOTP(true);
     try {
-      const isPhone = verificationType === 'phone';
+      const isPhone = channel === 'phone';
       const { data, error } = await supabase.functions.invoke('send-public-otp', {
         body: isPhone
           ? { action: 'send', channel: 'whatsapp', phone: signUpData.phone.replace(/\D/g, '') }
@@ -209,7 +194,8 @@ export default function Auth() {
       if (error) throw error;
       toast.success(isPhone ? 'Verification code sent to your WhatsApp' : 'Verification code sent to your email');
       
-      setRegistrationStep('otp');
+      setOtpCode('');
+      setRegistrationStep(isPhone ? 'otp-phone' : 'otp-email');
       setResendCooldown(60);
     } catch (error: any) {
       console.error('Error sending OTP:', error);
@@ -227,7 +213,7 @@ export default function Auth() {
 
     setVerifyingOTP(true);
     try {
-      const isPhone = verificationType === 'phone';
+      const isPhone = registrationStep === 'otp-phone';
       const { data, error } = await supabase.functions.invoke('send-public-otp', {
         body: isPhone
           ? { action: 'verify', channel: 'whatsapp', phone: signUpData.phone.replace(/\D/g, ''), otp: otpCode }
@@ -236,9 +222,16 @@ export default function Auth() {
       if (error) throw error;
       
       if (data.verified) {
-        setOtpVerified(true);
-        toast.success('Verification successful!');
-        await completeRegistration();
+        if (isPhone) {
+          setPhoneVerified(true);
+          toast.success('Phone verified! Now verify your email.');
+          // Automatically send email OTP
+          await sendOTPForChannel('email');
+        } else {
+          setEmailVerified(true);
+          toast.success('Email verified! Creating your account...');
+          await completeRegistration();
+        }
       } else {
         toast.error(data.error || 'Invalid verification code');
       }
@@ -292,9 +285,6 @@ export default function Auth() {
           }
 
           organizationId = newOrg.id;
-
-
-
 
           // Assign admin role to the creator
           const { error: roleError } = await supabase
@@ -353,9 +343,9 @@ export default function Auth() {
 
   const resetRegistration = () => {
     setRegistrationStep('details');
-    setVerificationType('email');
     setOtpCode('');
-    setOtpVerified(false);
+    setPhoneVerified(false);
+    setEmailVerified(false);
     setResendCooldown(0);
   };
 
@@ -387,142 +377,95 @@ export default function Auth() {
     }
   };
 
+  const renderOTPStep = (channel: 'phone' | 'email') => {
+    const isPhone = channel === 'phone';
+    const identifier = isPhone ? signUpData.phone : signUpData.email;
+    const label = isPhone ? 'WhatsApp' : 'Email';
+    const stepNumber = isPhone ? '1/2' : '2/2';
+    
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => {
+              if (isPhone) {
+                setRegistrationStep('details');
+              } else {
+                setRegistrationStep('otp-phone');
+              }
+            }}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h3 className="text-lg font-semibold text-foreground">Verify {label} ({stepNumber})</h3>
+        </div>
+
+        {/* Progress indicator */}
+        <div className="flex gap-2 mb-2">
+          <div className={`h-1 flex-1 rounded-full ${phoneVerified ? 'bg-green-500' : isPhone ? 'bg-primary' : 'bg-muted'}`} />
+          <div className={`h-1 flex-1 rounded-full ${emailVerified ? 'bg-green-500' : !isPhone ? 'bg-primary' : 'bg-muted'}`} />
+        </div>
+
+        <p className="text-sm text-muted-foreground text-center">
+          We sent a 6-digit code to{' '}
+          <span className="font-medium text-foreground">
+            {identifier}
+          </span>
+          {isPhone && ' via WhatsApp'}
+        </p>
+
+        <div className="flex justify-center py-4">
+          <InputOTP
+            maxLength={6}
+            value={otpCode}
+            onChange={setOtpCode}
+            disabled={verifyingOTP}
+          >
+            <InputOTPGroup>
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+              <InputOTPSlot index={4} />
+              <InputOTPSlot index={5} />
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
+
+        <Button 
+          onClick={verifyOTP} 
+          className="w-full" 
+          disabled={verifyingOTP || otpCode.length !== 6}
+        >
+          {verifyingOTP && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isPhone ? 'Verify & Continue' : 'Verify & Create Account'}
+        </Button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => sendOTPForChannel(channel)}
+            disabled={resendCooldown > 0 || sendingOTP}
+            className="text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {resendCooldown > 0 
+              ? `Resend code in ${resendCooldown}s` 
+              : 'Resend code'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const renderRegistrationStep = () => {
     switch (registrationStep) {
-      case 'verify-method':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setRegistrationStep('details')}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <h3 className="text-lg font-semibold text-foreground">Verify Your Identity</h3>
-            </div>
-            
-            <p className="text-sm text-muted-foreground mb-4">
-              Choose how you'd like to receive your verification code:
-            </p>
+      case 'otp-phone':
+        return renderOTPStep('phone');
 
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => setVerificationType('email')}
-                className={`w-full p-4 rounded-lg border-2 flex items-center gap-3 transition-all ${
-                  verificationType === 'email' 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border hover:border-muted-foreground'
-                }`}
-              >
-                <div className={`p-2 rounded-full ${verificationType === 'email' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                  <Mail size={20} />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-medium text-foreground">Email</p>
-                  <p className="text-sm text-muted-foreground truncate">{signUpData.email}</p>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setVerificationType('phone')}
-                disabled={!signUpData.phone}
-                className={`w-full p-4 rounded-lg border-2 flex items-center gap-3 transition-all ${
-                  verificationType === 'phone' 
-                    ? 'border-primary bg-primary/5' 
-                    : signUpData.phone 
-                      ? 'border-border hover:border-muted-foreground' 
-                      : 'border-border opacity-50 cursor-not-allowed'
-                }`}
-              >
-                <div className={`p-2 rounded-full ${verificationType === 'phone' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                  <Phone size={20} />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-medium text-foreground">WhatsApp</p>
-                  <p className="text-sm text-muted-foreground">
-                    {signUpData.phone || 'No phone number provided'}
-                  </p>
-                </div>
-              </button>
-            </div>
-
-            <Button 
-              onClick={sendOTP} 
-              className="w-full mt-4" 
-              disabled={sendingOTP}
-            >
-              {sendingOTP && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Verification Code
-            </Button>
-          </div>
-        );
-
-      case 'otp':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setRegistrationStep('verify-method')}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <h3 className="text-lg font-semibold text-foreground">Enter Verification Code</h3>
-            </div>
-
-            <p className="text-sm text-muted-foreground text-center">
-              We sent a 6-digit code to{' '}
-              <span className="font-medium text-foreground">
-                {verificationType === 'email' ? signUpData.email : signUpData.phone}
-              </span>
-            </p>
-
-            <div className="flex justify-center py-4">
-              <InputOTP
-                maxLength={6}
-                value={otpCode}
-                onChange={setOtpCode}
-                disabled={verifyingOTP}
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
-
-            <Button 
-              onClick={verifyOTP} 
-              className="w-full" 
-              disabled={verifyingOTP || otpCode.length !== 6}
-            >
-              {verifyingOTP && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Verify & Create Account
-            </Button>
-
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={sendOTP}
-                disabled={resendCooldown > 0 || sendingOTP}
-                className="text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {resendCooldown > 0 
-                  ? `Resend code in ${resendCooldown}s` 
-                  : 'Resend code'}
-              </button>
-            </div>
-          </div>
-        );
+      case 'otp-email':
+        return renderOTPStep('email');
 
       case 'complete':
         return (
@@ -570,17 +513,18 @@ export default function Auth() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="signup-phone" className="text-sm text-foreground">Phone (for OTP verification)</Label>
+              <Label htmlFor="signup-phone" className="text-sm text-foreground">Phone</Label>
               <Input 
                 id="signup-phone" 
                 type="tel" 
                 placeholder="9876543210" 
                 value={signUpData.phone} 
                 onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })} 
+                required
                 disabled={loading} 
                 className="h-9 text-sm" 
               />
-              <p className="text-xs text-muted-foreground">Optional if verifying via email</p>
+              <p className="text-xs text-muted-foreground">Verification code will be sent via WhatsApp</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
@@ -670,17 +614,14 @@ export default function Auth() {
                     className="h-9 text-sm" 
                     autoFocus
                   />
-                  
-
-
-
                   <p className="text-xs text-muted-foreground">
                     You'll be assigned as the admin of this organization.
                   </p>
                 </div>
               )}
             </div>
-            <Button type="submit" className="w-full mt-6 h-9 text-sm" disabled={loading || (!signUpData.createNewOrg && loadingOrgs)}>
+            <Button type="submit" className="w-full mt-6 h-9 text-sm" disabled={loading || sendingOTP || (!signUpData.createNewOrg && loadingOrgs)}>
+              {sendingOTP && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Continue
             </Button>
           </form>
