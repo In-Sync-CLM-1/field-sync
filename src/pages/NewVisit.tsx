@@ -45,6 +45,10 @@ export default function NewVisit() {
   const [scheduledTime, setScheduledTime] = useState('');
   const [purpose, setPurpose] = useState('');
   const [templateId, setTemplateId] = useState('');
+  const [manualAddress, setManualAddress] = useState('');
+  const [manualLatitude, setManualLatitude] = useState('');
+  const [manualLongitude, setManualLongitude] = useState('');
+  const [useManualLocation, setUseManualLocation] = useState(false);
 
   const selectedLead = leads.find((l) => l.id === leadId);
   const leadHasLocation = selectedLead?.latitude && selectedLead?.longitude;
@@ -110,10 +114,20 @@ export default function NewVisit() {
       return;
     }
 
-    if (!isScheduling && !location) {
-      toast.error('Location not available. Please try again.');
+    if (!isScheduling && !location && !(useManualLocation && (manualLatitude || manualAddress))) {
+      toast.error('Location not available. Please enter an address or enable GPS.');
       getCurrentLocation();
       return;
+    }
+
+    // Determine check-in coordinates
+    let checkInLat = location?.latitude || 0;
+    let checkInLng = location?.longitude || 0;
+    const shouldUpdateLeadLocation = !isScheduling && !leadHasLocation;
+
+    if (useManualLocation && manualLatitude && manualLongitude) {
+      checkInLat = parseFloat(manualLatitude);
+      checkInLng = parseFloat(manualLongitude);
     }
 
     let checklist: ChecklistItem[] | undefined;
@@ -127,14 +141,14 @@ export default function NewVisit() {
     createVisit(
       {
         customer_id: leadId,
-        check_in_latitude: location?.latitude || 0,
-        check_in_longitude: location?.longitude || 0,
-        notes: notes || undefined,
+        check_in_latitude: checkInLat,
+        check_in_longitude: checkInLng,
+        notes: manualAddress ? `${manualAddress}${notes ? `\n${notes}` : ''}` : (notes || undefined),
         purpose: purpose || undefined,
         scheduled_date: scheduledDate || undefined,
         scheduled_time: scheduledTime || undefined,
         checklist,
-        updateLeadLocation: !isScheduling && !leadHasLocation,
+        updateLeadLocation: shouldUpdateLeadLocation && (checkInLat !== 0 || checkInLng !== 0),
       },
       {
         onSuccess: (visit: any) => {
@@ -258,9 +272,60 @@ export default function NewVisit() {
           </div>
 
           {selectedLead && !leadHasLocation && !isScheduling && (
-            <div className="flex items-center gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-              <MapPin className="h-4 w-4 flex-shrink-0" />
-              <span>This lead doesn't have a location. Your current location will be saved to the lead record.</span>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <span>
+                  {useManualLocation
+                    ? 'Enter the address or coordinates manually below.'
+                    : 'This lead doesn\'t have a location. Your current location will be saved to the lead record.'}
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setUseManualLocation(!useManualLocation)}
+              >
+                {useManualLocation ? 'Use GPS location instead' : 'Enter address manually'}
+              </Button>
+              {useManualLocation && (
+                <div className="space-y-3 p-3 border rounded-md bg-muted/30">
+                  <div>
+                    <Label>Address</Label>
+                    <Input
+                      placeholder="e.g. 123 Main St, City, State"
+                      value={manualAddress}
+                      onChange={(e) => setManualAddress(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Latitude (optional)</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 28.6139"
+                        value={manualLatitude}
+                        onChange={(e) => setManualLatitude(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Longitude (optional)</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 77.2090"
+                        value={manualLongitude}
+                        onChange={(e) => setManualLongitude(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    If you provide coordinates, they will be saved to the lead record. Otherwise only the address is saved.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -310,7 +375,7 @@ export default function NewVisit() {
       <div className="flex gap-3 mt-6">
         <Button
           onClick={handleSubmit}
-          disabled={!leadId || (!isScheduling && (!location || gettingLocation)) || isCreating}
+          disabled={!leadId || (!isScheduling && !location && !(useManualLocation && (manualLatitude || manualAddress))) || isCreating}
           className="flex-1"
           size="lg"
         >
