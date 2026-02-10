@@ -1,77 +1,84 @@
 
+# Make Daily Plan Creation More Obvious
 
-## Fix App Tour Stability and Navigation Issues
+## Problem
+The Daily Planning page has all the functionality to create a plan, but the "Submit" button is small (h-6) and placed at the very bottom of the form, making it hard to discover. First-time users don't realize they need to fill in the target numbers and scroll down to submit.
 
-### Problems Identified
+## Solution
+Make the plan creation flow more intuitive with these changes:
 
-1. **Sidebar step (step 5) breaks on mobile**: The sidebar uses `collapsible="offcanvas"`, meaning it's hidden off-screen on mobile. The tour tries to highlight `[data-tour="sidebar"]` but it's not visible, causing the tooltip to either not appear or position incorrectly.
+### 1. Add a Prominent "Create Today's Plan" Call-to-Action (when no plan exists)
+When there's no plan for the selected date, show a highlighted banner/card above the target table with a clear message like:
+- "Set Your Targets for Today" with a brief instruction: "Enter your Prospects, Quotes, and Sales targets below, then tap Save Plan"
+- Use the brand's primary color to draw attention
 
-2. **MutationObserver fires excessively**: The observer watches all DOM changes on `document.body` with `{ childList: true, subtree: true }`. Every tiny DOM change triggers `updatePositionForTarget`, causing constant re-renders and flickering.
+### 2. Make the Submit/Save Button More Prominent
+- Increase button size from `h-6` to `h-9` (standard button height)
+- Make it full-width when creating a new plan
+- Use clear label: "Save Plan" (instead of "Submit")
+- Add a `PlusCircle` icon when creating, `Save` icon when updating
+- Use a success/primary color accent so it stands out
 
-3. **Highlight z-index conflict with overlay**: The tour highlight has `z-index: 100` (in CSS) but the overlay is at `z-[99]`. The highlighted element sits above the overlay, but the tooltip is at `z-[100]` -- the same level as the highlight. This creates visual inconsistency and the highlighted element can intercept clicks.
+### 3. Show an Empty State Guide (when no plan exists for the date)
+Before the user enters any targets, highlight the input fields with a subtle pulsing border or accent color to guide attention to them.
 
-4. **No scroll-into-view for off-screen targets**: If a target element (like "recent-visits" at the bottom of the page) is below the fold, the tooltip positions off-screen or at the edge.
+---
 
-5. **Back navigation across pages shows jarring "Navigating..." loader**: The loading overlay appears even for fast transitions, creating a poor experience.
+## Technical Details
 
-### Solution
+### File: `src/pages/Planning.tsx`
 
-#### 1. Fix sidebar step for mobile
-- Before highlighting the sidebar step, programmatically open the sidebar (if it's collapsed/offcanvas)
-- Add a small delay to let the sidebar animate open before positioning the tooltip
-- Close the sidebar when moving away from that step
+**Changes to the Agent View section (lines 444-853):**
 
-#### 2. Throttle MutationObserver updates
-- Add a debounce (150ms) to the MutationObserver callback so it doesn't fire on every micro-DOM change
-- Once the target is found and positioned, disconnect the MutationObserver (keep only ResizeObserver)
-
-#### 3. Fix z-index layering
-- Set overlay to `z-[100]`
-- Set highlighted element to `z-[101]` via inline style in JS (not just CSS class)
-- Set tooltip to `z-[102]`
-
-#### 4. Scroll target into view
-- Before positioning, call `target.scrollIntoView({ behavior: 'smooth', block: 'center' })` 
-- Wait for scroll to settle (200ms) before computing position
-
-#### 5. Improve page transition UX
-- Remove the full-screen "Navigating..." overlay
-- Instead, show a subtle inline loading state within the tooltip itself
-- Only show loading if element isn't found within 300ms (skip loader for fast transitions)
-
-### Files Changed
-
-| File | Action | Changes |
-|------|--------|---------|
-| `src/components/AppTour.tsx` | Update | Debounce MutationObserver, scroll-into-view, fix z-index, improve transition UX |
-| `src/contexts/TourContext.tsx` | Update | Add sidebar open/close logic for sidebar step, export sidebar control |
-| `src/index.css` | Update | Fix tour-highlight z-index to work with new layering |
-
-### Technical Details
-
-**Sidebar control**: Import `useSidebar` from the sidebar component to programmatically toggle the sidebar open/closed when the tour reaches the sidebar step. In `TourContext`, detect when current step targets `[data-tour="sidebar"]` and call `setOpen(true)`.
-
-**MutationObserver debounce pattern**:
-```typescript
-let debounceTimer: number;
-const mo = new MutationObserver(() => {
-  clearTimeout(debounceTimer);
-  debounceTimer = window.setTimeout(() => {
-    const el = document.querySelector(selector);
-    if (el) {
-      updatePositionForTarget(el);
-      mo.disconnect(); // Stop observing once found
-    }
-  }, 150);
-});
+1. Add a motivational banner above the Target vs Achievement card when `!plan`:
+```tsx
+{!plan && !isLoading && (
+  <Card className="border-primary/30 bg-primary/5">
+    <CardContent className="p-4 flex items-center gap-3">
+      <div className="icon-circle icon-circle-primary h-10 w-10 shrink-0">
+        <Target className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-foreground">
+          Set Your Targets for {format(selectedDate, 'MMM d, yyyy')}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Enter your Prospects, Quotes & Sales targets below and tap Save Plan
+        </p>
+      </div>
+    </CardContent>
+  </Card>
+)}
 ```
 
-**Scroll-into-view before positioning**:
-```typescript
-target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-setTimeout(() => {
-  setPosition(computePosition(target, currentStepData.position));
-  setTargetFound(true);
-}, 250);
+2. Update the Submit button (lines 826-835) to be larger and more prominent:
+```tsx
+<div className="mt-3">
+  <Button 
+    size="default"
+    className="w-full h-9 text-sm font-medium gap-2"
+    type="submit"
+    disabled={createPlan.isPending || updatePlan.isPending}
+  >
+    {plan ? (
+      <>
+        <CheckCircle className="h-4 w-4" />
+        Update Plan
+      </>
+    ) : (
+      <>
+        <PlusCircle className="h-4 w-4" />
+        Save Plan
+      </>
+    )}
+  </Button>
+</div>
 ```
 
+3. Import `PlusCircle` from lucide-react (add to existing import on line 4).
+
+### Summary of Changes
+- **1 file modified**: `src/pages/Planning.tsx`
+- Adds a guidance banner when no plan exists for the selected date
+- Makes the Save/Submit button full-width and larger with an icon
+- No database or backend changes needed
