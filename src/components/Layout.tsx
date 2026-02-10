@@ -156,9 +156,11 @@ export default function Layout() {
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem className="hover:bg-muted">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/profile" className="cursor-pointer hover:bg-muted">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()} className="hover:bg-destructive/10 hover:text-destructive">
