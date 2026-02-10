@@ -772,10 +772,8 @@
 
   /* Dashboard Tour Highlight */
   .tour-highlight {
-    @apply relative;
     box-shadow: 0 0 0 4px hsl(var(--primary) / 0.3), 0 0 20px hsl(var(--primary) / 0.2);
     border-radius: 8px;
-    z-index: 100;
     animation: tour-pulse 2s ease-in-out infinite;
   }
 

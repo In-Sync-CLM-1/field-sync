@@ -11,6 +11,7 @@ export interface TourStep {
   title: string;
   description: string;
   position: 'top' | 'bottom' | 'left' | 'right';
+  requiresSidebar?: boolean;
 }
 
 export const tourSteps: TourStep[] = [
@@ -54,6 +55,7 @@ export const tourSteps: TourStep[] = [
     title: '🧭 Navigation Menu',
     description: 'Access Daily Planning, Team Management, Analytics, and more from the sidebar.',
     position: 'right',
+    requiresSidebar: true,
   },
   // Users page step
   {
