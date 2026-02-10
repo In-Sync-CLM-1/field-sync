@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award, FileText, Users, Trophy, ArrowLeft } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award, FileText, Users, Trophy, ArrowLeft, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -637,6 +637,25 @@ export default function Planning() {
         </CardContent>
       </Card>
 
+      {/* Guidance Banner when no plan exists */}
+      {!plan && !isLoading && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="icon-circle icon-circle-primary h-10 w-10 shrink-0">
+              <Target className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Set Your Targets for {format(selectedDate, 'MMM d, yyyy')}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Enter your Prospects, Quotes & Sales targets below and tap Save Plan
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Target vs Achievement Card - Second */}
       {isLoading ? (
         <Card className="glass-card"><CardContent className="p-3"><Skeleton className="h-24" /></CardContent></Card>
@@ -823,14 +842,24 @@ export default function Planning() {
               )}
 
               {/* Submit Button at bottom */}
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3">
                 <Button 
-                  size="sm"
-                  className="h-6 px-4 text-xs"
+                  size="default"
+                  className="w-full h-9 text-sm font-medium gap-2"
                   type="submit"
                   disabled={createPlan.isPending || updatePlan.isPending}
                 >
-                  {plan ? 'Update' : 'Submit'}
+                  {plan ? (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Update Plan
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="h-4 w-4" />
+                      Save Plan
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
