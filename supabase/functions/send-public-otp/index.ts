@@ -32,29 +32,26 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
   const toPhone = phone.replace(/^\+/, "");
 
   const payload = {
-    custom_data: toPhone,
+    custom_field: phone,
     status_callback: "",
+    to: toPhone,
+    from: whatsappFrom,
     whatsapp: {
-      messages: [
-        {
-          from: whatsappFrom,
-          to: `+${toPhone}`,
-          content: {
-            recipient_type: "individual",
-            type: "template",
-            template: {
-              name: "otp",
-              language: { policy: "deterministic", code: "en" },
-              components: [
-                {
-                  type: "body",
-                  parameters: [{ type: "text", text: otp }],
-                },
-              ],
-            },
+      content_type: "template",
+      template: {
+        name: "psotp1",
+        language: "en_US",
+        body_values: {
+          "1": otp,
+        },
+        buttons: {
+          "0": {
+            sub_type: "url",
+            index: "0",
+            parameters: [otp],
           },
         },
-      ],
+      },
     },
   };
 
