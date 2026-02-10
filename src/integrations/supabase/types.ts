@@ -52,6 +52,81 @@ export type Database = {
           },
         ]
       }
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          organization_id: string
+          punch_in_accuracy: number | null
+          punch_in_latitude: number | null
+          punch_in_longitude: number | null
+          punch_in_time: string | null
+          punch_out_accuracy: number | null
+          punch_out_latitude: number | null
+          punch_out_longitude: number | null
+          punch_out_time: string | null
+          status: string
+          total_hours: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          punch_in_accuracy?: number | null
+          punch_in_latitude?: number | null
+          punch_in_longitude?: number | null
+          punch_in_time?: string | null
+          punch_out_accuracy?: number | null
+          punch_out_latitude?: number | null
+          punch_out_longitude?: number | null
+          punch_out_time?: string | null
+          status?: string
+          total_hours?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          punch_in_accuracy?: number | null
+          punch_in_latitude?: number | null
+          punch_in_longitude?: number | null
+          punch_in_time?: string | null
+          punch_out_accuracy?: number | null
+          punch_out_latitude?: number | null
+          punch_out_longitude?: number | null
+          punch_out_time?: string | null
+          status?: string
+          total_hours?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: string | null
@@ -555,6 +630,61 @@ export type Database = {
           },
         ]
       }
+      location_history: {
+        Row: {
+          accuracy: number | null
+          attendance_id: string
+          id: string
+          latitude: number
+          longitude: number
+          organization_id: string
+          recorded_at: string
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          attendance_id: string
+          id?: string
+          latitude: number
+          longitude: number
+          organization_id: string
+          recorded_at?: string
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          attendance_id?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          organization_id?: string
+          recorded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_history_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_incentive_targets: {
         Row: {
           created_at: string
@@ -931,6 +1061,74 @@ export type Database = {
           {
             foreignKeyName: "profiles_reporting_manager_id_fkey"
             columns: ["reporting_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      route_deviations: {
+        Row: {
+          acknowledged: boolean
+          attendance_id: string
+          detected_at: string
+          distance_from_route_km: number
+          id: string
+          latitude: number
+          longitude: number
+          nearest_visit_id: string | null
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged?: boolean
+          attendance_id: string
+          detected_at?: string
+          distance_from_route_km: number
+          id?: string
+          latitude: number
+          longitude: number
+          nearest_visit_id?: string | null
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          acknowledged?: boolean
+          attendance_id?: string
+          detected_at?: string
+          distance_from_route_km?: number
+          id?: string
+          latitude?: number
+          longitude?: number
+          nearest_visit_id?: string | null
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_deviations_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "attendance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_deviations_nearest_visit_id_fkey"
+            columns: ["nearest_visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_deviations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_deviations_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
