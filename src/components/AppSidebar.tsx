@@ -62,7 +62,7 @@ export function AppSidebar() {
     { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: Clock, label: 'Attendance', path: '/dashboard/attendance', roles: ['all'] },
     { icon: Globe, label: 'Territory', path: '/dashboard/territory', roles: ['all'] },
-    { icon: Award, label: 'Performance', path: '/dashboard/performance', roles: ['admin', 'super_admin', 'platform_admin'] },
+    { icon: Award, label: 'Performance Review', path: '/dashboard/performance-review', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
     { icon: Users, label: 'Users', path: '/dashboard/users', roles: ['admin', 'super_admin', 'platform_admin'] },
     { icon: CreditCard, label: 'Subscription', path: '/dashboard/subscription', roles: ['admin', 'super_admin', 'platform_admin'] },
     { icon: Building2, label: 'Platform Admin', path: '/platform-admin/organizations', roles: ['platform_admin'] },

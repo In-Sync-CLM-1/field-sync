@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.nearby-places]
 verify_jwt = false
+
+[functions.generate-performance-insights]
+verify_jwt = false
