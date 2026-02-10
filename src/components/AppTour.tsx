@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { X, ChevronLeft, ChevronRight, Sparkles, Lightbulb, Loader2, MapPin } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Sparkles, Lightbulb, Loader2 } from 'lucide-react';
 import { useAppTour } from '@/hooks/useAppTour';
 
 interface TooltipPosition {
@@ -13,16 +13,54 @@ interface TooltipPosition {
   arrowPosition: 'top' | 'bottom' | 'left' | 'right';
 }
 
+function computePosition(target: Element, preferredPosition: string): TooltipPosition {
+  const rect = target.getBoundingClientRect();
+  const tooltipWidth = 340;
+  const tooltipHeight = 220;
+  const padding = 16;
+  const arrowOffset = 12;
+
+  let top = 0;
+  let left = 0;
+  let arrowPosition: 'top' | 'bottom' | 'left' | 'right' = 'top';
+
+  switch (preferredPosition) {
+    case 'bottom':
+      top = rect.bottom + arrowOffset;
+      left = rect.left + rect.width / 2 - tooltipWidth / 2;
+      arrowPosition = 'top';
+      break;
+    case 'top':
+      top = rect.top - tooltipHeight - arrowOffset;
+      left = rect.left + rect.width / 2 - tooltipWidth / 2;
+      arrowPosition = 'bottom';
+      break;
+    case 'right':
+      top = rect.top + rect.height / 2 - tooltipHeight / 2;
+      left = rect.right + arrowOffset;
+      arrowPosition = 'left';
+      break;
+    case 'left':
+      top = rect.top + rect.height / 2 - tooltipHeight / 2;
+      left = rect.left - tooltipWidth - arrowOffset;
+      arrowPosition = 'right';
+      break;
+  }
+
+  left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
+  top = Math.max(padding, Math.min(top, window.innerHeight - tooltipHeight - padding));
+
+  return { top, left, arrowPosition };
+}
+
 export function AppTour() {
   const {
     isActive,
     currentStep,
     totalSteps,
     currentStepData,
-    hasCompletedTour,
     isNavigating,
     pageInfo,
-    startTour,
     nextStep,
     prevStep,
     skipTour,
@@ -31,10 +69,21 @@ export function AppTour() {
   const [position, setPosition] = useState<TooltipPosition | null>(null);
   const [targetFound, setTargetFound] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<MutationObserver | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
-  // Welcome popup removed — onboarding handles the intro now
+  const updatePositionForTarget = useCallback((target: Element) => {
+    if (!currentStepData) return;
+    requestAnimationFrame(() => {
+      setPosition(computePosition(target, currentStepData.position));
+      setTargetFound(true);
+      // Highlight
+      document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
+      target.classList.add('tour-highlight');
+    });
+  }, [currentStepData]);
 
-  // Calculate tooltip position based on target element
+  // MutationObserver-based positioning
   useEffect(() => {
     if (!isActive || !currentStepData || isNavigating) {
       setPosition(null);
@@ -42,74 +91,67 @@ export function AppTour() {
       return;
     }
 
-    const updatePosition = () => {
-      const target = document.querySelector(currentStepData.target);
-      if (!target) {
+    // Cleanup previous observers
+    observerRef.current?.disconnect();
+    resizeObserverRef.current?.disconnect();
+
+    const selector = currentStepData.target;
+
+    // Try to find immediately
+    const existing = document.querySelector(selector);
+    if (existing) {
+      updatePositionForTarget(existing);
+      // Watch for resize
+      resizeObserverRef.current = new ResizeObserver(() => {
+        const el = document.querySelector(selector);
+        if (el) updatePositionForTarget(el);
+      });
+      resizeObserverRef.current.observe(existing);
+    } else {
+      setTargetFound(false);
+    }
+
+    // MutationObserver to detect when element appears or changes
+    const mo = new MutationObserver(() => {
+      const el = document.querySelector(selector);
+      if (el) {
+        updatePositionForTarget(el);
+        // Start watching resize once found
+        resizeObserverRef.current?.disconnect();
+        resizeObserverRef.current = new ResizeObserver(() => {
+          const t = document.querySelector(selector);
+          if (t) updatePositionForTarget(t);
+        });
+        resizeObserverRef.current.observe(el);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    observerRef.current = mo;
+
+    // Fallback timeout — 3s max wait
+    const fallbackTimer = setTimeout(() => {
+      if (!document.querySelector(selector)) {
         setTargetFound(false);
-        return;
       }
+    }, 3000);
 
-      setTargetFound(true);
-      const rect = target.getBoundingClientRect();
-      const tooltipWidth = 340;
-      const tooltipHeight = 220;
-      const padding = 16;
-      const arrowOffset = 12;
-
-      let top = 0;
-      let left = 0;
-      let arrowPosition: 'top' | 'bottom' | 'left' | 'right' = 'top';
-
-      switch (currentStepData.position) {
-        case 'bottom':
-          top = rect.bottom + arrowOffset;
-          left = rect.left + rect.width / 2 - tooltipWidth / 2;
-          arrowPosition = 'top';
-          break;
-        case 'top':
-          top = rect.top - tooltipHeight - arrowOffset;
-          left = rect.left + rect.width / 2 - tooltipWidth / 2;
-          arrowPosition = 'bottom';
-          break;
-        case 'right':
-          top = rect.top + rect.height / 2 - tooltipHeight / 2;
-          left = rect.right + arrowOffset;
-          arrowPosition = 'left';
-          break;
-        case 'left':
-          top = rect.top + rect.height / 2 - tooltipHeight / 2;
-          left = rect.left - tooltipWidth - arrowOffset;
-          arrowPosition = 'right';
-          break;
-      }
-
-      // Keep within viewport
-      left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
-      top = Math.max(padding, Math.min(top, window.innerHeight - tooltipHeight - padding));
-
-      setPosition({ top, left, arrowPosition });
-
-      // Highlight target element
-      document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
-      target.classList.add('tour-highlight');
+    // Reposition on scroll/resize
+    const handleReposition = () => {
+      const el = document.querySelector(selector);
+      if (el) updatePositionForTarget(el);
     };
-
-    // Wait for page to fully render before positioning
-    const timer = setTimeout(updatePosition, 500);
-    // Re-check position periodically in case elements load late
-    const retryTimer = setTimeout(updatePosition, 1000);
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition);
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition);
 
     return () => {
-      clearTimeout(timer);
-      clearTimeout(retryTimer);
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition);
+      clearTimeout(fallbackTimer);
+      mo.disconnect();
+      resizeObserverRef.current?.disconnect();
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition);
       document.querySelectorAll('.tour-highlight').forEach(el => el.classList.remove('tour-highlight'));
     };
-  }, [isActive, currentStep, currentStepData, isNavigating]);
-
+  }, [isActive, currentStep, currentStepData, isNavigating, updatePositionForTarget]);
 
   // Navigating state
   if (isActive && isNavigating) {
@@ -133,7 +175,7 @@ export function AppTour() {
   return createPortal(
     <>
       {/* Overlay */}
-      <div 
+      <div
         className="fixed inset-0 z-[99] bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200"
         onClick={skipTour}
       />
@@ -142,7 +184,7 @@ export function AppTour() {
       <div
         ref={tooltipRef}
         className="fixed z-[100] w-[340px] animate-in fade-in slide-in-from-bottom-2 duration-300"
-        style={{ top: position.top, left: position.left }}
+        style={{ top: position.top, left: position.left, willChange: 'transform' }}
       >
         <Card className="shadow-2xl border-primary/30 overflow-hidden">
           {/* Arrow */}
@@ -156,7 +198,7 @@ export function AppTour() {
           />
 
           <CardContent className="p-4 space-y-3">
-            {/* Header with page indicator and close button */}
+            {/* Header */}
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
                 <Badge variant="outline" className="text-xs mb-1">
@@ -186,16 +228,15 @@ export function AppTour() {
                 <span>{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-1.5" />
-              {/* Page indicators */}
               <div className="flex justify-center gap-1 pt-1">
                 {['Dashboard', 'Users', 'Planning', 'Prospects'].map((page, idx) => (
-                  <div 
+                  <div
                     key={page}
                     className={`h-1 rounded-full transition-all ${
-                      idx === pageInfo.pageIndex 
-                        ? 'w-6 bg-primary' 
-                        : idx < pageInfo.pageIndex 
-                          ? 'w-2 bg-primary/50' 
+                      idx === pageInfo.pageIndex
+                        ? 'w-6 bg-primary'
+                        : idx < pageInfo.pageIndex
+                          ? 'w-2 bg-primary/50'
                           : 'w-2 bg-muted'
                     }`}
                   />

@@ -23,6 +23,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { swManager } from '@/lib/serviceWorker';
 import { useAgentLocationTracker } from '@/hooks/useAgentLocationTracker';
+import { TourProvider } from '@/contexts/TourContext';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
@@ -83,6 +84,7 @@ export default function Layout() {
   };
 
   return (
+    <TourProvider>
     <SidebarProvider>
       <div className="flex min-h-screen w-full overflow-x-hidden bg-background">
         <AppSidebar />
@@ -210,5 +212,6 @@ export default function Layout() {
       {/* Upgrade Dialog */}
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
     </SidebarProvider>
+    </TourProvider>
   );
 }
