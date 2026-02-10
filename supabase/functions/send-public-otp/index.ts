@@ -41,20 +41,28 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
           from: fromPhone,
           to: toPhone,
           content: {
-            content_type: "template",
+            type: "template",
             template: {
               name: "psotp1",
-              language: "en_US",
-              body_values: {
-                "1": otp,
+              language: {
+                code: "en_US",
               },
-              buttons: {
-                "0": {
+              components: [
+                {
+                  type: "body",
+                  parameters: [
+                    { type: "text", text: otp },
+                  ],
+                },
+                {
+                  type: "button",
                   sub_type: "url",
                   index: "0",
-                  parameters: [otp],
+                  parameters: [
+                    { type: "text", text: otp },
+                  ],
                 },
-              },
+              ],
             },
           },
         },
