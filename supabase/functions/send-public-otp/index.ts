@@ -65,6 +65,12 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
   const url = `https://${subdomain}/v2/accounts/${sid}/messages`;
   const auth = btoa(`${apiKey}:${apiToken}`);
 
+  console.log("Exotel request URL:", url);
+  console.log("Exotel from number:", whatsappFrom);
+  console.log("Exotel to number:", toPhone);
+  console.log("Exotel SID:", sid);
+  console.log("Exotel subdomain:", subdomain);
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -76,9 +82,17 @@ async function sendWhatsAppOTP(phone: string, otp: string): Promise<void> {
 
   const responseText = await response.text();
 
+  console.log("Exotel response status:", response.status);
+  console.log("Exotel response body:", responseText);
+  console.log("Exotel response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
+
   if (!response.ok) {
     console.error("Exotel API error:", response.status, responseText);
     throw new Error(`WhatsApp send failed: ${response.status} - ${responseText}`);
+  }
+
+  if (!responseText || responseText.trim() === "") {
+    console.warn("Exotel returned 200 but empty body - message may not have been sent");
   }
 
   console.log("WhatsApp OTP sent successfully:", responseText);
