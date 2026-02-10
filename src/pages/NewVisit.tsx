@@ -73,8 +73,14 @@ export default function NewVisit() {
 
   useEffect(() => {
     getCurrentLocation();
-    syncFromDatabase();
   }, []);
+
+  // Sync leads when organization is available
+  useEffect(() => {
+    if (leads.length === 0) {
+      syncFromDatabase();
+    }
+  }, [leads.length]);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
