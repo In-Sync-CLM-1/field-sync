@@ -135,30 +135,46 @@ export function AppTour() {
 
     const selector = currentStepData.target;
 
+    let positionLocked = false;
+
+    const attachResizeObserver = (el: Element) => {
+      resizeObserverRef.current?.disconnect();
+      resizeObserverRef.current = new ResizeObserver(() => {
+        const t = document.querySelector(selector);
+        if (t) updatePositionForTarget(t);
+      });
+      resizeObserverRef.current.observe(el);
+    };
+
     const scrollAndPosition = (el: Element) => {
+      positionLocked = true;
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setTimeout(() => {
         updatePositionForTarget(el);
-        // Watch for resize only
-        resizeObserverRef.current?.disconnect();
-        resizeObserverRef.current = new ResizeObserver(() => {
-          const t = document.querySelector(selector);
-          if (t) updatePositionForTarget(t);
-        });
-        resizeObserverRef.current.observe(el);
+        attachResizeObserver(el);
+        // Unlock repositioning after scroll settles
+        setTimeout(() => { positionLocked = false; }, 300);
       }, 250);
+    };
+
+    const handleReposition = () => {
+      if (positionLocked) return;
+      const el = document.querySelector(selector);
+      if (el) updatePositionForTarget(el);
     };
 
     // Try to find immediately
     const existing = document.querySelector(selector);
+    const timers: number[] = [];
+
     if (existing) {
       scrollAndPosition(existing);
     } else {
       setTargetFound(false);
-      // Show searching state after 300ms (skip for fast transitions)
-      const searchTimer = setTimeout(() => setSearching(true), 300);
+      const searchTimer = window.setTimeout(() => setSearching(true), 300);
+      timers.push(searchTimer);
 
-      // Debounced MutationObserver
+      // Debounced MutationObserver — disconnects once found
       const mo = new MutationObserver(() => {
         clearTimeout(debounceRef.current);
         debounceRef.current = window.setTimeout(() => {
@@ -166,6 +182,7 @@ export function AppTour() {
           if (el) {
             clearTimeout(searchTimer);
             mo.disconnect();
+            observerRef.current = null;
             scrollAndPosition(el);
           }
         }, 150);
@@ -173,48 +190,21 @@ export function AppTour() {
       mo.observe(document.body, { childList: true, subtree: true });
       observerRef.current = mo;
 
-      // Fallback timeout — 3s max wait
-      const fallbackTimer = setTimeout(() => {
+      const fallbackTimer = window.setTimeout(() => {
         if (!document.querySelector(selector)) {
           clearTimeout(searchTimer);
           setSearching(false);
           setTargetFound(false);
         }
       }, 3000);
-
-      // Reposition on scroll/resize
-      const handleReposition = () => {
-        const el = document.querySelector(selector);
-        if (el) updatePositionForTarget(el);
-      };
-      window.addEventListener('resize', handleReposition);
-      window.addEventListener('scroll', handleReposition, true);
-
-      return () => {
-        clearTimeout(fallbackTimer);
-        clearTimeout(searchTimer);
-        clearTimeout(debounceRef.current);
-        mo.disconnect();
-        resizeObserverRef.current?.disconnect();
-        window.removeEventListener('resize', handleReposition);
-        window.removeEventListener('scroll', handleReposition, true);
-        document.querySelectorAll('.tour-highlight').forEach(el => {
-          (el as HTMLElement).style.removeProperty('position');
-          (el as HTMLElement).style.removeProperty('z-index');
-          el.classList.remove('tour-highlight');
-        });
-      };
+      timers.push(fallbackTimer);
     }
 
-    // Reposition on scroll/resize (for the immediate-found case)
-    const handleReposition = () => {
-      const el = document.querySelector(selector);
-      if (el) updatePositionForTarget(el);
-    };
     window.addEventListener('resize', handleReposition);
     window.addEventListener('scroll', handleReposition, true);
 
     return () => {
+      timers.forEach(t => clearTimeout(t));
       clearTimeout(debounceRef.current);
       observerRef.current?.disconnect();
       resizeObserverRef.current?.disconnect();
