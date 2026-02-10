@@ -1,26 +1,30 @@
 
 
-## Fix: Wrong WhatsApp Template Name
+## Add Logo Upload to Onboarding "Set up your company" Screen
 
-### Problem
-The edge function sends the template name `"psotp1"` (line 46 of `send-public-otp/index.ts`), but your Exotel/Meta dashboard shows the approved Authentication template is named **"otp"**. Exotel accepts the request (returns 202) but silently fails delivery because the template name doesn't exist.
+### What changes
+Add an optional logo upload field to the Company Profile section of the onboarding page (the "Set up your company" step), placed between the "Company Profile" header bar and the "Company Name" field.
 
-### Solution
-A single-line change in `supabase/functions/send-public-otp/index.ts`:
-
-- **Line 46**: Change `name: "psotp1"` to `name: "otp"`
+### User Experience
+- A clickable upload area with a dashed border, camera/upload icon, and "Upload Logo" label
+- Clicking opens a file picker (images only, max 2MB)
+- Once selected, a circular preview of the logo appears with a remove (X) button
+- On submit, the logo is uploaded to the `org-logos` storage bucket and the organization's `logo_url` is updated -- reusing the same bucket and pattern already implemented in the Auth registration page
 
 ### Technical Details
 
-The template "otp" in your Exotel dashboard:
-- Category: Authentication
-- Language: English
-- Status: Active - quality pending
-- Body: `"{{1}} is your verification code. For your security..."`
+**File: `src/pages/Onboarding.tsx`**
 
-The `components` array structure (body param + URL button param) and `language.code: "en_US"` will remain unchanged since these match the Authentication template format.
+1. Add state variables for the logo file and preview URL (`orgLogo`, `orgLogoPreview`)
+2. Add a hidden file input ref
+3. Add file validation handler (images only, max 2MB)
+4. Insert a logo upload UI block between the "Company Profile" bar (line 513) and the "Company Name" field (line 518):
+   - Circular upload area with dashed border
+   - Preview with remove button when a file is selected
+5. Update `handleStep1Submit` to:
+   - Upload the file to `org-logos/{orgId}/logo.{ext}` via the storage API
+   - Update the organization's `logo_url` column with the public URL
+   - Update the local `currentOrganization` state with the new `logo_url`
 
-### After the fix
-- Redeploy the `send-public-otp` edge function (automatic)
-- Test OTP delivery end-to-end on the `/auth` page
+No new dependencies, migrations, or storage buckets are needed -- the `org-logos` bucket already exists with public access and authenticated upload policies.
 
