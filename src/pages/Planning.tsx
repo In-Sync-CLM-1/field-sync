@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, TrendingUp, IndianRupee, Sparkles, Award, FileText, Users, Trophy, ArrowLeft, PlusCircle } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, FileText, Users, Trophy, ArrowLeft, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Progress } from '@/components/ui/progress';
+
 import {
   Table,
   TableBody,
@@ -25,11 +25,6 @@ import {
   useUpdatePlanOffline 
 } from '@/hooks/useDailyPlansOffline';
 import { 
-  useMonthlyIncentiveTarget, 
-  useMonthlyEnrollments, 
-  calculateIncentive 
-} from '@/hooks/useMonthlyIncentive';
-import { 
   useIsManager, 
   useTeamAggregates, 
   useTeamIncentiveToppers 
@@ -37,7 +32,7 @@ import {
 import { EnrollmentDialog } from '@/components/EnrollmentDialog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import confetti from 'canvas-confetti';
+
 
 export default function Planning() {
   const navigate = useNavigate();
@@ -53,9 +48,6 @@ export default function Planning() {
   const { data: teamAggregates, isLoading: isLoadingAggregates } = useTeamAggregates(planDate);
   const { data: teamToppers, isLoading: isLoadingToppers } = useTeamIncentiveToppers(selectedDate);
 
-  // Monthly incentive hooks
-  const { target: monthlyTarget, upsertTarget } = useMonthlyIncentiveTarget(selectedDate);
-  const { data: monthlyData, isLoading: isLoadingMonthly } = useMonthlyEnrollments(selectedDate);
 
   const [formData, setFormData] = useState({
     prospects_target: 0,
@@ -71,9 +63,6 @@ export default function Planning() {
     health_insurance_target: 0,
   });
 
-  const [monthlyTargetInput, setMonthlyTargetInput] = useState<number>(0);
-  const [shownMilestones, setShownMilestones] = useState<Set<number>>(new Set());
-  const prevPolicies = useRef<number>(0);
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
 
   // Get enrolled leads for current plan
@@ -112,55 +101,7 @@ export default function Planning() {
     }
   }, [plan]);
 
-  useEffect(() => {
-    if (monthlyTarget) {
-      setMonthlyTargetInput(monthlyTarget.policy_target);
-    }
-  }, [monthlyTarget]);
 
-  // Confetti effect when reaching milestones (7, 15, 25 policies)
-  useEffect(() => {
-    const currentPolicies = monthlyData.totalPoliciesIssued;
-    const milestones = [
-      { threshold: 7, colors: ['#d97706', '#b45309', '#f59e0b', '#fbbf24'] }, // Bronze - amber
-      { threshold: 15, colors: ['#64748b', '#475569', '#94a3b8', '#cbd5e1'] }, // Silver - slate
-      { threshold: 25, colors: ['#eab308', '#ca8a04', '#facc15', '#fde047'] }, // Gold - yellow
-    ];
-
-    milestones.forEach(({ threshold, colors }) => {
-      if (currentPolicies >= threshold && prevPolicies.current < threshold && !shownMilestones.has(threshold)) {
-        // Fire confetti celebration
-        const duration = 3000;
-        const end = Date.now() + duration;
-
-        const frame = () => {
-          confetti({
-            particleCount: 4,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0, y: 0.7 },
-            colors
-          });
-          confetti({
-            particleCount: 4,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1, y: 0.7 },
-            colors
-          });
-
-          if (Date.now() < end) {
-            requestAnimationFrame(frame);
-          }
-        };
-
-        frame();
-        setShownMilestones(prev => new Set([...prev, threshold]));
-      }
-    });
-    
-    prevPolicies.current = currentPolicies;
-  }, [monthlyData.totalPoliciesIssued, shownMilestones]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,26 +164,6 @@ export default function Planning() {
     return { percent, color: 'text-accent' };
   };
 
-  const handleMonthlyTargetSave = async () => {
-    if (monthlyTargetInput >= 0) {
-      await upsertTarget.mutateAsync(monthlyTargetInput);
-    }
-  };
-
-  // Calculate progress towards personal target
-  const getTargetProgress = () => {
-    if (!monthlyTargetInput || monthlyTargetInput === 0) return 0;
-    return Math.min(100, Math.round((monthlyData.totalPoliciesIssued / monthlyTargetInput) * 100));
-  };
-
-  // Get next tier hint
-  const getNextTierHint = () => {
-    const policies = monthlyData.totalPoliciesIssued;
-    if (policies < 7) {
-      return { needed: 7 - policies, reward: '₹1,500' };
-    }
-    return null;
-  };
 
   // Render Manager View
   if (isManager && !isLoadingManager) {
@@ -470,172 +391,6 @@ export default function Planning() {
         </div>
       </div>
 
-      {/* Monthly Incentives Card - First */}
-      <Card className="glass-card" data-tour="planning-incentive">
-        <CardHeader className="compact-header pb-1">
-          <CardTitle className="text-sm font-semibold flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <IndianRupee className="h-4 w-4 text-success" />
-              Monthly Incentives
-            </span>
-            <Badge variant="outline" className="text-xs h-5">
-              {format(selectedDate, 'MMM yyyy')}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-3 pt-0 space-y-3">
-          {/* Target Input Row */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <label className="text-xs text-muted-foreground mb-1 block truncate">Target</label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min="0"
-                  value={monthlyTargetInput}
-                  onChange={(e) => setMonthlyTargetInput(parseInt(e.target.value) || 0)}
-                  className="h-5 w-20 text-xs px-2"
-                  placeholder="0"
-                />
-                <Button 
-                  size="sm" 
-                  className="h-5 px-3 text-xs"
-                  onClick={handleMonthlyTargetSave}
-                  disabled={upsertTarget.isPending}
-                >
-                  {upsertTarget.isPending ? '...' : 'Set'}
-                </Button>
-              </div>
-            </div>
-            <div className="text-right shrink-0">
-              <div className="text-xs text-muted-foreground">Achieved</div>
-              <div className="text-xl font-bold">{monthlyData.totalPoliciesIssued}</div>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          {monthlyTargetInput > 0 && (
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Progress to target</span>
-                <span>{getTargetProgress()}%</span>
-              </div>
-              <Progress value={getTargetProgress()} className="h-2" />
-              {monthlyData.totalPoliciesIssued < monthlyTargetInput && (
-                <div className="text-xs text-muted-foreground">
-                  {monthlyTargetInput - monthlyData.totalPoliciesIssued} more to reach your target
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Milestone Badges */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Bronze - 7 policies */}
-            <div className={cn(
-              "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
-              monthlyData.totalPoliciesIssued >= 7
-                ? "bg-gradient-to-b from-amber-600/20 to-amber-700/10 border-amber-600/50"
-                : "bg-muted/30 border-muted-foreground/20 opacity-50"
-            )}>
-              <Award className={cn(
-                "h-6 w-6 mb-1",
-                monthlyData.totalPoliciesIssued >= 7 ? "text-amber-600" : "text-muted-foreground"
-              )} />
-              <span className={cn(
-                "text-[10px] font-bold",
-                monthlyData.totalPoliciesIssued >= 7 ? "text-amber-600" : "text-muted-foreground"
-              )}>BRONZE</span>
-              <span className="text-[9px] text-muted-foreground">7 Sales</span>
-            </div>
-
-            {/* Silver - 15 policies */}
-            <div className={cn(
-              "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
-              monthlyData.totalPoliciesIssued >= 15
-                ? "bg-gradient-to-b from-slate-300/30 to-slate-400/10 border-slate-400/60"
-                : "bg-muted/30 border-muted-foreground/20 opacity-50"
-            )}>
-              <Award className={cn(
-                "h-6 w-6 mb-1",
-                monthlyData.totalPoliciesIssued >= 15 ? "text-slate-400" : "text-muted-foreground"
-              )} />
-              <span className={cn(
-                "text-[10px] font-bold",
-                monthlyData.totalPoliciesIssued >= 15 ? "text-slate-400" : "text-muted-foreground"
-              )}>SILVER</span>
-              <span className="text-[9px] text-muted-foreground">15 Sales</span>
-            </div>
-
-            {/* Gold - 25 policies */}
-            <div className={cn(
-              "flex-1 flex flex-col items-center p-2 rounded-lg border-2 transition-all",
-              monthlyData.totalPoliciesIssued >= 25
-                ? "bg-gradient-to-b from-yellow-400/30 to-yellow-500/10 border-yellow-500/60"
-                : "bg-muted/30 border-muted-foreground/20 opacity-50"
-            )}>
-              <Award className={cn(
-                "h-6 w-6 mb-1",
-                monthlyData.totalPoliciesIssued >= 25 ? "text-yellow-500" : "text-muted-foreground"
-              )} />
-              <span className={cn(
-                "text-[10px] font-bold",
-                monthlyData.totalPoliciesIssued >= 25 ? "text-yellow-500" : "text-muted-foreground"
-              )}>GOLD</span>
-              <span className="text-[9px] text-muted-foreground">25 Sales</span>
-            </div>
-          </div>
-
-          {/* Commission Earned */}
-          <div className={cn(
-            "p-4 rounded-xl border-2 shadow-sm",
-            monthlyData.incentiveEarned > 0 
-              ? "bg-gradient-to-r from-success/20 to-success/5 border-success/40" 
-              : "bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30"
-          )}>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                Incentives Earned
-                {monthlyData.incentiveEarned > 0 && (
-                  <Sparkles className="h-4 w-4 text-success animate-pulse" />
-                )}
-              </span>
-              <span className={cn(
-                "text-2xl font-bold",
-                monthlyData.incentiveEarned > 0 ? "text-success" : "text-primary"
-              )}>
-                ₹{monthlyData.incentiveEarned.toLocaleString('en-IN')}
-              </span>
-            </div>
-            
-            {/* Breakdown */}
-            {monthlyData.incentiveEarned > 0 && (
-              <div className="mt-3 pt-3 border-t border-success/30 space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Base (7 sales)</span>
-                  <span className="font-medium">₹{monthlyData.baseIncentive.toLocaleString('en-IN')}</span>
-                </div>
-                {monthlyData.additionalIncentive > 0 && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Additional ({monthlyData.totalPoliciesIssued - 7} × ₹250)</span>
-                    <span className="font-medium">₹{monthlyData.additionalIncentive.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Next Tier Hint */}
-          {getNextTierHint() && (
-            <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded text-xs">
-              <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              <span>
-                <strong>{getNextTierHint()?.needed} more</strong> sale{getNextTierHint()!.needed > 1 ? 's' : ''} to earn {getNextTierHint()?.reward}!
-              </span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Guidance Banner when no plan exists */}
       {!plan && !isLoading && (
