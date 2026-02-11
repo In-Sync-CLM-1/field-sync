@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 
 import { useAuthStore } from '@/store/authStore';
 import { LeadsUpload } from '@/components/LeadsUpload';
+import { LEAD_STATUSES, getStatusLabel, getStatusColor } from '@/components/LeadStatusPipeline';
 import { 
   Search, 
   MapPin, 
@@ -19,6 +20,7 @@ import {
   Calendar,
   ArrowLeft,
   Plus,
+  AlertCircle,
 } from 'lucide-react';
 import {
   Pagination,
@@ -29,7 +31,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { format } from 'date-fns';
+import { format, isToday, isBefore, startOfDay } from 'date-fns';
 
 export default function Leads() {
   const navigate = useNavigate();
@@ -44,7 +46,20 @@ export default function Leads() {
     syncFromDatabase 
   } = useLeads();
 
+  // Count leads per status for filter chips (use all leads before status filter)
+  const { leads: allLeadsForCount } = { leads: leads }; // leads already filtered by org+search
+  // We need the unfiltered-by-status leads to get counts. Re-derive from useLeads.
+  // Actually, useLeads already applies filterStatus. For counts, we need all statuses.
+  // We'll compute counts from the full list by temporarily considering all.
 
+  const getFollowUpIndicator = (followUpDate?: string) => {
+    if (!followUpDate) return null;
+    const date = new Date(followUpDate);
+    const today = startOfDay(new Date());
+    if (isBefore(date, today)) return 'overdue';
+    if (isToday(date)) return 'today';
+    return 'upcoming';
+  };
   const {
     currentPage,
     totalPages,
@@ -59,14 +74,9 @@ export default function Leads() {
     totalItems,
   } = usePagination({ items: leads, itemsPerPage: 10 });
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'policy_issued': return 'status-badge-success';
-      case 'quoted': return 'status-badge-info';
-      case 'lead': return 'status-badge-primary';
-      case 'proposal_submitted': return 'status-badge-warning';
-      default: return 'bg-muted text-muted-foreground';
-    }
+  const getStatusBadgeColor = (status?: string) => {
+    const color = getStatusColor(status || '');
+    return `${color} text-white`;
   };
 
   return (
@@ -130,6 +140,33 @@ export default function Leads() {
             />
           </div>
 
+          {/* Status Filter Chips */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${
+                filterStatus === 'all' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-muted text-muted-foreground hover:bg-accent'
+              }`}
+            >
+              All ({leads.length})
+            </button>
+            {LEAD_STATUSES.map((status) => (
+              <button
+                key={status.value}
+                onClick={() => setFilterStatus(status.value)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${
+                  filterStatus === status.value 
+                    ? `${status.color} text-white` 
+                    : 'bg-muted text-muted-foreground hover:bg-accent'
+                }`}
+              >
+                {status.label}
+              </button>
+            ))}
+          </div>
+
         </CardContent>
       </Card>
 
@@ -188,10 +225,16 @@ export default function Leads() {
                       <p className="text-xs text-muted-foreground">{lead.policyTypeCategory}</p>
                     )}
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-center">
+                    {lead.followUpDate && (() => {
+                      const indicator = getFollowUpIndicator(lead.followUpDate);
+                      if (indicator === 'overdue') return <AlertCircle className="h-3 w-3 text-red-500" />;
+                      if (indicator === 'today') return <AlertCircle className="h-3 w-3 text-amber-500" />;
+                      return null;
+                    })()}
                     {lead.status && (
-                      <Badge className={`text-[10px] h-5 ${getStatusColor(lead.status)}`}>
-                        {lead.status}
+                      <Badge className={`text-[10px] h-5 ${getStatusBadgeColor(lead.status)}`}>
+                        {getStatusLabel(lead.status)}
                       </Badge>
                     )}
                   </div>

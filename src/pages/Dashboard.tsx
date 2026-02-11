@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer, FileText, ChevronRight, Lightbulb, Building2, LayoutDashboard } from 'lucide-react';
+import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer, FileText, ChevronRight, Lightbulb, Building2, LayoutDashboard, Phone } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RecentVisitsSection } from '@/components/dashboard/RecentVisitsSection';
@@ -10,6 +10,9 @@ import { useNavigate } from 'react-router-dom';
 import { AppTour, TourTriggerButton } from '@/components/AppTour';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { format, isToday, isBefore, startOfDay } from 'date-fns';
+import { useAuthStore } from '@/store/authStore';
 
 type StatusColor = 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -95,7 +98,28 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const myStats = useMyStats();
+  const { currentOrganization } = useAuthStore();
   const [userRole, setUserRole] = useState<string>('sales_officer');
+
+  // Fetch follow-ups due today
+  const { data: followUpLeads = [] } = useQuery({
+    queryKey: ['follow-up-leads-today', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id) return [];
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const { data, error } = await supabase
+        .from('leads')
+        .select('id, name, mobile_no, follow_up_date, status')
+        .eq('organization_id', currentOrganization.id)
+        .lte('follow_up_date', today)
+        .not('status', 'in', '("won","lost")')
+        .order('follow_up_date', { ascending: true })
+        .limit(5);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentOrganization?.id,
+  });
 
   useEffect(() => {
     async function checkRole() {
@@ -368,6 +392,57 @@ export default function Dashboard() {
           })}
         </div>
       </div>
+
+      {/* Follow-ups Due Today */}
+      {followUpLeads.length > 0 && (
+        <Card className="animate-fade-in">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              Follow-ups Due ({followUpLeads.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {followUpLeads.map((lead) => {
+              const isOverdue = lead.follow_up_date && isBefore(new Date(lead.follow_up_date), startOfDay(new Date()));
+              return (
+                <div
+                  key={lead.id}
+                  className="flex items-center justify-between p-2 rounded-md bg-muted/50 cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => navigate(`/dashboard/leads/${lead.id}`)}
+                >
+                  <div>
+                    <p className="text-sm font-medium">{lead.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {lead.follow_up_date && (
+                        <span className={isOverdue ? 'text-red-500 font-medium' : 'text-amber-600'}>
+                          {isOverdue ? 'Overdue' : 'Today'} · {format(new Date(lead.follow_up_date), 'dd MMM')}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    {lead.mobile_no && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = `tel:${lead.mobile_no}`;
+                        }}
+                      >
+                        <Phone className="h-3 w-3" />
+                      </Button>
+                    )}
+                    <ChevronRight className="h-4 w-4 text-muted-foreground self-center" />
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Visits Section */}
       <div data-tour="recent-visits">
