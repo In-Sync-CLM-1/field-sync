@@ -90,6 +90,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: Users, label: 'Users', path: '/dashboard/users' },
             { icon: GitBranch, label: 'Org Chart', path: '/dashboard/org-chart' },
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
+            { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
           ],
         },
         {
@@ -123,6 +124,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: Users, label: 'Users', path: '/dashboard/users' },
             { icon: GitBranch, label: 'Org Chart', path: '/dashboard/org-chart' },
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
+            { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
           ],
         },
         {
