@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Clock, ArrowLeft, CalendarDays, List, Route } from 'lucide-react';
+import { Plus, Clock, ArrowLeft, CalendarDays, List, Route, Navigation } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -217,16 +217,32 @@ export default function Visits() {
                     {visit.notes && (
                       <p className="text-xs text-muted-foreground mb-1 line-clamp-1">{visit.notes}</p>
                     )}
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {visit.scheduled_date
-                          ? format(new Date(visit.scheduled_date), 'PP')
-                          : format(new Date(visit.check_in_time), 'PP')}
-                      </span>
-                      {visit.scheduled_time && <span>{visit.scheduled_time}</span>}
-                      {!visit.scheduled_date && (
-                        <span>{formatDuration(visit.check_in_time, visit.check_out_time)}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {visit.scheduled_date
+                            ? format(new Date(visit.scheduled_date), 'PP')
+                            : format(new Date(visit.check_in_time), 'PP')}
+                        </span>
+                        {visit.scheduled_time && <span>{visit.scheduled_time}</span>}
+                        {!visit.scheduled_date && (
+                          <span>{formatDuration(visit.check_in_time, visit.check_out_time)}</span>
+                        )}
+                      </div>
+                      {visit.lead?.latitude && visit.lead?.longitude && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          title="Get Directions"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`https://www.google.com/maps/dir/?api=1&destination=${visit.lead!.latitude},${visit.lead!.longitude}`, '_blank');
+                          }}
+                        >
+                          <Navigation className="h-3 w-3" />
+                        </Button>
                       )}
                     </div>
                   </CardContent>

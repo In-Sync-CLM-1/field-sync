@@ -183,12 +183,25 @@ export default function VisitDetail() {
           )}
 
           {/* Lead Details */}
-          {visit.lead && (visit.lead.village_city || visit.lead.district) && (
+          {visit.lead && (visit.lead.village_city || visit.lead.district || (visit.lead.latitude && visit.lead.longitude)) && (
             <div className="space-y-2 pb-4 border-b">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span>{[visit.lead.village_city, visit.lead.district].filter(Boolean).join(', ')}</span>
-              </div>
+              {(visit.lead.village_city || visit.lead.district) && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span>{[visit.lead.village_city, visit.lead.district].filter(Boolean).join(', ')}</span>
+                </div>
+              )}
+              {visit.lead.latitude && visit.lead.longitude && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => handleNavigate(Number(visit.lead!.latitude), Number(visit.lead!.longitude))}
+                >
+                  <Navigation className="h-4 w-4" />
+                  Get Directions
+                </Button>
+              )}
             </div>
           )}
 
