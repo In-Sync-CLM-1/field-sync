@@ -1,12 +1,18 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLead } from '@/hooks/useLeads';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useLeadActivities } from '@/hooks/useLeadActivities';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AssignUserDialog } from '@/components/AssignUserDialog';
+import { LeadStatusPipeline, getStatusLabel } from '@/components/LeadStatusPipeline';
+import { LeadActivityTimeline } from '@/components/LeadActivityTimeline';
+import { LogActivityDialog } from '@/components/LogActivityDialog';
+import { ActivityType } from '@/hooks/useLeadActivities';
 import {
   ArrowLeft,
   Phone,
@@ -17,7 +23,6 @@ import {
   ExternalLink,
   IndianRupee,
   Building2,
-  User,
   FileText,
   CheckCircle,
   Clock,
@@ -30,6 +35,9 @@ export default function LeadDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { lead, isLoading } = useLead(id);
+  const { activities, isLoading: activitiesLoading, createActivity } = useLeadActivities(id);
+  const [logDialogOpen, setLogDialogOpen] = useState(false);
+  const [logActivityType, setLogActivityType] = useState<ActivityType>('note');
 
   // Get assigned user name
   const { data: assignedUser } = useQuery({
@@ -47,17 +55,41 @@ export default function LeadDetail() {
     enabled: !!lead?.assigned_user_id,
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
+      if (!id || !lead) return;
+      const oldStatus = lead.status;
+      const { error } = await supabase
+        .from('leads')
+        .update({ status: newStatus })
+        .eq('id', id);
+      if (error) throw error;
+
+      // Auto-log status change
+      createActivity.mutate({
+        leadId: id,
+        activityType: 'status_change',
+        metadata: { old_status: oldStatus, new_status: newStatus },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lead', id] });
+      toast.success('Status updated');
+    },
+    onError: () => toast.error('Failed to update status'),
+  });
+
   const handleCall = () => {
     if (!lead?.mobile_no) return;
     window.location.href = `tel:${lead.mobile_no}`;
-    toast.info('Opening phone dialer...');
+    createActivity.mutate({ leadId: id!, activityType: 'call', description: 'Call initiated' });
   };
 
   const handleWhatsApp = () => {
     if (!lead?.mobile_no) return;
     const cleanPhone = lead.mobile_no.replace(/\D/g, '');
     window.open(`https://wa.me/${cleanPhone}`, '_blank');
-    toast.info('Opening WhatsApp...');
+    createActivity.mutate({ leadId: id!, activityType: 'whatsapp', description: 'WhatsApp message sent' });
   };
 
   const handleNavigate = () => {
@@ -65,7 +97,6 @@ export default function LeadDetail() {
       toast.error('Location not available');
       return;
     }
-    
     const url = `https://www.google.com/maps/dir/?api=1&destination=${lead.latitude},${lead.longitude}`;
     window.open(url, '_blank');
   };
@@ -74,14 +105,19 @@ export default function LeadDetail() {
     navigate(`/dashboard/visits/new?leadId=${id}`);
   };
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'policy_issued': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
-      case 'quoted': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
-      case 'lead': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
-      case 'proposal_submitted': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100';
-    }
+  const openLogDialog = (type: ActivityType) => {
+    setLogActivityType(type);
+    setLogDialogOpen(true);
+  };
+
+  const handleLogSubmit = (description: string) => {
+    if (!id) return;
+    createActivity.mutate({
+      leadId: id,
+      activityType: logActivityType,
+      description,
+    });
+    toast.success('Activity logged');
   };
 
   if (isLoading) {
@@ -112,25 +148,33 @@ export default function LeadDetail() {
   }
 
   return (
-    <div className="container py-6 space-y-6">
+    <div className="container py-6 space-y-4">
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => navigate('/dashboard/leads')}>
           <ArrowLeft />
           Back
         </Button>
-        <div className="flex items-center gap-2">
-          <AssignUserDialog
-            entityType="lead"
-            entityId={id!}
-            currentAssigneeId={lead.assigned_user_id}
-            currentAssigneeName={assignedUser?.full_name}
-            onAssigned={() => queryClient.invalidateQueries({ queryKey: ['lead', id] })}
-          />
-          <Badge className={getStatusColor(lead.status)}>
-            {lead.status}
-          </Badge>
-        </div>
+        <AssignUserDialog
+          entityType="lead"
+          entityId={id!}
+          currentAssigneeId={lead.assigned_user_id}
+          currentAssigneeName={assignedUser?.full_name}
+          onAssigned={() => queryClient.invalidateQueries({ queryKey: ['lead', id] })}
+        />
       </div>
+
+      {/* Status Pipeline */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Pipeline Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LeadStatusPipeline
+            currentStatus={lead.status}
+            onStatusChange={(newStatus) => statusMutation.mutate(newStatus)}
+          />
+        </CardContent>
+      </Card>
 
       {/* Main Info Card */}
       <Card>
@@ -180,7 +224,7 @@ export default function LeadDetail() {
 
           <Separator />
 
-          {/* Policy Details */}
+          {/* Sales Details */}
           {(lead.premium_amount || lead.policy_type) && (
             <>
               <div className="space-y-2">
@@ -239,15 +283,34 @@ export default function LeadDetail() {
 
           <Separator />
 
-          {/* Quick Actions */}
-          <div className="flex gap-3 justify-center">
-            <Button variant="outline" size="icon" onClick={handleCall} disabled={!lead.mobile_no}>
-              <Phone />
+          {/* Quick Actions - Call, WhatsApp, Log */}
+          <div className="flex gap-2 justify-center flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleCall} disabled={!lead.mobile_no} className="gap-1">
+              <Phone className="h-3 w-3" /> Call
             </Button>
-            <Button variant="outline" size="icon" onClick={handleWhatsApp} disabled={!lead.mobile_no}>
-              <MessageSquare />
+            <Button variant="outline" size="sm" onClick={handleWhatsApp} disabled={!lead.mobile_no} className="gap-1">
+              <MessageSquare className="h-3 w-3" /> WhatsApp
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => openLogDialog('call')} className="gap-1">
+              <Phone className="h-3 w-3" /> Log Call
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => openLogDialog('whatsapp')} className="gap-1">
+              <MessageSquare className="h-3 w-3" /> Log WhatsApp
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => openLogDialog('note')} className="gap-1">
+              <FileText className="h-3 w-3" /> Add Note
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Activity Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Activity Timeline</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LeadActivityTimeline activities={activities} isLoading={activitiesLoading} />
         </CardContent>
       </Card>
 
@@ -304,6 +367,15 @@ export default function LeadDetail() {
         <Calendar />
         Start Visit
       </Button>
+
+      {/* Log Activity Dialog */}
+      <LogActivityDialog
+        open={logDialogOpen}
+        onOpenChange={setLogDialogOpen}
+        activityType={logActivityType}
+        onSubmit={handleLogSubmit}
+        isLoading={createActivity.isPending}
+      />
     </div>
   );
 }
