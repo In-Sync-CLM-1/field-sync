@@ -1,13 +1,15 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer, FileText, ChevronRight, Lightbulb } from 'lucide-react';
+import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, AlertTriangle, Timer, FileText, ChevronRight, Lightbulb, Building2, LayoutDashboard } from 'lucide-react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RecentVisitsSection } from '@/components/dashboard/RecentVisitsSection';
 import { SetupChecklist } from '@/components/dashboard/SetupChecklist';
 import { useNavigate } from 'react-router-dom';
 import { AppTour, TourTriggerButton } from '@/components/AppTour';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 type StatusColor = 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -93,6 +95,26 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const myStats = useMyStats();
+  const [userRole, setUserRole] = useState<string>('sales_officer');
+
+  useEffect(() => {
+    async function checkRole() {
+      if (!user) return;
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      const userRoles = roles?.map(r => r.role) || [];
+      if (userRoles.includes('admin') || userRoles.includes('super_admin') || userRoles.includes('platform_admin')) {
+        setUserRole('admin');
+      } else if (userRoles.includes('branch_manager')) {
+        setUserRole('branch_manager');
+      } else {
+        setUserRole('sales_officer');
+      }
+    }
+    checkRole();
+  }, [user]);
 
   const currentHour = new Date().getHours();
   const primaryAction = getPrimaryAction(currentHour, myStats?.visitsToday || 0);
@@ -253,6 +275,36 @@ export default function Dashboard() {
           <TourTriggerButton />
         </div>
       </div>
+
+      {/* Role-based navigation banner */}
+      {userRole === 'admin' && (
+        <Card className="border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => navigate('/dashboard/branch-dashboard')}>
+          <CardContent className="flex items-center justify-between py-3 px-4">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Branch Dashboard</p>
+                <p className="text-xs text-muted-foreground">View organization-wide performance</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-primary" />
+          </CardContent>
+        </Card>
+      )}
+      {userRole === 'branch_manager' && (
+        <Card className="border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => navigate('/dashboard/team-dashboard')}>
+          <CardContent className="flex items-center justify-between py-3 px-4">
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Team Dashboard</p>
+                <p className="text-xs text-muted-foreground">Monitor your team's performance</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-primary" />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Setup Checklist - shows for new users */}
       <SetupChecklist />
