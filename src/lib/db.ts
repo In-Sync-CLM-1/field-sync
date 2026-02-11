@@ -73,8 +73,10 @@ export interface Photo {
   visitId: string;
   blob: Blob;
   caption?: string;
+  category: 'selfie' | 'property' | 'document' | 'other';
   latitude?: number;
   longitude?: number;
+  accuracy?: number;
   timestamp: Date;
   syncStatus: 'synced' | 'pending' | 'failed';
   lastSyncedAt?: Date;
@@ -174,7 +176,7 @@ export interface Communication {
 
 // Database version - INCREMENT when schema changes
 // Current: 16 (insurance terminology update)
-export const DB_VERSION = 16;
+export const DB_VERSION = 17;
 
 class FieldVisitDatabase extends Dexie {
   leads!: Table<Lead, string>;

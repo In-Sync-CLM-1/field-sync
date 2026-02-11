@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useVisit, useVisits, ChecklistItem } from '@/hooks/useVisits';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { AssignUserDialog } from '@/components/AssignUserDialog';
 import { VisitChecklist } from '@/components/VisitChecklist';
+import { VisitPhotoCapture } from '@/components/VisitPhotoCapture';
 import { RescheduleDialog } from '@/components/RescheduleDialog';
 import { CancelVisitDialog } from '@/components/CancelVisitDialog';
 import { toast } from 'sonner';
@@ -32,6 +33,11 @@ export default function VisitDetail() {
   const [notes, setNotes] = useState('');
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [photosMeetMinimum, setPhotosMeetMinimum] = useState(false);
+
+  const handlePhotoCountChange = useCallback((count: number, meetsMin: boolean) => {
+    setPhotosMeetMinimum(meetsMin);
+  }, []);
 
   const { data: assignedUser } = useQuery({
     queryKey: ['user', visit?.user_id],
@@ -286,18 +292,27 @@ export default function VisitDetail() {
         </CardContent>
       </Card>
 
+      {/* Photo Capture Section */}
+      {(visit.status === 'in_progress' || isCompleted) && (
+        <VisitPhotoCapture
+          visitId={id!}
+          isActive={visit.status === 'in_progress'}
+          onPhotoCountChange={handlePhotoCountChange}
+        />
+      )}
+
       {/* Action Buttons */}
       {isActive && (
         <div className="space-y-2">
           {visit.status === 'in_progress' && (
             <Button
               onClick={handleCheckOut}
-              disabled={!location || isCheckingOut || gettingLocation}
+              disabled={!location || isCheckingOut || gettingLocation || !photosMeetMinimum}
               className="w-full"
               size="lg"
             >
               {isCheckingOut && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Complete Visit
+              {!photosMeetMinimum ? 'Capture 2+ Photos to Complete' : 'Complete Visit'}
             </Button>
           )}
           <div className="flex gap-2">
