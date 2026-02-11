@@ -1368,6 +1368,63 @@ export type Database = {
           },
         ]
       }
+      visit_photos: {
+        Row: {
+          accuracy: number | null
+          captured_at: string
+          category: string
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          organization_id: string
+          storage_path: string
+          user_id: string
+          visit_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          captured_at?: string
+          category?: string
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          organization_id: string
+          storage_path: string
+          user_id: string
+          visit_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          captured_at?: string
+          category?: string
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          organization_id?: string
+          storage_path?: string
+          user_id?: string
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_photos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visit_photos_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       visits: {
         Row: {
           cancel_reason: string | null

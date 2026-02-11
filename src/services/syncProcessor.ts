@@ -19,6 +19,7 @@ export async function processSyncQueue() {
     // Sync other entity types as needed
     await syncPendingLeads();
     await syncPendingVisits();
+    await syncPendingPhotos();
     await syncPendingCommunications();
 
     console.log('[SyncProcessor] Sync complete');
@@ -155,6 +156,93 @@ async function syncPendingVisits() {
       }
     } catch (err: any) {
       console.error('[SyncProcessor] Visit sync failed:', err);
+      await db.syncQueue.update(item.id, {
+        retryCount: item.retryCount + 1,
+        lastAttemptAt: new Date(),
+        error: err.message,
+      });
+    }
+  }
+}
+
+// Sync pending photos
+async function syncPendingPhotos() {
+  const pendingItems = await db.syncQueue
+    .where('type')
+    .equals('photo')
+    .toArray();
+
+  if (pendingItems.length === 0) return;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // Get user's organization
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile?.organization_id) return;
+
+  for (const item of pendingItems) {
+    if (item.retryCount >= item.maxRetries) {
+      console.log('[SyncProcessor] Max retries reached for photo:', item.entityId);
+      continue;
+    }
+
+    try {
+      const photo = await db.photos.get(item.entityId);
+      if (!photo) {
+        await db.syncQueue.delete(item.id);
+        continue;
+      }
+
+      // Upload blob to storage
+      const ext = photo.blob.type === 'image/png' ? 'png' : 'jpg';
+      const storagePath = `${profile.organization_id}/${photo.visitId}/${photo.id}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('visit-photos')
+        .upload(storagePath, photo.blob, {
+          contentType: photo.blob.type,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Create DB record
+      const { error: dbError } = await supabase
+        .from('visit_photos')
+        .upsert({
+          id: photo.id,
+          visit_id: photo.visitId,
+          organization_id: profile.organization_id,
+          user_id: user.id,
+          category: photo.category || 'other',
+          storage_path: storagePath,
+          latitude: photo.latitude || null,
+          longitude: photo.longitude || null,
+          accuracy: photo.accuracy || null,
+          captured_at: photo.timestamp.toISOString(),
+        });
+
+      if (dbError) {
+        throw new Error(`DB insert failed: ${dbError.message}`);
+      }
+
+      // Mark as synced
+      await db.photos.update(photo.id, {
+        syncStatus: 'synced',
+        lastSyncedAt: new Date(),
+      });
+      await db.syncQueue.delete(item.id);
+      console.log('[SyncProcessor] Photo synced successfully:', photo.id);
+    } catch (err: any) {
+      console.error('[SyncProcessor] Photo sync failed:', err);
       await db.syncQueue.update(item.id, {
         retryCount: item.retryCount + 1,
         lastAttemptAt: new Date(),
