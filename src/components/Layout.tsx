@@ -179,7 +179,7 @@ export default function Layout() {
           </main>
 
           {/* Bottom Navigation */}
-          <nav className="fixed bottom-0 left-0 right-0 z-50 h-12 border-t border-border bg-card/95 backdrop-blur-sm">
+          <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 border-t border-border bg-card shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
             <div className="grid h-full grid-cols-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -189,20 +189,18 @@ export default function Layout() {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 relative ${
+                    className={`flex flex-col items-center justify-center gap-1 py-1.5 transition-all duration-200 relative ${
                       active
                         ? 'text-primary'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <div className={`relative transition-transform duration-200 ${active ? 'scale-105' : 'hover:scale-100'}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className="text-[10px] font-medium leading-tight">{item.label}</span>
-                    {/* Active indicator dot */}
+                    {/* Active top indicator bar */}
                     {active && (
-                      <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+                      <div className="absolute top-0 left-1/4 right-1/4 h-0.5 rounded-b-full bg-primary" />
                     )}
+                    <Icon className={`h-5 w-5 ${active ? 'stroke-[2.5]' : ''}`} />
+                    <span className={`text-[11px] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
                   </Link>
                 );
               })}
