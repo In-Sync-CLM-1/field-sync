@@ -1,32 +1,65 @@
 
 
-# Add "Directions to Visit" Button
+# Visual Org Chart
 
 ## Overview
-Add a prominent "Get Directions" button on both the **Visit Detail** page and each **Visit card** in the list, so agents can quickly open Google Maps navigation to the lead's location.
+Add a new **Org Chart** page that displays the full organizational hierarchy as a visual tree diagram: Branches at the top, Managers underneath, and Agents (Sales Officers) at the leaf level. Accessible from the sidebar under the MANAGEMENT section (Admin only).
 
-## Changes
+## How It Works
 
-### 1. Visit Detail Page (`src/pages/VisitDetail.tsx`)
-- Add a prominent "Directions" button in the **Lead Details** section (where address is shown)
-- Uses the lead's `latitude`/`longitude` to open Google Maps directions
-- Button is shown whenever the lead has valid coordinates, regardless of visit status
-- Styled as a visible action button (not just a ghost icon like the existing check-in/check-out navigation buttons)
+1. Admin navigates to **Org Chart** from the sidebar
+2. The page fetches all profiles, branches, and user roles for the current organization
+3. It renders a top-down tree layout:
 
-### 2. Visits List Page (`src/pages/Visits.tsx`)
-- Add a small **Navigation icon button** on each visit card
-- Clicking it opens Google Maps directions to the lead's location
-- Uses `e.stopPropagation()` to prevent navigating to the visit detail page
-- Only shown when the lead has valid latitude/longitude
+```text
+       [Organization]
+        /         \
+   [Branch A]   [Branch B]
+      |              |
+  [Manager 1]   [Manager 2]
+   /     \           |
+[Agent] [Agent]   [Agent]
+```
+
+4. Each node shows the user's name, role badge, and active/inactive status
+5. Unassigned users (no branch or no manager) appear in a separate "Unassigned" section at the bottom
+6. Clicking a user node navigates to the Edit User dialog or shows a detail popover
 
 ## Technical Details
 
-### Files Modified
+### New Files
+
+| File | Purpose |
+|---|---|
+| `src/pages/OrgChart.tsx` | Main page component with tree rendering |
+
+### Modified Files
+
 | File | Change |
 |---|---|
-| `src/pages/VisitDetail.tsx` | Add a "Get Directions" button in the lead details section using `lead.latitude` and `lead.longitude` |
-| `src/pages/Visits.tsx` | Add a navigation icon button on each visit card that opens Google Maps directions |
+| `src/App.tsx` | Add `/dashboard/org-chart` route |
+| `src/components/AppSidebar.tsx` | Add "Org Chart" link under MANAGEMENT section (Admin only) |
 
-Both use the existing pattern: `window.open('https://www.google.com/maps/dir/?api=1&destination={lat},{lng}', '_blank')`
+### Data Fetching
 
-No database changes or new files required.
+Uses existing queries -- no new tables or migrations needed:
+- `profiles` table: `id`, `full_name`, `branch_id`, `reporting_manager_id`, `is_active`, `organization_id`
+- `user_roles` table: `user_id`, `role`
+- `branches` table: `id`, `name`, `is_active`
+
+### Tree Construction Logic
+
+1. Group users by `branch_id`
+2. Within each branch, identify managers (`branch_manager` role)
+3. Under each manager, list agents where `reporting_manager_id` matches
+4. Handle edge cases: users with no branch, agents with no manager, empty branches
+
+### UI Design
+
+- Pure CSS/Tailwind tree layout using flexbox (no external library needed)
+- Vertical connectors drawn with CSS borders
+- Each node is a compact Card with: avatar initial, name, role Badge
+- Inactive users shown with reduced opacity
+- Responsive: on mobile, the tree scrolls horizontally within a ScrollArea
+- Branch nodes use a folder icon, user nodes use avatar initials
+
