@@ -19,6 +19,8 @@ import NewLead from "./pages/NewLead";
 import TeamAndBranches from "./pages/TeamAndBranches";
 import Branches from "./pages/Branches";
 import Teams from "./pages/Teams";
+import TeamDashboard from "./pages/TeamDashboard";
+import BranchDashboard from "./pages/BranchDashboard";
 import AnalyticsHub from "./pages/AnalyticsHub";
 import TerritoryMap from "./pages/TerritoryMap";
 import PerformanceBoard from "./pages/PerformanceBoard";
@@ -106,6 +108,8 @@ const App = () => (
                 }
               >
                 <Route index element={<Dashboard />} />
+                <Route path="team-dashboard" element={<TeamDashboard />} />
+                <Route path="branch-dashboard" element={<BranchDashboard />} />
                 <Route path="planning" element={<Planning />} />
                 <Route path="planning/team" element={<Teams />} />
                 <Route path="planning/overview" element={<PlanningOverview />} />

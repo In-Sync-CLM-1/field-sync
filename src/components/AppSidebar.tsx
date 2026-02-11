@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, BarChart3, Globe, Award, ChevronRight, Users, ClipboardList, LogOut, CreditCard, Building2, Clock } from 'lucide-react';
+import { Home, LayoutDashboard, BarChart3, Globe, Award, Users, ClipboardList, LogOut, CreditCard, Building2, Clock, MapPin, TrendingUp } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,12 +21,144 @@ import {
 import { Button } from '@/components/ui/button';
 import inSyncLogo from '@/assets/in-sync-logo.png';
 
+type RoleType = 'platform_admin' | 'super_admin' | 'admin' | 'branch_manager' | 'sales_officer';
+
+interface NavSection {
+  label: string;
+  items: { icon: any; label: string; path: string }[];
+}
+
+function getSectionsForRole(role: RoleType): NavSection[] {
+  switch (role) {
+    case 'sales_officer':
+      return [
+        {
+          label: 'MY WORK',
+          items: [
+            { icon: Home, label: 'Dashboard', path: '/dashboard' },
+            { icon: ClipboardList, label: 'Daily Plan', path: '/dashboard/planning' },
+            { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
+            { icon: Users, label: 'Leads', path: '/dashboard/leads' },
+            { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
+            { icon: Globe, label: 'Territory', path: '/dashboard/territory' },
+          ],
+        },
+      ];
+
+    case 'branch_manager':
+      return [
+        {
+          label: 'MY WORK',
+          items: [
+            { icon: Home, label: 'Dashboard', path: '/dashboard' },
+            { icon: ClipboardList, label: 'Daily Plan', path: '/dashboard/planning' },
+            { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
+            { icon: Users, label: 'Leads', path: '/dashboard/leads' },
+            { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
+          ],
+        },
+        {
+          label: 'TEAM',
+          items: [
+            { icon: LayoutDashboard, label: 'Team Dashboard', path: '/dashboard/team-dashboard' },
+            { icon: Users, label: 'Teams', path: '/dashboard/teams' },
+            { icon: ClipboardList, label: 'Planning Overview', path: '/dashboard/planning/overview' },
+          ],
+        },
+        {
+          label: 'ANALYTICS',
+          items: [
+            { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
+            { icon: Award, label: 'Performance Review', path: '/dashboard/performance-review' },
+          ],
+        },
+      ];
+
+    case 'admin':
+    case 'super_admin':
+      return [
+        {
+          label: 'OVERVIEW',
+          items: [
+            { icon: Building2, label: 'Branch Dashboard', path: '/dashboard/branch-dashboard' },
+            { icon: ClipboardList, label: 'Planning Overview', path: '/dashboard/planning/overview' },
+          ],
+        },
+        {
+          label: 'MANAGEMENT',
+          items: [
+            { icon: Building2, label: 'Branches', path: '/dashboard/branches' },
+            { icon: Users, label: 'Teams', path: '/dashboard/teams' },
+            { icon: Users, label: 'Users', path: '/dashboard/users' },
+          ],
+        },
+        {
+          label: 'ANALYTICS',
+          items: [
+            { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
+            { icon: Award, label: 'Performance Review', path: '/dashboard/performance-review' },
+          ],
+        },
+        {
+          label: 'SETTINGS',
+          items: [
+            { icon: CreditCard, label: 'Subscription', path: '/dashboard/subscription' },
+          ],
+        },
+      ];
+
+    case 'platform_admin':
+      return [
+        {
+          label: 'OVERVIEW',
+          items: [
+            { icon: Building2, label: 'Branch Dashboard', path: '/dashboard/branch-dashboard' },
+            { icon: ClipboardList, label: 'Planning Overview', path: '/dashboard/planning/overview' },
+          ],
+        },
+        {
+          label: 'MANAGEMENT',
+          items: [
+            { icon: Building2, label: 'Branches', path: '/dashboard/branches' },
+            { icon: Users, label: 'Teams', path: '/dashboard/teams' },
+            { icon: Users, label: 'Users', path: '/dashboard/users' },
+          ],
+        },
+        {
+          label: 'ANALYTICS',
+          items: [
+            { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
+            { icon: Award, label: 'Performance Review', path: '/dashboard/performance-review' },
+          ],
+        },
+        {
+          label: 'PLATFORM',
+          items: [
+            { icon: Building2, label: 'Platform Admin', path: '/platform-admin/organizations' },
+            { icon: CreditCard, label: 'Subscription', path: '/dashboard/subscription' },
+          ],
+        },
+      ];
+
+    default:
+      return [
+        {
+          label: 'MY WORK',
+          items: [
+            { icon: Home, label: 'Dashboard', path: '/dashboard' },
+            { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
+          ],
+        },
+      ];
+  }
+}
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string>('sales_officer');
+  const [userRole, setUserRole] = useState<RoleType>('sales_officer');
 
   useEffect(() => {
     async function checkRole() {
@@ -38,7 +170,7 @@ export function AppSidebar() {
         .eq('user_id', user.id);
       
       const userRoles = roles?.map(r => r.role) || [];
-      const primaryRole = userRoles.includes('platform_admin') 
+      const primaryRole: RoleType = userRoles.includes('platform_admin') 
         ? 'platform_admin' 
         : userRoles.includes('super_admin')
         ? 'super_admin'
@@ -54,21 +186,7 @@ export function AppSidebar() {
     checkRole();
   }, [user]);
 
-  const dashboards = [
-    { icon: Home, label: 'My Dashboard', path: '/dashboard', roles: ['all'] },
-    { icon: ClipboardList, label: 'Daily Plan', path: '/dashboard/planning', roles: ['sales_officer', 'branch_manager'] },
-    { icon: Building2, label: 'Branches', path: '/dashboard/branches', roles: ['admin', 'super_admin', 'platform_admin'] },
-    { icon: Users, label: 'Teams', path: '/dashboard/teams', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: ClipboardList, label: 'Planning Overview', path: '/dashboard/planning/overview', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: Clock, label: 'Attendance', path: '/dashboard/attendance', roles: ['all'] },
-    { icon: Globe, label: 'Territory', path: '/dashboard/territory', roles: ['all'] },
-    { icon: Award, label: 'Performance Review', path: '/dashboard/performance-review', roles: ['branch_manager', 'admin', 'super_admin', 'platform_admin'] },
-    { icon: Users, label: 'Users', path: '/dashboard/users', roles: ['admin', 'super_admin', 'platform_admin'] },
-    { icon: CreditCard, label: 'Subscription', path: '/dashboard/subscription', roles: ['admin', 'super_admin', 'platform_admin'] },
-    { icon: Building2, label: 'Platform Admin', path: '/platform-admin/organizations', roles: ['platform_admin'] },
-  ].filter(d => d.roles.includes('all') || d.roles.includes(userRole));
-
+  const sections = getSectionsForRole(userRole);
   const currentPath = location.pathname;
 
   return (
@@ -88,40 +206,45 @@ export function AppSidebar() {
         )}
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {dashboards.map((item, index) => {
-                const Icon = item.icon;
-                const isActive = currentPath === item.path;
-                
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild isActive={isActive} size="xs">
-                      <NavLink 
-                        to={item.path} 
-                        end
-                        className={`flex items-center gap-2 text-sm rounded-md transition-all duration-150 ${
-                          isActive 
-                            ? 'bg-primary/10 text-primary font-medium border-l-2 border-primary' 
-                            : 'hover:bg-muted text-foreground'
-                        }`}
-                        activeClassName=""
-                        style={{ animationDelay: `${index * 40}ms` }}
-                      >
-                        <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? '' : 'text-muted-foreground'}`} />
-                        {!collapsed && <span>{item.label}</span>}
-                        {isActive && !collapsed && (
-                          <div className="ml-auto w-1 h-1 rounded-full bg-primary" />
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {sections.map((section) => (
+          <SidebarGroup key={section.label}>
+            <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground tracking-widest px-3">
+              {!collapsed && section.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = currentPath === item.path || 
+                    (item.path !== '/dashboard' && currentPath.startsWith(item.path));
+                  
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton asChild isActive={isActive} size="xs">
+                        <NavLink 
+                          to={item.path} 
+                          end={item.path === '/dashboard'}
+                          className={`flex items-center gap-2 text-sm rounded-md transition-all duration-150 ${
+                            isActive 
+                              ? 'bg-primary/10 text-primary font-medium border-l-2 border-primary' 
+                              : 'hover:bg-muted text-foreground'
+                          }`}
+                          activeClassName=""
+                        >
+                          <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? '' : 'text-muted-foreground'}`} />
+                          {!collapsed && <span>{item.label}</span>}
+                          {isActive && !collapsed && (
+                            <div className="ml-auto w-1 h-1 rounded-full bg-primary" />
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       
       <SidebarFooter className="p-2 border-t border-sidebar-border">
