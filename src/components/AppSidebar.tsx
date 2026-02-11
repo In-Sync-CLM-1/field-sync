@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, BarChart3, Globe, Award, Users, ClipboardList, LogOut, CreditCard, Building2, Clock, MapPin, TrendingUp, UserCheck } from 'lucide-react';
+import { Home, LayoutDashboard, BarChart3, Globe, Award, Users, ClipboardList, LogOut, CreditCard, Building2, Clock, MapPin, TrendingUp, UserCheck, GitBranch } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -88,6 +88,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: Building2, label: 'Branches', path: '/dashboard/branches' },
             { icon: Users, label: 'Teams', path: '/dashboard/teams' },
             { icon: Users, label: 'Users', path: '/dashboard/users' },
+            { icon: GitBranch, label: 'Org Chart', path: '/dashboard/org-chart' },
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
           ],
         },
@@ -120,6 +121,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: Building2, label: 'Branches', path: '/dashboard/branches' },
             { icon: Users, label: 'Teams', path: '/dashboard/teams' },
             { icon: Users, label: 'Users', path: '/dashboard/users' },
+            { icon: GitBranch, label: 'Org Chart', path: '/dashboard/org-chart' },
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
           ],
         },

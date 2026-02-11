@@ -46,6 +46,7 @@ import Attendance from "./pages/Attendance";
 import OrganizationsDashboard from "./pages/PlatformAdmin/OrganizationsDashboard";
 import OrganizationDetail from "./pages/PlatformAdmin/OrganizationDetail";
 
+import OrgChart from "./pages/OrgChart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -155,6 +156,11 @@ const App = () => (
                 } />
                 <Route path="attendance" element={<Attendance />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="org-chart" element={
+                  <AdminRoute>
+                    <OrgChart />
+                  </AdminRoute>
+                } />
                 
               </Route>
               <Route path="*" element={<NotFound />} />
