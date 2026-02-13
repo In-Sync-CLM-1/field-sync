@@ -79,7 +79,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
         {
           label: 'OVERVIEW',
           items: [
-            { icon: Building2, label: 'Branch Dashboard', path: '/dashboard/branch-dashboard' },
+            { icon: Building2, label: 'Organization Dashboard', path: '/dashboard/branch-dashboard' },
           ],
         },
         {
@@ -113,7 +113,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
         {
           label: 'OVERVIEW',
           items: [
-            { icon: Building2, label: 'Branch Dashboard', path: '/dashboard/branch-dashboard' },
+            { icon: Building2, label: 'Organization Dashboard', path: '/dashboard/branch-dashboard' },
           ],
         },
         {
