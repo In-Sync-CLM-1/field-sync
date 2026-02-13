@@ -1,31 +1,26 @@
 
 
-# Add "Visits" Tab for All Roles and Ensure Agent Visit Visibility
+# Rename "Branch Dashboard" to "Organization Dashboard"
 
-## What Changes
+## Problem
+The Admin's top-level dashboard is incorrectly named "Branch Dashboard" even though it displays organization-wide metrics across all branches. This is confusing since it implies a single branch's view.
 
-### 1. Add "Visits" to Admin/Super Admin Sidebar
-The Visits link (`/dashboard/visits`) is currently available for Sales Officers and Branch Managers but missing from the Admin, Super Admin, and Platform Admin sidebar sections. It will be added to the **MANAGEMENT** section for these roles.
+## Changes
 
-### 2. Agent Dashboard -- Already Complete
-The agent (Sales Officer) dashboard already displays:
-- **Visits Today** metric card with planned vs completed count
-- **This Week** visits summary
-- **Active Visits** count
-- **Pending Visits** count
-- **Avg Duration** metric
-- **Recent Visits Section** with today's schedule and visit history
-- **Quick Actions** with "View All Visits" and "Start Visit" buttons
+### 1. Rename in the Page (`src/pages/BranchDashboard.tsx`)
+- Change the heading from "Branch Dashboard" to "Organization Dashboard"
+- Update the subtitle from "Organization-wide performance overview" to "Head Office overview across all branches"
 
-No changes are needed on the dashboard itself.
+### 2. Rename in the Sidebar (`src/components/AppSidebar.tsx`)
+- Change the sidebar label from "Branch Dashboard" to "Organization Dashboard" (or "HQ Dashboard" for brevity)
 
-## Technical Details
+No backend changes, no routing changes (the URL `/dashboard/branch-dashboard` stays the same to avoid breaking bookmarks).
 
-### File: `src/components/AppSidebar.tsx`
+## Summary of Hierarchy (no changes needed -- already correct)
 
-Add the Visits menu item to the `admin`, `super_admin`, and `platform_admin` role sections in the `getSectionsForRole` function:
+```text
+Admin       --> Organization Dashboard (all branches, all agents)
+Manager     --> Team Dashboard (their team's agents only)
+Agent       --> My Dashboard (personal stats only)
+```
 
-- For `admin` / `super_admin` (lines 76-108): Add `{ icon: MapPin, label: 'Visits', path: '/dashboard/visits' }` to the MANAGEMENT items list
-- For `platform_admin` (lines 110-142): Add `{ icon: MapPin, label: 'Visits', path: '/dashboard/visits' }` to the MANAGEMENT items list
-
-This is a single-file change affecting approximately 2 lines of code.
