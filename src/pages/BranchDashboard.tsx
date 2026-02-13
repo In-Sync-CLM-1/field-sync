@@ -33,8 +33,8 @@ export default function BranchDashboard() {
           <Building2 className="h-4 w-4 text-primary" />
           <span className="text-xs font-medium text-primary uppercase tracking-wider">Organization</span>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground">Branch Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Organization-wide performance overview</p>
+        <h1 className="text-xl font-bold tracking-tight text-foreground">Organization Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Head Office overview across all branches</p>
       </div>
 
       {/* Org KPI Cards */}
