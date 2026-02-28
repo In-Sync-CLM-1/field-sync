@@ -24,6 +24,7 @@ import { db } from '@/lib/db';
 import { swManager } from '@/lib/serviceWorker';
 import { useAgentLocationTracker } from '@/hooks/useAgentLocationTracker';
 import { TourProvider } from '@/contexts/TourContext';
+import { HelpWidget } from '@/components/HelpWidget';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
@@ -173,6 +174,7 @@ export default function Layout() {
       
       {/* Upgrade Dialog */}
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
+      <HelpWidget />
     </SidebarProvider>
     </TourProvider>
   );
