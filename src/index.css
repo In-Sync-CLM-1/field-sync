@@ -31,15 +31,15 @@
 @layer base {
   :root {
     /* Base Colors - Light Mode */
-    --background: 180 5% 98%;          /* Very light gray-green */
+    --background: 210 20% 96%;          /* Cool-tinted gray */
     --foreground: 192 16% 27%;         /* #374649 Dark Teal - main text */
 
     /* Card Colors - Pure white */
-    --card: 0 0% 100%;
-    --card-foreground: 192 16% 27%;    /* Dark Teal */
+    --card: 210 15% 99%;
+    --card-foreground: 192 16% 27%;
 
     /* Popover & Dropdown - Solid white */
-    --popover: 0 0% 100%;
+    --popover: 210 15% 99%;
     --popover-foreground: 192 16% 27%;
 
     /* Primary - Brand Teal #01B8AA */
@@ -52,7 +52,7 @@
     --secondary-foreground: 174 99% 30%;
 
     /* Muted - #5F6B6D based */
-    --muted: 180 5% 95%;
+    --muted: 210 15% 93%;
     --muted-foreground: 192 7% 40%;    /* #5F6B6D Dark gray */
 
     /* Accent - Brand Gold #F2C80F */
@@ -80,8 +80,8 @@
     --info-bg: 197 73% 95%;
 
     /* Border & Input - Light gray #DFBFBF based */
-    --border: 180 5% 85%;
-    --input: 180 5% 88%;
+    --border: 200 12% 82%;
+    --input: 200 10% 86%;
     --ring: 174 99% 36%;
 
     /* Brand Colors - From Palette */
@@ -116,10 +116,10 @@
     --space-8: 4rem;
 
     /* Shadows - Subtle, professional */
-    --shadow-sm: 0 1px 2px hsla(192, 16%, 27%, 0.05);
-    --shadow-md: 0 4px 8px hsla(192, 16%, 27%, 0.08);
-    --shadow-lg: 0 8px 16px hsla(192, 16%, 27%, 0.1);
-    --shadow-xl: 0 16px 32px hsla(192, 16%, 27%, 0.12);
+    --shadow-sm: 0 1px 3px hsla(192, 16%, 27%, 0.07);
+    --shadow-md: 0 4px 12px hsla(192, 16%, 27%, 0.12);
+    --shadow-lg: 0 8px 20px hsla(192, 16%, 27%, 0.14);
+    --shadow-xl: 0 16px 40px hsla(192, 16%, 27%, 0.16);
     --shadow-glow: 0 0 16px hsla(174, 99%, 36%, 0.25);
     --shadow-glow-lime: 0 0 16px hsla(48, 93%, 50%, 0.25);
     --shadow-glow-pink: 0 0 16px hsla(319, 24%, 62%, 0.25);
@@ -135,13 +135,13 @@
     --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 192 16% 27%;
-    --sidebar-primary: 174 99% 36%;
+    --sidebar-background: 192 40% 14%;
+    --sidebar-foreground: 180 5% 92%;
+    --sidebar-primary: 174 99% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 48 93% 92%;
-    --sidebar-accent-foreground: 48 93% 25%;
-    --sidebar-border: 180 5% 90%;
+    --sidebar-accent: 174 40% 22%;
+    --sidebar-accent-foreground: 180 5% 95%;
+    --sidebar-border: 192 30% 20%;
     --sidebar-ring: 174 99% 36%;
   }
 
@@ -421,9 +421,14 @@
     @apply absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full;
     background: hsl(var(--accent));
   }
+
+
+  /* Card accent - colored top border for dashboard cards */
+  .card-accent {
+    border-top: 2px solid hsl(var(--primary));
+  }
 }
 
-/* Keyframe Animations */
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
