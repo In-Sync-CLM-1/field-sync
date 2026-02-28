@@ -1,33 +1,33 @@
 
 
-# Updated Plan: Attendance Summary + Mandatory Punch-In Gate
+# Make Theme Modern and Vibrant
 
-## 1. Attendance Summary Page (as previously planned)
+## Problem
+The light mode is too white and washed out — white background, white cards, white sidebar, white popovers. Needs more color depth and vibrancy.
 
-Create `src/pages/AttendanceSummary.tsx` with Daily and Monthly tabs:
-- **Daily tab**: Date picker, table with Employee Name, Punch In, Punch Out, Hours, Status
-- **Monthly tab**: Month/Year selector, aggregated stats per employee (Days Present, Absent, Total Hours, Avg Hours)
-- Role-based visibility: agents see self, managers see direct reports, admins see all org employees
-- Queries `attendance` table joined with `profiles` for names
+## Changes — All in `src/index.css` (`:root` variables)
 
-Add route `/dashboard/attendance-summary` in `src/App.tsx`.
+### 1. Background and surfaces — add depth
+- `--background`: Change from near-white `180 5% 98%` to a subtle cool-tinted gray `210 20% 96%`
+- `--card`: Change from pure white `0 0% 100%` to a soft warm white `210 15% 99%`
+- `--muted`: Shift from neutral gray to a tinted `210 15% 93%`
 
-Add sidebar item "Attendance Summary" (BarChart3 icon) in `src/components/AppSidebar.tsx`:
-- `sales_officer` → MY WORK section
-- `branch_manager` → TEAM section
-- `admin`/`super_admin`/`platform_admin` → MANAGEMENT section
+### 2. Sidebar — make it bold and branded
+- `--sidebar-background`: Change from white `0 0% 100%` to a deep dark teal `192 40% 14%` (dark sidebar)
+- `--sidebar-foreground`: Light text `180 5% 92%`
+- `--sidebar-border`: Dark teal border `192 30% 20%`
+- `--sidebar-accent`: Teal-tinted accent `174 40% 22%`
+- `--sidebar-accent-foreground`: Bright white/light text
 
-## 2. Mandatory Attendance Punch-In Gate on Login
+### 3. Borders and inputs — add subtle color
+- `--border`: From plain gray `180 5% 85%` to slightly teal-tinted `200 12% 82%`
+- `--input`: From gray `180 5% 88%` to tinted `200 10% 86%`
 
-Create `src/components/AttendanceGate.tsx`:
-- Wraps protected app content (inside Layout, after auth)
-- On mount, checks if the current user has a `punch_in_time` for today in the `attendance` table
-- If no punch-in exists, shows a full-screen modal/overlay prompting "Mark Attendance" with GPS capture
-- On successful punch-in, dismisses the gate and shows the app
-- Only applies to `sales_officer` and `branch_manager` roles (admins/platform_admins skip the gate)
+### 4. Shadows — warmer, more visible
+- Increase shadow opacity slightly for more depth (from 0.05/0.08 to 0.07/0.12)
 
-Integrate in `src/components/Layout.tsx`:
-- Wrap the main content area with `<AttendanceGate>` so it blocks navigation until attendance is marked
+### 5. Cards — add a thin colored top accent
+- Add a `.card-accent` utility with a 2px top border in primary color for key dashboard cards
 
-No database changes needed — the existing `attendance` table and RLS policies already support this flow.
+This keeps the flat design principle but shifts from "sterile white" to a rich, modern palette with a dark branded sidebar and tinted surfaces.
 
