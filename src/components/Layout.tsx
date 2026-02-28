@@ -25,6 +25,7 @@ import { swManager } from '@/lib/serviceWorker';
 import { useAgentLocationTracker } from '@/hooks/useAgentLocationTracker';
 import { TourProvider } from '@/contexts/TourContext';
 import { HelpWidget } from '@/components/HelpWidget';
+import { AttendanceGate } from '@/components/AttendanceGate';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
@@ -77,6 +78,7 @@ export default function Layout() {
 
   return (
     <TourProvider>
+    <AttendanceGate>
     <SidebarProvider>
       <div className="flex min-h-screen w-full overflow-x-hidden bg-background">
         <AppSidebar />
@@ -176,6 +178,7 @@ export default function Layout() {
       <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
       <HelpWidget />
     </SidebarProvider>
+    </AttendanceGate>
     </TourProvider>
   );
 }

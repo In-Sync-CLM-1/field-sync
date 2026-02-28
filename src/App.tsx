@@ -43,6 +43,7 @@ import SubscriptionExpired from "./pages/SubscriptionExpired";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 import Profile from "./pages/Profile";
 import Attendance from "./pages/Attendance";
+import AttendanceSummary from "./pages/AttendanceSummary";
 import OrganizationsDashboard from "./pages/PlatformAdmin/OrganizationsDashboard";
 import OrganizationDetail from "./pages/PlatformAdmin/OrganizationDetail";
 
@@ -149,6 +150,7 @@ const App = () => (
                   </AdminRoute>
                 } />
                 <Route path="attendance" element={<Attendance />} />
+                <Route path="attendance-summary" element={<AttendanceSummary />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="org-chart" element={
                   <AdminRoute>

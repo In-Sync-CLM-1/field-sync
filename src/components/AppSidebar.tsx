@@ -40,6 +40,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
             { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
+            { icon: BarChart3, label: 'Attendance Summary', path: '/dashboard/attendance-summary' },
             { icon: Globe, label: 'Territory', path: '/dashboard/territory' },
           ],
         },
@@ -62,6 +63,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
           label: 'TEAM',
           items: [
             { icon: Users, label: 'Teams', path: '/dashboard/teams' },
+            { icon: BarChart3, label: 'Attendance Summary', path: '/dashboard/attendance-summary' },
           ],
         },
       ];
@@ -85,6 +87,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
             { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
             { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
+            { icon: BarChart3, label: 'Attendance Summary', path: '/dashboard/attendance-summary' },
           ],
         },
         {
@@ -113,6 +116,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
             { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
             { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
+            { icon: BarChart3, label: 'Attendance Summary', path: '/dashboard/attendance-summary' },
           ],
         },
         {
