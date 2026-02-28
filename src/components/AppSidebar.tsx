@@ -60,7 +60,6 @@ function getSectionsForRole(role: RoleType): NavSection[] {
         {
           label: 'TEAM',
           items: [
-            { icon: LayoutDashboard, label: 'Team Dashboard', path: '/dashboard/team-dashboard' },
             { icon: Users, label: 'Teams', path: '/dashboard/teams' },
           ],
         },
@@ -79,7 +78,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
         {
           label: 'OVERVIEW',
           items: [
-            { icon: Building2, label: 'Dashboard', path: '/dashboard/branch-dashboard' },
+            { icon: Building2, label: 'Dashboard', path: '/dashboard' },
           ],
         },
         {
@@ -113,7 +112,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
         {
           label: 'OVERVIEW',
           items: [
-            { icon: Building2, label: 'Dashboard', path: '/dashboard/branch-dashboard' },
+            { icon: Building2, label: 'Dashboard', path: '/dashboard' },
           ],
         },
         {

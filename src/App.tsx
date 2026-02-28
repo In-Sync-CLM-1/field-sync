@@ -14,7 +14,7 @@ import { ServiceWorkerUpdateHandler } from "@/components/ServiceWorkerUpdateHand
 import { LandingRoute } from "@/components/LandingRoute";
 import Layout from "@/components/Layout";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
+import RoleDashboard from "./components/dashboard/RoleDashboard";
 import NewLead from "./pages/NewLead";
 import TeamAndBranches from "./pages/TeamAndBranches";
 import Branches from "./pages/Branches";
@@ -108,9 +108,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               >
-                <Route index element={<Dashboard />} />
-                <Route path="team-dashboard" element={<TeamDashboard />} />
-                <Route path="branch-dashboard" element={<BranchDashboard />} />
+                <Route index element={<RoleDashboard />} />
                 <Route path="planning" element={<Planning />} />
                 <Route path="planning/team" element={<Teams />} />
                 <Route path="planning/overview" element={<PlanningOverview />} />
