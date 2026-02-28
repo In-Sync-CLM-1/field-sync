@@ -291,12 +291,6 @@ export default function LeadDetail() {
             <Button variant="outline" size="sm" onClick={handleWhatsApp} disabled={!lead.mobile_no} className="gap-1">
               <MessageSquare className="h-3 w-3" /> WhatsApp
             </Button>
-            <Button variant="outline" size="sm" onClick={() => openLogDialog('call')} className="gap-1">
-              <Phone className="h-3 w-3" /> Log Call
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => openLogDialog('whatsapp')} className="gap-1">
-              <MessageSquare className="h-3 w-3" /> Log WhatsApp
-            </Button>
             <Button variant="outline" size="sm" onClick={() => openLogDialog('note')} className="gap-1">
               <FileText className="h-3 w-3" /> Add Note
             </Button>
