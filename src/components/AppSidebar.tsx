@@ -55,6 +55,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
             { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
+            { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
           ],
         },
         {
@@ -90,6 +91,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: GitBranch, label: 'Org Chart', path: '/dashboard/org-chart' },
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
             { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
+            { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
           ],
         },
         {
@@ -124,6 +126,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: GitBranch, label: 'Org Chart', path: '/dashboard/org-chart' },
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
             { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
+            { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
           ],
         },
         {

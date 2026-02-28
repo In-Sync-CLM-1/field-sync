@@ -16,7 +16,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { TrialBanner } from '@/components/TrialBanner';
 import { UpgradeDialog } from '@/components/UpgradeDialog';
-import { Home, Users, MapPin, Map, LogOut, User, Activity, RefreshCw, Locate } from 'lucide-react';
+import { LogOut, User, Activity, RefreshCw, Locate } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import inSyncLogo from '@/assets/in-sync-logo.png';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -68,15 +68,6 @@ export default function Layout() {
 
     checkRole();
   }, [user]);
-
-  const navItems = [
-    { icon: Home, label: 'Home', path: '/dashboard' },
-    { icon: Users, label: 'Leads', path: '/dashboard/leads' },
-    { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
-    { icon: Map, label: 'Map', path: '/dashboard/visits/map' },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -174,38 +165,9 @@ export default function Layout() {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 pb-14 min-w-0">
+          <main className="flex-1 min-w-0">
             <Outlet />
           </main>
-
-          {/* Bottom Navigation */}
-          <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 border-t border-border bg-card shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
-            <div className="grid h-full grid-cols-4">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.path);
-                
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex flex-col items-center justify-center gap-1 py-1.5 transition-all duration-200 relative ${
-                      active
-                        ? 'text-primary'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {/* Active top indicator bar */}
-                    {active && (
-                      <div className="absolute top-0 left-1/4 right-1/4 h-0.5 rounded-b-full bg-primary" />
-                    )}
-                    <Icon className={`h-5 w-5 ${active ? 'stroke-[2.5]' : ''}`} />
-                    <span className={`text-[11px] leading-tight ${active ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
         </div>
       </div>
       
