@@ -322,17 +322,17 @@
     box-shadow: var(--shadow-glow-pink);
   }
 
-  /* Gradient Utilities - Brand aligned */
+  /* Solid Utilities - Brand aligned (flat design) */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%);
+    background: hsl(var(--primary));
   }
 
   .gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--neon-cyan)) 100%);
+    background: hsl(var(--accent));
   }
 
   .gradient-brand {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%);
+    background: hsl(var(--primary));
   }
 
   /* XP Bar Progress */
@@ -343,7 +343,7 @@
 
   .xp-bar-fill {
     @apply h-full rounded-full transition-all duration-500;
-    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    background: hsl(var(--primary));
   }
 
   /* Compact utilities */
@@ -395,7 +395,7 @@
   /* Gaming Accent Bar */
   .gaming-accent-bar {
     @apply absolute top-0 left-0 right-0 h-0.5;
-    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 50%, hsl(var(--accent)) 100%);
+    background: hsl(var(--primary));
   }
 
   /* Staggered Animation Delays */
@@ -596,17 +596,13 @@
   .page-gradient::before {
     content: '';
     @apply absolute inset-0 pointer-events-none;
-    background: radial-gradient(ellipse at top right, hsl(var(--primary) / 0.03) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom left, hsl(var(--accent) / 0.02) 0%, transparent 50%);
+    background: transparent;
   }
 
-  /* Header Gradient Bar - Brand Teal to Purple */
+  /* Header Accent Bar - Solid Brand Teal */
   .header-gradient-bar {
     @apply absolute top-0 left-0 right-0 h-0.5;
-    background: linear-gradient(90deg, 
-      hsl(var(--primary)) 0%, 
-      hsl(var(--neon-pink)) 100%
-    );
+    background: hsl(var(--primary));
   }
 
   /* Icon Circle Containers */
@@ -659,19 +655,13 @@
     @apply border-l-3 border-l-success;
   }
 
-  /* Gradient Text - Brand Colors */
+  /* Text - Brand Colors (flat) */
   .gradient-text-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--deep-teal)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    @apply text-primary;
   }
 
   .gradient-text-accent {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-cyan)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    @apply text-primary;
   }
 
   /* Enhanced Status Badges */
@@ -699,7 +689,7 @@
   .progress-gradient::after {
     content: '';
     @apply absolute inset-0;
-    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--success)) 100%);
+    background: hsl(var(--primary));
   }
 
   /* Elevated Card */
@@ -720,7 +710,7 @@
   /* Quick Action Button Styles - Brand Teal */
   .btn-gradient-primary {
     @apply relative overflow-hidden transition-all duration-200;
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(174 99% 30%) 100%);
+    background: hsl(var(--primary));
   }
 
   .btn-gradient-primary:hover {
@@ -740,34 +730,28 @@
     @apply border border-warning/50 text-warning-foreground hover:bg-warning/10 transition-all duration-200;
   }
 
-  /* Rank Badges */
+  /* Rank Badges - Flat */
   .rank-gold {
-    background: linear-gradient(135deg, #fde047 0%, #eab308 50%, #ca8a04 100%);
-    @apply text-yellow-900;
+    @apply bg-yellow-500 text-yellow-900;
   }
 
   .rank-silver {
-    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 50%, #64748b 100%);
-    @apply text-slate-900;
+    @apply bg-slate-400 text-slate-900;
   }
 
   .rank-bronze {
-    background: linear-gradient(135deg, #fbbf24 0%, #d97706 50%, #b45309 100%);
-    @apply text-amber-900;
+    @apply bg-amber-600 text-amber-900;
   }
 
-  /* Welcome Hero Section - Brand Teal */
+  /* Welcome Hero Section - Flat Brand Teal */
   .hero-gradient {
-    @apply relative overflow-hidden rounded-lg p-3;
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.05) 0%, hsl(var(--muted)) 100%);
+    @apply relative overflow-hidden rounded-lg p-3 bg-muted;
     border: 1px solid hsl(var(--border));
+    border-left: 3px solid hsl(var(--primary));
   }
 
   .hero-gradient::before {
-    content: '';
-    @apply absolute -top-1/2 -right-1/2 w-full h-full;
-    background: radial-gradient(circle, hsl(var(--primary) / 0.05) 0%, transparent 70%);
-    animation: float 10s ease-in-out infinite;
+    display: none;
   }
 
   /* Dashboard Tour Highlight */

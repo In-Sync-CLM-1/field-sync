@@ -477,7 +477,7 @@ export default function Auth() {
             </div>
             <h3 className="text-xl font-semibold text-foreground">Account Created!</h3>
             <p className="text-muted-foreground">
-              Welcome to InSync. Redirecting you now...
+              Welcome! Redirecting you now...
             </p>
             <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
           </div>

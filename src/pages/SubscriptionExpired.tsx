@@ -53,12 +53,7 @@ export default function SubscriptionExpired() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-destructive/5 to-background">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-destructive/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
 
       <div className="w-full max-w-lg relative z-10">
         {/* Logo */}
@@ -79,7 +74,7 @@ export default function SubscriptionExpired() {
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   Your 14-day free trial for <span className="font-medium text-foreground">{currentOrganization?.name}</span> has ended. 
-                  Upgrade now to continue using InSync and keep all your data.
+                  Upgrade now to continue using <img src={insyncLogo} alt="In-Sync" className="h-4 w-4 inline align-text-bottom" /> and keep all your data.
                 </p>
               </div>
             </div>
@@ -96,7 +91,7 @@ export default function SubscriptionExpired() {
               </Badge>
             </div>
             <CardDescription>
-              Get full access to all InSync features
+              Get full access to all features
             </CardDescription>
           </CardHeader>
 
