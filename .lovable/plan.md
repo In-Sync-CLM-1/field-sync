@@ -1,23 +1,35 @@
 
 
-# Remove Bottom Navigation, Add Map to Sidebar
+# Unify Analytics & Performance into Dashboard (Single View, No Tabs)
 
 ## Changes
 
-### 1. Edit `src/components/Layout.tsx`
-- Remove the entire bottom `<nav>` element (lines 181-208)
-- Remove the `pb-14` class from `<main>` (no longer need padding for bottom bar)
-- Remove unused imports (`Home`, `Users`, `MapPin`, `Map` from lucide, `Link`)
-- Remove `navItems` array and `isActive` function (no longer needed)
+### 1. Edit `src/components/dashboard/HQDashboard.tsx`
+- Remove the `ActivityFeed` section (lines 106-111)
+- Remove the ActivityFeed import
+- Add inline after the Pipeline card:
+  - **Analytics section**: Visit Trends line chart (30 days) + Visits by Day of Week bar chart from OverviewTab, using `useAnalyticsData` hook
+  - **Branch Performance section**: KPI cards (Total Sales, Conversion Rate, Incentives, Sales Officers) + Target vs Actual bar chart from BranchPerformanceTab, using `useBranchAnalytics` hook
+  - **Leaderboard section**: Top 3 podium + rankings list from PerformanceBoard, using `usePerformanceData` hook
+- Remove "Analytics" and "Performance" quick action buttons (lines 142-147)
 
-### 2. Edit `src/components/AppSidebar.tsx`
-- Add **Territory Map** item to `sales_officer` section (already has Territory at `/dashboard/territory`)
-- Verify all bottom nav items (Home, Leads, Visits, Map) are covered in the sidebar for each role — they already are except Map for branch_manager/admin roles
-- Add `Map` (Globe icon) entry to `branch_manager` and `admin`/`super_admin`/`platform_admin` sections pointing to `/dashboard/territory`
+### 2. Edit `src/components/dashboard/ManagerDashboard.tsx`
+- Add inline after Target vs Achievement:
+  - **Analytics section**: Sales Trend chart + Target vs Actual bar chart using `useBranchAnalytics`
+  - **Leaderboard section**: Top performers + rankings using `usePerformanceData`
+- Remove "Performance" quick action button (lines 162-164)
+
+### 3. Edit `src/components/AppSidebar.tsx`
+- Remove the entire ANALYTICS section from `branch_manager`, `admin`/`super_admin`, and `platform_admin` roles (Analytics + Performance Review entries)
+
+### 4. Edit `src/App.tsx`
+- Redirect `/dashboard/analytics` and `/dashboard/performance-review` to `/dashboard`
 
 ### Files
 | Action | File |
 |--------|------|
-| Edit | `src/components/Layout.tsx` — remove bottom nav, remove pb-14 |
-| Edit | `src/components/AppSidebar.tsx` — add Territory Map for manager/admin roles |
+| Edit | `src/components/dashboard/HQDashboard.tsx` — remove ActivityFeed, add analytics charts + leaderboard inline |
+| Edit | `src/components/dashboard/ManagerDashboard.tsx` — add analytics charts + leaderboard inline |
+| Edit | `src/components/AppSidebar.tsx` — remove ANALYTICS section for all roles |
+| Edit | `src/App.tsx` — redirect old analytics/performance routes |
 
