@@ -1,24 +1,21 @@
 
 
-# Remove "Log Call" & "Log WhatsApp" Buttons + Native Calling/WhatsApp Answer
+# Add Call & WhatsApp Buttons to Lead Cards
 
-## Task 1: Remove crossed-out buttons
+## Edit `src/pages/Leads.tsx`
 
-### Edit `src/pages/LeadDetail.tsx`
-- Remove the "Log Call" button (line 294-296) and "Log WhatsApp" button (line 297-299) from the quick actions section
-- Keep "Call", "WhatsApp", and "Add Note" buttons
+- Import `MessageSquare` icon from lucide-react
+- Add a row of Call and WhatsApp buttons at the bottom of each lead card (after the location/phone/date row)
+- **Call button**: Uses `tel:` protocol to open native dialer — `<a href="tel:{mobileNo}">`
+- **WhatsApp button**: Uses `https://wa.me/{number}` to open WhatsApp app
+- Both buttons use `e.stopPropagation()` to prevent navigating to lead detail when clicking them
+- Buttons are disabled when `mobileNo` is not available
+- Small icon buttons styled with `variant="outline"` to match the card aesthetic
 
-## Task 2: Native Call & WhatsApp — Already Implemented!
+### Layout
+The buttons will appear as a small action row at the bottom-right of each card, next to the existing metadata.
 
-Good news: **both features already work exactly as you described.**
-
-- **Call button**: Uses `tel:` protocol (`window.location.href = 'tel:...'`) — this opens the phone's native dialer with the number pre-filled, ready to dial with one tap.
-- **WhatsApp button**: Uses `https://wa.me/...` — this opens the WhatsApp app directly and starts/opens a conversation thread with that number.
-
-Both work on mobile devices (Android & iOS) out of the box. On desktop, the Call button will try to open a calling app (like FaceTime, Skype), and WhatsApp will open WhatsApp Web or the desktop app.
-
-## Files
 | Action | File |
 |--------|------|
-| Edit | `src/pages/LeadDetail.tsx` — remove "Log Call" and "Log WhatsApp" buttons |
+| Edit | `src/pages/Leads.tsx` — add Call & WhatsApp action buttons to each lead card |
 
