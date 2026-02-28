@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 
 import { useAuthStore } from '@/store/authStore';
 import { LeadsUpload } from '@/components/LeadsUpload';
+import insyncLogo from '@/assets/in-sync-logo.png';
 import { LEAD_STATUSES, getStatusLabel, getStatusColor } from '@/components/LeadStatusPipeline';
 import { 
   Search, 
@@ -84,31 +85,28 @@ export default function Leads() {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3 page-gradient min-h-screen">
       {/* Hero Header */}
       <div className="hero-gradient" data-tour="prospects-header">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1 hover:bg-primary/10">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </Button>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight gradient-text-primary">Prospects</h1>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold tracking-tight text-primary">Prospects</h1>
               <div className="flex items-center gap-2">
                 {currentOrganization && (
-                  <Badge className="status-badge-primary gap-1 text-xs">
-                    <Building2 className="h-3 w-3" />
-                    {currentOrganization.name}
-                  </Badge>
+                  <img src={insyncLogo} alt={currentOrganization.name} className="h-4 w-4 shrink-0" />
                 )}
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground truncate">
                   {leads.length} prospects
                 </span>
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               onClick={() => navigate('/dashboard/leads/new')}
-              className="btn-gradient-primary text-primary-foreground"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               size="sm"
             >
               <Plus className="h-3 w-3 mr-1" />
@@ -193,9 +191,9 @@ export default function Leads() {
               </p>
               {currentOrganization && (
                 <div className="flex gap-2">
-                  <Button 
+                    <Button 
                     onClick={() => navigate('/dashboard/leads/new')}
-                    className="btn-gradient-primary text-primary-foreground"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
                     size="sm"
                   >
                     <Plus className="h-3 w-3 mr-1" />

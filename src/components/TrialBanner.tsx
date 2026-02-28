@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { X, Sparkles, Clock, AlertTriangle, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import insyncLogo from '@/assets/in-sync-logo.png';
 
 interface TrialBannerProps {
   onUpgrade?: () => void;
@@ -60,7 +61,7 @@ export function TrialBanner({ onUpgrade }: TrialBannerProps) {
         <Icon className={cn('h-4 w-4 shrink-0', iconStyles)} />
         <p className="text-sm font-medium truncate">
           {isExpired ? (
-            <>Your trial has expired. Upgrade now to continue using InSync.</>
+            <>Your trial has expired. Upgrade now to continue using <img src={insyncLogo} alt="In-Sync" className="h-4 w-4 inline align-text-bottom" />.</>
           ) : daysRemaining === 0 ? (
             <>Your trial expires today! Upgrade to keep your data.</>
           ) : daysRemaining === 1 ? (

@@ -239,12 +239,7 @@ export default {
         "ripple": "ripple 0.5s linear",
         "orb-float": "orb-float 8s ease-in-out infinite",
       },
-      backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 100%)',
-        'gradient-accent': 'linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--neon-cyan)) 100%)',
-        'gradient-gaming': 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--neon-pink)) 50%, hsl(var(--accent)) 100%)',
-        'shimmer-gradient': 'linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.2), transparent)',
-      },
+      backgroundImage: {},
     },
   },
   plugins: [require("tailwindcss-animate")],
