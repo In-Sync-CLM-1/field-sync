@@ -1,7 +1,6 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
-import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -16,8 +15,8 @@ interface AttendanceGateProps {
 const GATED_ROLES = ['sales_officer', 'branch_manager'];
 
 export function AttendanceGate({ children }: AttendanceGateProps) {
-  const { user } = useAuth();
-  const { currentOrganization } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const currentOrganization = useAuthStore((s) => s.currentOrganization);
   const queryClient = useQueryClient();
 
   const [checking, setChecking] = useState(true);
@@ -64,7 +63,7 @@ export function AttendanceGate({ children }: AttendanceGateProps) {
     };
 
     check();
-  }, [user, currentOrganization]);
+  }, [user?.id, currentOrganization?.id]);
 
   const handlePunchIn = async () => {
     if (!user || !currentOrganization) return;
