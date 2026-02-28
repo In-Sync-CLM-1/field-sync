@@ -93,15 +93,13 @@ export default function Leads() {
             </Button>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-bold tracking-tight text-primary">Prospects</h1>
-              <div className="flex items-center gap-2">
-                {currentOrganization && (
-                  <img src={insyncLogo} alt={currentOrganization.name} className="h-4 w-4 shrink-0" />
-                )}
-                <span className="text-xs text-muted-foreground truncate">
-                  {leads.length} prospects
-                </span>
-              </div>
+              <span className="text-xs text-muted-foreground truncate">
+                {leads.length} prospects
+              </span>
             </div>
+            {currentOrganization && (
+              <img src={insyncLogo} alt={currentOrganization.name} className="h-12 w-12 shrink-0" />
+            )}
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button 
