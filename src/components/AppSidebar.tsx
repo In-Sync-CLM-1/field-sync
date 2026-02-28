@@ -64,13 +64,6 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: Users, label: 'Teams', path: '/dashboard/teams' },
           ],
         },
-        {
-          label: 'ANALYTICS',
-          items: [
-            { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
-            { icon: Award, label: 'Performance Review', path: '/dashboard/performance-review' },
-          ],
-        },
       ];
 
     case 'admin':
@@ -92,13 +85,6 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
             { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
             { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
-          ],
-        },
-        {
-          label: 'ANALYTICS',
-          items: [
-            { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
-            { icon: Award, label: 'Performance Review', path: '/dashboard/performance-review' },
           ],
         },
         {
@@ -127,13 +113,6 @@ function getSectionsForRole(role: RoleType): NavSection[] {
             { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
             { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
             { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
-          ],
-        },
-        {
-          label: 'ANALYTICS',
-          items: [
-            { icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
-            { icon: Award, label: 'Performance Review', path: '/dashboard/performance-review' },
           ],
         },
         {
