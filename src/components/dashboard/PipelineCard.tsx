@@ -13,12 +13,12 @@ interface PipelineCardProps {
   stages: PipelineStage[];
 }
 
-const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-  blue: { bg: 'bg-info/10', text: 'text-info', border: 'border-info/30' },
-  amber: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/30' },
-  green: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/30' },
-  red: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/30' },
-  gray: { bg: 'bg-muted', text: 'text-muted-foreground', border: 'border-border' },
+const colorMap: Record<string, { bg: string; text: string; border: string; subtext: string }> = {
+  blue: { bg: 'bg-info', text: 'text-white', border: 'border-info', subtext: 'text-white/80' },
+  amber: { bg: 'bg-warning', text: 'text-white', border: 'border-warning', subtext: 'text-white/80' },
+  green: { bg: 'bg-success', text: 'text-white', border: 'border-success', subtext: 'text-white/80' },
+  red: { bg: 'bg-destructive', text: 'text-white', border: 'border-destructive', subtext: 'text-white/80' },
+  gray: { bg: 'bg-muted-foreground', text: 'text-white', border: 'border-muted-foreground', subtext: 'text-white/80' },
 };
 
 export function PipelineCard({ title, icon: Icon, stages }: PipelineCardProps) {
@@ -42,7 +42,7 @@ export function PipelineCard({ title, icon: Icon, stages }: PipelineCardProps) {
                 className={`rounded-lg border ${c.border} ${c.bg} p-2.5 text-center`}
               >
                 <p className={`text-lg font-bold ${c.text}`}>{stage.count}</p>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mt-0.5">
+                <p className={`text-[10px] font-medium ${c.subtext} uppercase tracking-wide mt-0.5`}>
                   {stage.label}
                 </p>
               </div>
