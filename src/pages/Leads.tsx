@@ -21,6 +21,7 @@ import {
   ArrowLeft,
   Plus,
   AlertCircle,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Pagination,
@@ -278,6 +279,38 @@ export default function Leads() {
                       {format(new Date(lead.followUpDate), 'dd MMM')}
                     </span>
                   )}
+                </div>
+
+                {/* Call & WhatsApp action buttons */}
+                <div className="flex gap-2 mt-2 justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    disabled={!lead.mobileNo}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (lead.mobileNo) window.location.href = `tel:${lead.mobileNo}`;
+                    }}
+                  >
+                    <Phone className="h-3 w-3" /> Call
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    disabled={!lead.mobileNo}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (lead.mobileNo) {
+                        const num = lead.mobileNo.replace(/\D/g, '');
+                        const waNum = num.startsWith('91') ? num : `91${num}`;
+                        window.open(`https://wa.me/${waNum}`, '_blank');
+                      }
+                    }}
+                  >
+                    <MessageSquare className="h-3 w-3" /> WhatsApp
+                  </Button>
                 </div>
               </CardContent>
             </Card>
