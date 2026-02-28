@@ -115,19 +115,15 @@ const App = () => (
                 <Route path="team" element={<Teams />} />
                 <Route path="branches" element={<Branches />} />
                 <Route path="teams" element={<Teams />} />
-                <Route path="analytics" element={<AnalyticsHub />} />
-                <Route path="analytics/branch" element={<AnalyticsHub />} />
+                <Route path="analytics" element={<RoleDashboard />} />
+                <Route path="analytics/branch" element={<RoleDashboard />} />
                 <Route path="territory" element={<TerritoryMap />} />
                 <Route path="performance" element={
                   <AdminRoute>
                     <PerformanceBoard />
                   </AdminRoute>
                 } />
-                <Route path="performance-review" element={
-                  <AdminRoute>
-                    <PerformanceReview />
-                  </AdminRoute>
-                } />
+                <Route path="performance-review" element={<RoleDashboard />} />
                 <Route path="leads" element={<Leads />} />
                 <Route path="leads/new" element={<NewLead />} />
                 <Route path="leads/:id" element={<LeadDetail />} />
