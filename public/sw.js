@@ -1,5 +1,5 @@
 // Service Worker for Background Sync
-const CACHE_NAME = 'field-visit-v1';
+const CACHE_NAME = 'field-sync-v1';
 const SYNC_TAG = 'crm-sync';
 
 // Precache assets - Workbox will inject the manifest here
@@ -143,7 +143,7 @@ async function syncPendingData() {
 function openDatabase() {
   return new Promise((resolve, reject) => {
     // Open without specifying version - will use existing version
-    const request = indexedDB.open('FieldVisitDB');
+    const request = indexedDB.open('FieldSyncDB');
     
     request.onsuccess = () => {
       const db = request.result;

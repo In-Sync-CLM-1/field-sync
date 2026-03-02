@@ -80,7 +80,7 @@ export default function SyncMonitoring() {
     
     try {
       await db.close();
-      await indexedDB.deleteDatabase('FieldVisitDB');
+      await indexedDB.deleteDatabase('FieldSyncDB');
       toast.success('Database reset. Please refresh the page.');
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {

@@ -53,7 +53,7 @@ const Landing = () => {
           <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2.5 cursor-pointer bg-transparent border-none">
             <img src={insyncLogo} alt="In-Sync" className="h-10 w-auto" />
             <span className="font-bold text-lg text-[#F0F4F5]">
-              In-Sync <span className="text-[#01B8AA]">Field Force</span>
+              In-Sync <span className="text-[#01B8AA]">Field-Sync</span>
             </span>
           </button>
           <ul className="hidden md:flex items-center gap-8 list-none">
@@ -355,7 +355,7 @@ const Landing = () => {
           <div className="max-w-[480px] mx-auto mt-[60px]">
             <div className="anim-scroll opacity-0 translate-y-6 transition-all duration-700 rounded-3xl p-12 text-center relative border-2 border-[#01B8AA]" style={{ background: "#12282E", boxShadow: "0 0 60px rgba(1,184,170,0.25)" }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#01B8AA] text-[#0B1A1E] text-xs font-bold uppercase tracking-[1.5px] px-6 py-1.5 rounded-full">Most Popular</div>
-              <div className="text-xl font-bold mb-2 mt-2.5">Field Force Pro</div>
+              <div className="text-xl font-bold mb-2 mt-2.5">Field-Sync Pro</div>
               <div className="text-sm text-[#8FA3A8] mb-7">Everything your team needs</div>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="text-[28px] font-semibold text-[#8FA3A8]">₹</span>
@@ -434,7 +434,7 @@ const Landing = () => {
       {/* ── FOOTER ── */}
       <footer className="py-10 border-t border-[#01B8AA]/15">
         <div className="max-w-[1140px] mx-auto px-6 flex items-center justify-between flex-wrap gap-5">
-          <div className="text-[13px] text-[#5F6B6D]">© 2025 In-Sync Field Force by ECR Technical Innovations Pvt. Ltd.</div>
+          <div className="text-[13px] text-[#5F6B6D]">© 2026 In-Sync Field-Sync by ECR Technical Innovations Pvt. Ltd.</div>
           <div className="flex gap-6">
             <a href="#" className="text-[13px] text-[#5F6B6D] hover:text-[#F0F4F5] transition-colors no-underline">Privacy Policy</a>
             <a href="#" className="text-[13px] text-[#5F6B6D] hover:text-[#F0F4F5] transition-colors no-underline">Terms of Service</a>

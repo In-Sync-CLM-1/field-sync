@@ -178,7 +178,7 @@ export interface Communication {
 // Current: 16 (insurance terminology update)
 export const DB_VERSION = 17;
 
-class FieldVisitDatabase extends Dexie {
+class FieldSyncDatabase extends Dexie {
   leads!: Table<Lead, string>;
   visits!: Table<Visit, string>;
   photos!: Table<Photo, string>;
@@ -190,7 +190,7 @@ class FieldVisitDatabase extends Dexie {
   planEnrollments!: Table<PlanEnrollment, string>;
 
   constructor() {
-    super('FieldVisitDB');
+    super('FieldSyncDB');
     
     // Define schema - Dexie handles all version upgrades automatically
     this.version(DB_VERSION).stores({
@@ -207,7 +207,7 @@ class FieldVisitDatabase extends Dexie {
   }
 }
 
-export const db = new FieldVisitDatabase();
+export const db = new FieldSyncDatabase();
 
 // Version checking utility
 export async function checkDatabaseVersion(): Promise<{ 
@@ -217,7 +217,7 @@ export async function checkDatabaseVersion(): Promise<{
   status: 'ok' | 'needs_upgrade' | 'newer_than_expected';
 }> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('FieldVisitDB');
+    const request = indexedDB.open('FieldSyncDB');
     
     request.onsuccess = () => {
       const currentVersion = request.result.version;

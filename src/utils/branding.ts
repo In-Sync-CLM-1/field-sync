@@ -43,7 +43,7 @@ export function applyOrganizationBranding(org: Organization) {
   }
 
   // Update document title with org name
-  document.title = `${org.name} - Field Sales CRM`;
+  document.title = `${org.name} - Field-Sync`;
 
   // Store for use in UI components (header, sidebar, etc.)
   localStorage.setItem('org_branding', JSON.stringify({
@@ -78,5 +78,5 @@ export function clearBranding() {
     existingStyle.remove();
   }
   
-  document.title = 'Field Sales CRM';
+  document.title = 'Field-Sync';
 }
