@@ -19,7 +19,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import inSyncLogo from '@/assets/in-sync-logo.png';
+import insyncLogoColor from '@/assets/insync-logo-color.png';
 
 type RoleType = 'platform_admin' | 'super_admin' | 'admin' | 'branch_manager' | 'sales_officer';
 
@@ -178,17 +178,17 @@ export function AppSidebar() {
   const currentPath = location.pathname;
 
   return (
-    <Sidebar data-tour="sidebar" collapsible="offcanvas" className="md:w-56 bg-sidebar border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-2 flex flex-col items-center">
+    <Sidebar data-tour="sidebar" collapsible="offcanvas" className="md:w-56 border-r border-sidebar-border sidebar-gradient">
+      <SidebarHeader className="border-b border-white/10 px-3 py-3 flex flex-col items-center">
         <div className="relative group">
-          <img 
-            src={inSyncLogo} 
-            alt="In-Sync" 
-            className="h-8 w-auto object-contain transition-transform duration-200 group-hover:scale-105" 
+          <img
+            src={insyncLogoColor}
+            alt="In-Sync"
+            className="h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
           />
         </div>
         {(user?.user_metadata?.full_name || user?.email) && (
-          <p className="text-xs text-muted-foreground mt-1 truncate text-center max-w-full">
+          <p className="text-xs text-white/60 mt-1.5 truncate text-center max-w-full">
             {user?.user_metadata?.full_name || user?.email}
           </p>
         )}
@@ -196,33 +196,33 @@ export function AppSidebar() {
       <SidebarContent>
         {sections.map((section) => (
           <SidebarGroup key={section.label}>
-            <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground tracking-widest px-3">
+            <SidebarGroupLabel className="text-[10px] font-semibold text-[#01B8AA] tracking-[0.15em] px-3 uppercase">
               {!collapsed && section.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive = currentPath === item.path || 
+                  const isActive = currentPath === item.path ||
                     (item.path !== '/dashboard' && currentPath.startsWith(item.path));
-                  
+
                   return (
                     <SidebarMenuItem key={item.path}>
                       <SidebarMenuButton asChild isActive={isActive} size="xs">
-                        <NavLink 
-                          to={item.path} 
+                        <NavLink
+                          to={item.path}
                           end={item.path === '/dashboard'}
                           className={`flex items-center gap-2 text-sm rounded-md transition-all duration-150 ${
-                            isActive 
-                              ? 'bg-primary/10 text-primary font-medium border-l-2 border-primary' 
-                              : 'hover:bg-muted text-foreground'
+                            isActive
+                              ? 'bg-[#01B8AA]/20 text-white font-medium border-l-2 border-[#01B8AA]'
+                              : 'text-white/75 hover:bg-white/10 hover:text-white'
                           }`}
                           activeClassName=""
                         >
-                          <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? '' : 'text-muted-foreground'}`} />
+                          <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-[#01B8AA]' : 'text-white/50'}`} />
                           {!collapsed && <span>{item.label}</span>}
                           {isActive && !collapsed && (
-                            <div className="ml-auto w-1 h-1 rounded-full bg-primary" />
+                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#01B8AA]" />
                           )}
                         </NavLink>
                       </SidebarMenuButton>
@@ -234,11 +234,11 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      
-      <SidebarFooter className="p-2 border-t border-sidebar-border">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors h-9"
+
+      <SidebarFooter className="p-2 border-t border-white/10">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-2 text-white/60 hover:text-[#FD625E] hover:bg-[#FD625E]/10 transition-colors h-9"
           onClick={async () => {
             await supabase.auth.signOut();
           }}

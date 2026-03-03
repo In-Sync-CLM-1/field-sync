@@ -87,7 +87,7 @@ export default function Layout() {
           <TrialBanner onUpgrade={() => setShowUpgradeDialog(true)} />
           
           {/* Header with gradient accent line */}
-          <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 relative">
+          <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 relative shadow-sm">
             {/* Multi-color gradient accent bar */}
             <div className="header-gradient-bar" />
             

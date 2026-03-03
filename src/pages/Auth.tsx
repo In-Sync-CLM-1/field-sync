@@ -630,18 +630,21 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden bg-background">
-      {/* Subtle background elements */}
-      <div className="absolute top-20 left-20 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-20 right-20 w-40 h-40 bg-accent/5 rounded-full blur-3xl" />
+    <div className="flex min-h-screen items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #293537 0%, #28738A 50%, #1a2a2e 100%)' }}>
+      {/* Animated gradient orbs */}
+      <div className="absolute top-[15%] left-[10%] w-64 h-64 rounded-full blur-3xl opacity-30 animate-orb-float" style={{ background: 'radial-gradient(circle, #01B8AA, transparent 70%)' }} />
+      <div className="absolute bottom-[10%] right-[15%] w-56 h-56 rounded-full blur-3xl opacity-20 animate-orb-float" style={{ background: 'radial-gradient(circle, #3599B8, transparent 70%)', animationDelay: '3s' }} />
+      <div className="absolute top-[60%] left-[60%] w-40 h-40 rounded-full blur-3xl opacity-10 animate-orb-float" style={{ background: 'radial-gradient(circle, #F2C80F, transparent 70%)', animationDelay: '5s' }} />
 
-      <Card className="w-full max-w-md relative z-10 animate-scale-in border-border shadow-lg bg-card">
+      <Card className="w-full max-w-md relative z-10 animate-scale-in border-0 shadow-xl bg-card overflow-hidden">
+        {/* Teal accent border top */}
+        <div className="h-1 w-full bg-gradient-to-r from-[#01B8AA] via-[#3599B8] to-[#F2C80F]" />
         <CardHeader className="space-y-1 text-center pb-2">
-          <div className="flex justify-center mb-3">
-            <img 
-              src={insyncLogo} 
-              alt="InSync" 
-              className="h-16 w-auto object-contain"
+          <div className="flex justify-center mb-4">
+            <img
+              src={insyncLogo}
+              alt="InSync"
+              className="h-20 w-auto object-contain"
             />
           </div>
           <CardTitle className="text-xl font-bold text-foreground">

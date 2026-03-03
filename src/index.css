@@ -115,11 +115,11 @@
     --space-7: 3rem;
     --space-8: 4rem;
 
-    /* Shadows - Subtle, professional */
-    --shadow-sm: 0 1px 2px hsla(192, 16%, 27%, 0.05);
-    --shadow-md: 0 4px 8px hsla(192, 16%, 27%, 0.08);
-    --shadow-lg: 0 8px 16px hsla(192, 16%, 27%, 0.1);
-    --shadow-xl: 0 16px 32px hsla(192, 16%, 27%, 0.12);
+    /* Shadows - Rich depth */
+    --shadow-sm: 0 1px 3px hsla(192, 16%, 27%, 0.1), 0 1px 2px hsla(192, 16%, 27%, 0.06);
+    --shadow-md: 0 4px 12px hsla(192, 16%, 27%, 0.15), 0 2px 4px hsla(192, 16%, 27%, 0.08);
+    --shadow-lg: 0 8px 24px hsla(192, 16%, 27%, 0.18), 0 4px 8px hsla(192, 16%, 27%, 0.1);
+    --shadow-xl: 0 16px 48px hsla(192, 16%, 27%, 0.20), 0 8px 16px hsla(192, 16%, 27%, 0.12);
     --shadow-glow: 0 0 16px hsla(174, 99%, 36%, 0.25);
     --shadow-glow-lime: 0 0 16px hsla(48, 93%, 50%, 0.25);
     --shadow-glow-pink: 0 0 16px hsla(319, 24%, 62%, 0.25);
@@ -134,15 +134,15 @@
     --ease-in: cubic-bezier(0.32, 0, 0.67, 0);
     --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 192 16% 27%;
-    --sidebar-primary: 174 99% 36%;
+    /* Sidebar - Dark theme */
+    --sidebar-background: 192 16% 19%;     /* #293537 Dark Forest */
+    --sidebar-foreground: 0 0% 95%;        /* White text */
+    --sidebar-primary: 174 99% 45%;        /* Brighter teal for contrast */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 48 93% 92%;
-    --sidebar-accent-foreground: 48 93% 25%;
-    --sidebar-border: 180 5% 90%;
-    --sidebar-ring: 174 99% 36%;
+    --sidebar-accent: 174 99% 36%;         /* Teal highlight on dark */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 192 16% 24%;         /* Subtle dark border */
+    --sidebar-ring: 174 99% 45%;
   }
 
   .dark {
@@ -215,15 +215,15 @@
     --shadow-glow-lime: 0 0 24px hsla(48, 93%, 55%, 0.4);
     --shadow-glow-pink: 0 0 24px hsla(319, 24%, 68%, 0.4);
 
-    /* Sidebar */
-    --sidebar-background: 192 16% 10%;
-    --sidebar-foreground: 180 5% 90%;
-    --sidebar-primary: 174 99% 42%;
+    /* Sidebar - Dark theme (darker variant) */
+    --sidebar-background: 192 16% 12%;     /* Darker forest */
+    --sidebar-foreground: 0 0% 92%;        /* Light text */
+    --sidebar-primary: 174 99% 48%;        /* Bright teal */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 48 93% 20%;
-    --sidebar-accent-foreground: 48 93% 70%;
-    --sidebar-border: 192 16% 20%;
-    --sidebar-ring: 174 99% 42%;
+    --sidebar-accent: 174 99% 40%;         /* Teal highlight */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 192 16% 18%;         /* Subtle border */
+    --sidebar-ring: 174 99% 48%;
   }
 }
 
@@ -599,10 +599,11 @@
     background: transparent;
   }
 
-  /* Header Accent Bar - Solid Brand Teal */
+  /* Header Accent Bar - Vivid multi-color gradient */
   .header-gradient-bar {
-    @apply absolute top-0 left-0 right-0 h-0.5;
-    background: hsl(var(--primary));
+    @apply absolute top-0 left-0 right-0;
+    height: 3px;
+    background: linear-gradient(90deg, #01B8AA, #3599B8, #F2C80F);
   }
 
   /* Icon Circle Containers */
@@ -695,10 +696,21 @@
   /* Elevated Card */
   .card-elevated {
     box-shadow: var(--shadow-md);
+    border: 1px solid hsl(var(--border) / 0.6);
   }
 
   .card-elevated:hover {
     box-shadow: var(--shadow-lg);
+  }
+
+  /* Sidebar gradient - dark forest to darker */
+  .sidebar-gradient {
+    background: linear-gradient(180deg, #293537 0%, #1a2a2e 100%);
+  }
+
+  /* Header accent gradient - teal to ocean blue to gold */
+  .header-accent-gradient {
+    background: linear-gradient(90deg, #01B8AA, #3599B8, #F2C80F);
   }
 
   /* Glass Card Enhanced */
