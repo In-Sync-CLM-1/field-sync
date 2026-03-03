@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Play, Pause, SkipForward } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
-mapboxgl.accessToken = 'MAPBOX_TOKEN_REMOVED';
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 interface RouteReplayMapProps {
   userId: string;

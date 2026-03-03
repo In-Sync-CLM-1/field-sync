@@ -26,7 +26,7 @@ export function MapViewTab({ branches }: MapViewTabProps) {
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    mapboxgl.accessToken = 'MAPBOX_TOKEN_REMOVED';
+    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,

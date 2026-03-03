@@ -110,9 +110,7 @@ export default function TerritoryMap() {
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    const mapboxToken = 'MAPBOX_TOKEN_REMOVED';
-
-    mapboxgl.accessToken = mapboxToken;
+    mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
     // Default center (will be updated with user location)
     let initialCenter: [number, number] = [78.9629, 20.5937]; // India center as fallback
