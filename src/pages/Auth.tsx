@@ -286,7 +286,13 @@ export default function Auth() {
 
           organizationId = newOrg.id;
 
-          // Assign admin role to the creator
+          // Remove auto-assigned sales_officer role and assign admin instead
+          await supabase
+            .from('user_roles')
+            .delete()
+            .eq('user_id', newUser.id)
+            .eq('role', 'sales_officer');
+
           const { error: roleError } = await supabase
             .from('user_roles')
             .insert({ user_id: newUser.id, role: 'admin' });
