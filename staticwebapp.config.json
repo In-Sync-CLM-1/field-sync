@@ -1,0 +1,6 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/sw.js", "/registerSW.js", "/manifest.webmanifest"]
+  }
+}
