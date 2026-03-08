@@ -708,20 +708,30 @@ export default function Auth() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="signin-organization" className="text-sm text-foreground">Organization</Label>
-                  <Select 
-                    value={signInData.organizationId} 
-                    onValueChange={(value) => setSignInData({ ...signInData, organizationId: value })} 
-                    disabled={loading || loadingOrgs}
-                  >
-                    <SelectTrigger id="signin-organization" className="h-9 text-sm">
-                      <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {organizations.map((org) => (
-                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {!loadingOrgs && organizations.length === 0 ? (
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded-md p-3">
+                      No organizations found. Please{' '}
+                      <button type="button" onClick={() => setActiveTab('register')} className="text-primary hover:underline font-medium">
+                        register
+                      </button>{' '}
+                      to create one.
+                    </div>
+                  ) : (
+                    <Select
+                      value={signInData.organizationId}
+                      onValueChange={(value) => setSignInData({ ...signInData, organizationId: value })}
+                      disabled={loading || loadingOrgs}
+                    >
+                      <SelectTrigger id="signin-organization" className="h-9 text-sm">
+                        <SelectValue placeholder={loadingOrgs ? "Loading..." : "Select organization"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="flex justify-end">
                   <button
@@ -732,7 +742,7 @@ export default function Auth() {
                     Forgot password?
                   </button>
                 </div>
-                <Button type="submit" className="w-full h-9 text-sm" disabled={loading || loadingOrgs}>
+                <Button type="submit" className="w-full h-9 text-sm" disabled={loading || loadingOrgs || organizations.length === 0}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign In
                 </Button>
