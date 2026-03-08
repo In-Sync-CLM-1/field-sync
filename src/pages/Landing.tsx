@@ -189,6 +189,53 @@ const Landing = () => {
         </div>
       </div>
 
+      {/* ── CLIENT LOGOS ── */}
+      <div className="py-12 overflow-hidden">
+        <div className="text-center mb-8">
+          <span className="text-[13px] font-semibold tracking-[2px] uppercase text-[#94A3B8]">Trusted by teams at</span>
+        </div>
+        <div className="relative">
+          <div className="absolute left-0 top-0 bottom-0 w-24 z-10" style={{ background: "linear-gradient(90deg, white, transparent)" }} />
+          <div className="absolute right-0 top-0 bottom-0 w-24 z-10" style={{ background: "linear-gradient(270deg, white, transparent)" }} />
+          <div className="flex gap-12 items-center logo-scroll">
+            {[
+              "/logos/resized_Quess_Logo.png",
+              "/logos/resized_Motherson-Logo.jpg",
+              "/logos/resized_College Dekho.jpg",
+              "/logos/resized_Zolve_transparent.webp",
+              "/logos/resized_alice-blue-financial-services-logo-vector.png",
+              "/logos/resized_Zopper-Logo-Transparent-Background_5dbced9873927dbc00aa1bed763f6f2b.png",
+              "/logos/Incred.png",
+              "/logos/resized_UHC.png",
+              "/logos/resized_Ezeepay.png",
+              "/logos/resized_Seeds.png",
+              "/logos/resized_Ev-co.jpg",
+              "/logos/resized_Growthvive.png",
+              "/logos/resized_CI.webp",
+              "/logos/resized_SMB Connect.jpg",
+              "/logos/resized_logo-ecofy.png",
+              "/logos/resized_CAR_TRENDS_LOGO.webp",
+              "/logos/resized_RB.jpg",
+              "/logos/resized_legitquest-logo.png",
+              "/logos/resized_audi-14-logo-png-transparent.png",
+              "/logos/resized_Quess_Logo.png",
+              "/logos/resized_Motherson-Logo.jpg",
+              "/logos/resized_College Dekho.jpg",
+              "/logos/resized_Zolve_transparent.webp",
+              "/logos/resized_alice-blue-financial-services-logo-vector.png",
+              "/logos/resized_Zopper-Logo-Transparent-Background_5dbced9873927dbc00aa1bed763f6f2b.png",
+              "/logos/Incred.png",
+              "/logos/resized_UHC.png",
+              "/logos/resized_Ezeepay.png",
+              "/logos/resized_Seeds.png",
+              "/logos/resized_Ev-co.jpg",
+            ].map((src, i) => (
+              <img key={i} src={src} alt="" className="h-8 w-auto object-contain flex-shrink-0 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all" />
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ── PROBLEM → SOLUTION ── */}
       <section className="py-24 max-md:py-16">
         <div className="max-w-[1200px] mx-auto px-6">
@@ -458,6 +505,15 @@ const Landing = () => {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes scrollLogos {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .logo-scroll {
+          animation: scrollLogos 30s linear infinite;
+          width: max-content;
+        }
+        .logo-scroll:hover { animation-play-state: paused; }
       `}</style>
     </div>
   );
