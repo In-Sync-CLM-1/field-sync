@@ -51,7 +51,7 @@ import OrgChart from "./pages/OrgChart";
 import OrgSettings from "./pages/OrgSettings";
 import Reimbursements from "./pages/Reimbursements";
 import NotFound from "./pages/NotFound";
-import Walkthrough from "./pages/Walkthrough";
+
 import Demo from "./pages/Demo";
 
 const queryClient = new QueryClient();
@@ -72,7 +72,7 @@ const App = () => (
               <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/walkthrough" element={<Walkthrough />} />
+
               <Route path="/demo" element={<Demo />} />
               
               {/* Protected but subscription-exempt routes */}

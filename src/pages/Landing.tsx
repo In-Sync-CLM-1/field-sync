@@ -53,12 +53,11 @@ const Landing = () => {
           <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2.5 cursor-pointer bg-transparent border-none">
             <img src={insyncLogo} alt="In-Sync" className="h-10 w-auto" />
             <span className="font-bold text-lg text-[#F0F4F5]">
-              In-Sync <span className="text-[#01B8AA]">Field-Sync</span>
+              Field-Sync
             </span>
           </button>
           <ul className="hidden md:flex items-center gap-8 list-none">
             <li><button onClick={() => scrollTo("features")} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">Features</button></li>
-            <li><button onClick={() => navigate("/walkthrough")} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">Walkthrough</button></li>
             <li><button onClick={() => scrollTo("use-cases")} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">Who It's For</button></li>
             <li><button onClick={() => scrollTo("pricing")} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">Pricing</button></li>
             <li><button onClick={() => scrollTo("faq")} className="text-[#8FA3A8] text-sm font-medium hover:text-white bg-transparent border-none cursor-pointer transition-colors">FAQ</button></li>
