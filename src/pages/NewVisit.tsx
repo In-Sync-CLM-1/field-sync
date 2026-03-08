@@ -217,6 +217,7 @@ export default function NewVisit() {
                 <SelectItem value="delivery">Delivery</SelectItem>
                 <SelectItem value="survey">Survey</SelectItem>
                 <SelectItem value="collection">Collection</SelectItem>
+                <SelectItem value="sales_order">Sales Order</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -12,6 +12,7 @@ import { VisitChecklist } from '@/components/VisitChecklist';
 import { VisitPhotoCapture } from '@/components/VisitPhotoCapture';
 import { RescheduleDialog } from '@/components/RescheduleDialog';
 import { CancelVisitDialog } from '@/components/CancelVisitDialog';
+import { OrderCollectionForm } from '@/components/OrderCollectionForm';
 import { toast } from 'sonner';
 import { MapPin, Clock, Loader2, ArrowLeft, Navigation, CalendarClock, Ban } from 'lucide-react';
 import { format } from 'date-fns';
@@ -311,6 +312,17 @@ export default function VisitDetail() {
           visitId={id!}
           isActive={visit.status === 'in_progress'}
           onPhotoCountChange={handlePhotoCountChange}
+        />
+      )}
+
+      {/* Orders & Collections Section */}
+      {(visit.status === 'in_progress' || isCompleted) && (
+        <OrderCollectionForm
+          visitId={id!}
+          leadName={visit.lead?.name}
+          leadPhone={visit.lead?.mobile_no}
+          leadId={visit.lead?.id}
+          isActive={visit.status === 'in_progress'}
         />
       )}
 

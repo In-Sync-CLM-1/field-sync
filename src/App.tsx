@@ -48,6 +48,8 @@ import OrganizationsDashboard from "./pages/PlatformAdmin/OrganizationsDashboard
 import OrganizationDetail from "./pages/PlatformAdmin/OrganizationDetail";
 
 import OrgChart from "./pages/OrgChart";
+import OrgSettings from "./pages/OrgSettings";
+import Reimbursements from "./pages/Reimbursements";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -149,6 +151,12 @@ const App = () => (
                     <SubscriptionManagement />
                   </AdminRoute>
                 } />
+                <Route path="settings" element={
+                  <AdminRoute>
+                    <OrgSettings />
+                  </AdminRoute>
+                } />
+                <Route path="reimbursements" element={<Reimbursements />} />
                 <Route path="attendance" element={<Attendance />} />
                 <Route path="attendance-summary" element={<AttendanceSummary />} />
                 <Route path="profile" element={<Profile />} />

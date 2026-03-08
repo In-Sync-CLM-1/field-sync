@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>In-Sync Field-Sync — Product Walkthrough</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0B1A1E;--card:#12282E;--border:rgba(1,184,170,0.15);
+  --teal:#01B8AA;--gold:#F2C80F;--coral:#FD625E;--cyan:#8AD4EB;--purple:#A66999;
+  --text:#F0F4F5;--muted:#8FA3A8;--dim:#5F6B6D;
+  --font:'DM Sans',sans-serif;--serif:'Playfair Display',Georgia,serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{color:var(--teal);text-decoration:none}
+
+/* ── Utilities ── */
+.container{max-width:1140px;margin:0 auto;padding:0 24px}
+.section{padding:100px 0}
+@media(max-width:768px){.section{padding:60px 0}}
+.section-label{font-size:13px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal);display:inline-block;margin-bottom:16px}
+.section-title{font-family:var(--serif);font-size:clamp(30px,5vw,44px);font-weight:800;line-height:1.15;margin-bottom:18px}
+.section-sub{font-size:17px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.65}
+.text-center{text-align:center}
+.grid{display:grid;gap:24px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.grid-3,.grid-4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:32px;position:relative;overflow:hidden;transition:all .35s ease}
+.card:hover{transform:translateY(-4px);border-color:rgba(1,184,170,0.3)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--teal);opacity:0;transition:opacity .3s}
+.card:hover::before{opacity:1}
+.card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:20px}
+.card h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.card p{font-size:14px;color:var(--muted);line-height:1.65}
+
+/* ── Badge / Tag ── */
+.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid}
+.tag-teal{color:var(--teal);border-color:rgba(1,184,170,0.3);background:rgba(1,184,170,0.1)}
+.tag-gold{color:var(--gold);border-color:rgba(242,200,15,0.3);background:rgba(242,200,15,0.08)}
+.tag-coral{color:var(--coral);border-color:rgba(253,98,94,0.3);background:rgba(253,98,94,0.08)}
+.tag-new{color:#fff;background:var(--teal);border-color:var(--teal);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+
+/* ── Hero ── */
+.hero{min-height:100vh;display:flex;align-items:center;padding-top:60px;position:relative}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(1,184,170,0.12) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 80% 80%,rgba(1,184,170,0.06) 0%,transparent 50%)}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(1,184,170,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(1,184,170,0.03) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,black 20%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,black 20%,transparent 70%)}
+.hero-content{position:relative;z-index:2}
+.hero h1{font-family:var(--serif);font-size:clamp(36px,5.5vw,58px);font-weight:900;line-height:1.1;margin-bottom:20px}
+.hero h1 span{color:var(--teal)}
+.hero p.lead{font-size:18px;color:var(--muted);max-width:520px;line-height:1.7;margin-bottom:36px}
+
+/* ── Nav ── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 0;transition:all .3s}
+.nav.scrolled{padding:10px 0;background:rgba(11,26,30,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between}
+.nav-brand{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.nav-brand span{color:var(--teal)}
+.nav-links{display:flex;align-items:center;gap:28px;list-style:none}
+.nav-links a{color:var(--muted);font-size:14px;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+@media(max-width:768px){.nav-links{display:none}}
+
+/* ── Workflow ── */
+.workflow{display:flex;align-items:flex-start;gap:0;position:relative;justify-content:center;flex-wrap:wrap}
+.workflow-step{flex:1;min-width:200px;max-width:260px;text-align:center;position:relative;padding:0 16px}
+.workflow-num{width:52px;height:52px;border-radius:50%;border:2px solid var(--teal);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--teal);margin:0 auto 16px;background:var(--card);box-shadow:0 0 25px rgba(1,184,170,0.2);position:relative;z-index:2}
+.workflow-step h4{font-size:15px;font-weight:700;margin-bottom:6px}
+.workflow-step p{font-size:13px;color:var(--muted);line-height:1.5}
+.workflow-line{position:absolute;top:26px;left:16%;right:16%;height:2px;background:linear-gradient(90deg,var(--teal),rgba(1,184,170,0.2),var(--teal));opacity:.3;z-index:1}
+@media(max-width:600px){.workflow-line{display:none}}
+
+/* ── Mockup Card ── */
+.mockup{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.mockup-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.mockup-dot{width:8px;height:8px;border-radius:50%}
+.mockup-body{padding:20px}
+.mockup-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.mockup-row:last-child{border-bottom:none}
+.mockup-field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.mockup-field label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.mockup-field .value{font-size:14px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border)}
+.mockup-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;border:none;cursor:default}
+.mockup-btn-primary{background:var(--teal);color:var(--bg)}
+.mockup-btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.mockup-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+
+/* ── Feature Row ── */
+.feature-row{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.feature-row.reverse{direction:rtl}
+.feature-row.reverse>*{direction:ltr}
+@media(max-width:768px){.feature-row,.feature-row.reverse{grid-template-columns:1fr;gap:32px}}
+.feature-text h3{font-family:var(--serif);font-size:clamp(24px,3.5vw,34px);font-weight:800;line-height:1.2;margin-bottom:16px}
+.feature-text p{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:20px}
+.feature-list{list-style:none;padding:0}
+.feature-list li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:14px;color:var(--muted)}
+.feature-list li::before{content:'';width:20px;height:20px;border-radius:50%;background:rgba(1,184,170,0.15);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2301B8AA' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
+
+/* ── Divider ── */
+.divider{height:1px;background:var(--border);margin:0}
+
+/* ── TOC ── */
+.toc{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:36px}
+.toc a{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);border:1px solid var(--border);background:var(--card);transition:all .2s}
+.toc a:hover{color:var(--text);border-color:var(--teal);background:rgba(1,184,170,0.08)}
+
+/* ── Animations ── */
+.anim{opacity:0;transform:translateY(24px);transition:all .7s ease}
+.anim.visible{opacity:1;transform:translateY(0)}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── Stat Grid ── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:40px}
+@media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center}
+.stat-card .num{font-size:32px;font-weight:800;color:var(--teal);line-height:1}
+.stat-card .label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px}
+
+/* ── Scroll indicator ── */
+.scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;animation:fadeInUp .6s ease .8s both}
+.scroll-hint span{font-size:12px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.scroll-hint .arrow{width:24px;height:24px;border:2px solid var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;animation:float 2s ease-in-out infinite}
+.scroll-hint .arrow::after{content:'';width:6px;height:6px;border-right:2px solid var(--teal);border-bottom:2px solid var(--teal);transform:rotate(45deg) translateY(-2px)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ NAV ══════════════════ -->
+<nav class="nav" id="nav">
+  <div class="container nav-inner">
+    <div class="nav-brand">
+      <span style="font-size:24px">&#9670;</span> In-Sync <span>Field-Sync</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#core-features">Features</a></li>
+      <li><a href="#orders">Orders</a></li>
+      <li><a href="#reimbursements">Reimbursements</a></li>
+      <li><a href="#analytics">Analytics</a></li>
+      <li><a href="#roles">Roles</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="container hero-content">
+    <div style="max-width:700px;margin:0 auto;text-align:center">
+      <div class="tag tag-teal" style="margin-bottom:28px;animation:fadeInUp .6s ease both">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite"></span>
+        Product Walkthrough
+      </div>
+      <h1 style="animation:fadeInUp .6s ease .1s both">
+        Your Complete<br/><span>Field Force Platform</span>
+      </h1>
+      <p class="lead" style="margin-left:auto;margin-right:auto;animation:fadeInUp .6s ease .2s both">
+        From GPS-verified visits and daily planning to sales orders, payment collection, and travel reimbursements &#8212; everything your field team needs in one app.
+      </p>
+      <div class="toc" style="animation:fadeInUp .6s ease .3s both">
+        <a href="#visits">&#128205; Visits</a>
+        <a href="#leads">&#128100; Leads</a>
+        <a href="#orders">&#128722; Orders</a>
+        <a href="#reimbursements">&#128663; Reimbursements</a>
+        <a href="#attendance">&#9201; Attendance</a>
+        <a href="#analytics">&#128200; Analytics</a>
+        <a href="#settings">&#9881; Settings</a>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="arrow"></div>
+  </div>
+</section>
+
+<!-- ══════════════════ OVERVIEW STATS ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="overview">
+  <div class="container text-center">
+    <span class="section-label">Platform Overview</span>
+    <h2 class="section-title">One Platform. Every Field Operation.</h2>
+    <p class="section-sub">In-Sync Field-Sync covers every aspect of field force management &#8212; built for Indian sales teams with offline-first architecture.</p>
+    <div class="stat-grid">
+      <div class="stat-card anim">
+        <div class="num">15+</div>
+        <div class="label">Modules</div>
+      </div>
+      <div class="stat-card anim">
+        <div class="num">3</div>
+        <div class="label">Role Tiers</div>
+      </div>
+      <div class="stat-card anim">
+        <div class="num" style="color:var(--gold)">100%</div>
+        <div class="label">Offline Capable</div>
+      </div>
+      <div class="stat-card anim">
+        <div class="num">&#8377;99</div>
+        <div class="label">Per User / Month</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ CORE FEATURES GRID ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="core-features">
+  <div class="container text-center">
+    <span class="section-label">Core Features</span>
+    <h2 class="section-title">Everything Your Field Team Needs</h2>
+    <p class="section-sub">Purpose-built modules for visit tracking, lead management, daily planning, attendance, territory mapping, and more.</p>
+    <div class="grid grid-3" style="margin-top:48px">
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(1,184,170,0.12)">&#128205;</div>
+        <h3>GPS-Verified Visits</h3>
+        <p>Every visit is timestamped and GPS-verified. Check-in, capture photos, fill checklists, and check-out with precise coordinates.</p>
+      </div>
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(253,98,94,0.12)">&#128100;</div>
+        <h3>Lead Management</h3>
+        <p>Full prospect pipeline from New to Enrolled. Track calls, WhatsApp messages, visits, and follow-ups with activity timeline.</p>
+      </div>
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(242,200,15,0.12)">&#128203;</div>
+        <h3>Daily Planning</h3>
+        <p>Agents set daily targets for prospects, quotes, and policies. Managers review and correct plans with full audit trail.</p>
+      </div>
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(138,212,235,0.12)">&#9201;</div>
+        <h3>Attendance Tracking</h3>
+        <p>Punch in/out with GPS. Real-time timer, location history throughout the day, and monthly attendance summary.</p>
+      </div>
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(166,105,153,0.12)">&#127758;</div>
+        <h3>Territory Maps</h3>
+        <p>Interactive Mapbox maps with live agent markers, nearby places, route replay, and route deviation detection.</p>
+      </div>
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(1,184,170,0.12)">&#128200;</div>
+        <h3>Analytics &amp; Performance</h3>
+        <p>Branch analytics with milestone badges, performance leaderboard, AI insights, and org-wide KPI dashboards.</p>
+      </div>
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(242,200,15,0.12)">&#128225;</div>
+        <h3>Offline-First PWA</h3>
+        <p>Works without internet using IndexedDB. Service worker for offline access. Background sync with conflict resolution.</p>
+      </div>
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(253,98,94,0.12)">&#128101;</div>
+        <h3>Team &amp; Branch Management</h3>
+        <p>Org chart with reporting hierarchy, branch CRUD, team performance aggregates, and incentive leaderboard.</p>
+      </div>
+
+      <div class="card anim">
+        <div class="card-icon" style="background:rgba(138,212,235,0.12)">&#128179;</div>
+        <h3>Subscription &amp; Billing</h3>
+        <p>Multi-tier plans with Razorpay integration, trial tracking, invoice history, and subscription gating.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ VISIT DETAIL ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="visits">
+  <div class="container">
+    <div class="feature-row">
+      <div class="feature-text anim">
+        <span class="section-label">Visit Management</span>
+        <h3>GPS-Verified Visits with Photos &amp; Checklists</h3>
+        <p>Field agents check in to visits with automatic GPS capture. During the visit, they can capture photos, fill checklists, add notes, book sales orders, and collect payments &#8212; all before checking out.</p>
+        <ul class="feature-list">
+          <li>Auto GPS capture at check-in and check-out</li>
+          <li>Photo capture with categories (selfie, document, property)</li>
+          <li>Customizable checklist templates per organization</li>
+          <li>Visit calendar and scheduling with rescheduling/cancellation</li>
+          <li>Route optimization for daily visit sequence</li>
+          <li>Route replay to visualize the agent's actual path</li>
+        </ul>
+      </div>
+      <div class="anim">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot" style="background:var(--coral)"></div>
+            <div class="mockup-dot" style="background:var(--gold)"></div>
+            <div class="mockup-dot" style="background:var(--teal)"></div>
+            <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">Visit Detail</span>
+            <span class="mockup-badge" style="background:rgba(245,158,11,0.15);color:#F59E0B">IN PROGRESS</span>
+          </div>
+          <div class="mockup-body">
+            <div style="font-size:18px;font-weight:700;margin-bottom:4px">Anil Sharma</div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:16px">Meeting &middot; Health Insurance</div>
+            <div style="display:flex;gap:8px;margin-bottom:16px">
+              <div style="flex:1;padding:10px;border-radius:10px;background:rgba(1,184,170,0.08);border:1px solid var(--border)">
+                <div style="font-size:10px;color:var(--dim)">CHECK-IN</div>
+                <div style="font-size:12px;font-weight:600">10:32 AM</div>
+                <div style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono'">28.6139, 77.2090</div>
+              </div>
+              <div style="flex:1;padding:10px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+                <div style="font-size:10px;color:var(--dim)">DURATION</div>
+                <div style="font-size:12px;font-weight:600;color:var(--teal)">00:42:15</div>
+                <div style="font-size:10px;color:var(--dim)">Running...</div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Checklist (2/3)</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--teal)">&#10003;</span> Presented quote</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--teal)">&#10003;</span> Collected documents</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)">&#9744; Customer signed</div>
+            </div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Photos (3)</div>
+            <div style="display:flex;gap:6px;margin-bottom:16px">
+              <div style="width:48px;height:48px;border-radius:8px;background:rgba(1,184,170,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px">&#128247;</div>
+              <div style="width:48px;height:48px;border-radius:8px;background:rgba(242,200,15,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px">&#128196;</div>
+              <div style="width:48px;height:48px;border-radius:8px;background:rgba(253,98,94,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px">&#127968;</div>
+            </div>
+            <div class="mockup-btn mockup-btn-primary" style="width:100%;justify-content:center">&#10003; Complete Visit</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ LEADS ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="leads">
+  <div class="container">
+    <div class="feature-row reverse">
+      <div class="feature-text anim">
+        <span class="section-label">Lead Management</span>
+        <h3>Full Prospect Pipeline with Activity Timeline</h3>
+        <p>Track every lead from first contact to enrollment. Log calls, WhatsApp conversations, visits, notes, and status changes. Assign leads to team members and set follow-up dates.</p>
+        <ul class="feature-list">
+          <li>Pipeline stages: New &#8594; Contacted &#8594; Interested &#8594; Proposal &#8594; Enrolled</li>
+          <li>Bulk lead upload via CSV/Excel</li>
+          <li>Activity timeline with call logs, messages, and visit records</li>
+          <li>Lead assignment and disposition management</li>
+          <li>Insurance-specific fields: policy type, premium, proposal number</li>
+          <li>Auto location capture on first visit</li>
+        </ul>
+      </div>
+      <div class="anim">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot" style="background:var(--coral)"></div>
+            <div class="mockup-dot" style="background:var(--gold)"></div>
+            <div class="mockup-dot" style="background:var(--teal)"></div>
+            <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">Lead Pipeline</span>
+          </div>
+          <div class="mockup-body">
+            <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto">
+              <span class="mockup-badge" style="background:rgba(59,130,246,0.15);color:#3B82F6;white-space:nowrap">New (12)</span>
+              <span class="mockup-badge" style="background:rgba(1,184,170,0.15);color:var(--teal);white-space:nowrap">Contacted (8)</span>
+              <span class="mockup-badge" style="background:rgba(242,200,15,0.15);color:var(--gold);white-space:nowrap">Interested (5)</span>
+              <span class="mockup-badge" style="background:rgba(34,197,94,0.15);color:#22C55E;white-space:nowrap">Enrolled (3)</span>
+            </div>
+            <div class="mockup-row">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--bg)">AS</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Anil Sharma</div>
+                <div style="font-size:11px;color:var(--dim)">Health &#183; &#8377;15,000/yr</div>
+              </div>
+              <span class="mockup-badge" style="background:rgba(242,200,15,0.15);color:var(--gold)">Interested</span>
+            </div>
+            <div class="mockup-row">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--bg)">PP</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Priya Patel</div>
+                <div style="font-size:11px;color:var(--dim)">Life &#183; &#8377;25,000/yr</div>
+              </div>
+              <span class="mockup-badge" style="background:rgba(1,184,170,0.15);color:var(--teal)">Contacted</span>
+            </div>
+            <div class="mockup-row">
+              <div style="width:32px;height:32px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--bg)">RG</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">Rajesh Gupta</div>
+                <div style="font-size:11px;color:var(--dim)">Motor &#183; &#8377;8,500/yr</div>
+              </div>
+              <span class="mockup-badge" style="background:rgba(59,130,246,0.15);color:#3B82F6">New</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ORDERS & COLLECTIONS (NEW) ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="orders" style="background:radial-gradient(ellipse 50% 50% at 50% 50%,rgba(1,184,170,0.06) 0%,transparent 70%)">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:48px">
+      <div style="margin-bottom:12px"><span class="tag tag-new">New Feature</span></div>
+      <span class="section-label">Sales Orders &amp; Payment Collection</span>
+      <h2 class="section-title">Book Orders &amp; Collect Payments<br/>During Field Visits</h2>
+      <p class="section-sub">Field agents can now take sales orders or collect payments right from the visit detail screen. Submissions are automatically emailed to the configured notification address.</p>
+    </div>
+
+    <div class="feature-row">
+      <div class="anim">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot" style="background:var(--coral)"></div>
+            <div class="mockup-dot" style="background:var(--gold)"></div>
+            <div class="mockup-dot" style="background:var(--teal)"></div>
+            <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">Orders &amp; Collections</span>
+          </div>
+          <div class="mockup-body">
+            <!-- Tabs -->
+            <div style="display:flex;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+              <div style="flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;background:var(--teal);color:var(--bg)">&#128230; Sales Order</div>
+              <div style="flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);background:rgba(255,255,255,0.03)">&#128176; Collect Payment</div>
+            </div>
+            <div class="mockup-field">
+              <label>Product / Service Name</label>
+              <div class="value">Life Insurance - Term Plan</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="mockup-field">
+                <label>Quantity</label>
+                <div class="value">1</div>
+              </div>
+              <div class="mockup-field">
+                <label>Unit Price (&#8377;)</label>
+                <div class="value">25,000.00</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:10px;background:rgba(1,184,170,0.08);border:1px solid rgba(1,184,170,0.2);margin-bottom:14px">
+              <span style="font-size:13px;font-weight:500">Total Amount</span>
+              <span style="font-size:20px;font-weight:800;color:var(--teal)">&#8377;25,000.00</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="mockup-field">
+                <label>Customer Name</label>
+                <div class="value">Anil Sharma</div>
+              </div>
+              <div class="mockup-field">
+                <label>Phone</label>
+                <div class="value">98765 43210</div>
+              </div>
+            </div>
+            <div class="mockup-btn mockup-btn-primary" style="width:100%;justify-content:center;margin-top:4px">&#10003; Submit Order</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feature-text anim">
+        <h3>Sales Orders</h3>
+        <p>During an active visit, agents can book sales orders with product details, quantity, and pricing. The total is auto-calculated and the order details are emailed instantly.</p>
+        <ul class="feature-list">
+          <li>Product/service name, description, quantity, and unit price</li>
+          <li>Auto-calculated total amount</li>
+          <li>Customer name and phone pre-filled from lead</li>
+          <li>Optional remarks for special instructions</li>
+        </ul>
+        <div style="height:24px"></div>
+        <h3>Payment Collection</h3>
+        <p>Collect payments in the field with support for multiple payment modes. Reference numbers are tracked for reconciliation.</p>
+        <ul class="feature-list">
+          <li>Support for Cash, Cheque, UPI, Bank Transfer, Online</li>
+          <li>Payment reference number tracking</li>
+          <li>Instant email notification to configured address</li>
+          <li>History of all collections on the visit record</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Email Notification Flow -->
+    <div style="margin-top:64px" class="anim">
+      <h3 class="text-center" style="font-size:18px;margin-bottom:32px;color:var(--muted)">How the Email Notification Works</h3>
+      <div class="workflow" style="position:relative">
+        <div class="workflow-line"></div>
+        <div class="workflow-step">
+          <div class="workflow-num">1</div>
+          <div style="font-size:24px;margin-bottom:8px">&#128221;</div>
+          <h4>Agent Submits</h4>
+          <p>Agent fills in order or payment details during an active visit and hits Submit</p>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-num">2</div>
+          <div style="font-size:24px;margin-bottom:8px">&#128190;</div>
+          <h4>Saved to Database</h4>
+          <p>Record is saved with visit, lead, and agent details linked together</p>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-num">3</div>
+          <div style="font-size:24px;margin-bottom:8px">&#128231;</div>
+          <h4>Email Sent</h4>
+          <p>Formatted email with full details is sent to the notification email configured in Settings</p>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-num">4</div>
+          <div style="font-size:24px;margin-bottom:8px">&#9989;</div>
+          <h4>Confirmed</h4>
+          <p>Record is marked as emailed. Visible on the visit detail page with "Emailed" badge</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Collection Mockup -->
+    <div style="margin-top:64px">
+      <div class="feature-row reverse">
+        <div class="feature-text anim">
+          <h3>Payment Collection Mode</h3>
+          <p>Switch to the "Collect Payment" tab to record payments received in the field. The payment mode determines which reference fields are shown.</p>
+          <ul class="feature-list">
+            <li><strong>Cash</strong> &#8212; Amount recorded, no reference needed</li>
+            <li><strong>Cheque</strong> &#8212; Cheque number captured</li>
+            <li><strong>UPI</strong> &#8212; UPI transaction reference</li>
+            <li><strong>Bank Transfer</strong> &#8212; Transfer ID recorded</li>
+            <li><strong>Online</strong> &#8212; Payment gateway reference</li>
+          </ul>
+        </div>
+        <div class="anim">
+          <div class="mockup">
+            <div class="mockup-header">
+              <div class="mockup-dot" style="background:var(--coral)"></div>
+              <div class="mockup-dot" style="background:var(--gold)"></div>
+              <div class="mockup-dot" style="background:var(--teal)"></div>
+              <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">Collect Payment</span>
+            </div>
+            <div class="mockup-body">
+              <div style="display:flex;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+                <div style="flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);background:rgba(255,255,255,0.03)">&#128230; Sales Order</div>
+                <div style="flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;background:var(--teal);color:var(--bg)">&#128176; Collect Payment</div>
+              </div>
+              <div class="mockup-field">
+                <label>Amount Collected (&#8377;)</label>
+                <div class="value" style="font-size:18px;font-weight:700;color:var(--teal)">12,500.00</div>
+              </div>
+              <div class="mockup-field">
+                <label>Payment Mode</label>
+                <div class="value">&#128179; UPI</div>
+              </div>
+              <div class="mockup-field">
+                <label>Reference Number</label>
+                <div class="value" style="font-family:'JetBrains Mono';font-size:13px">UPI/4523891/MAR26</div>
+              </div>
+              <div class="mockup-field">
+                <label>Remarks</label>
+                <div class="value" style="font-size:13px;color:var(--muted)">Partial premium payment for health policy</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <div class="mockup-btn mockup-btn-primary" style="flex:1;justify-content:center">&#10003; Submit</div>
+                <div class="mockup-btn mockup-btn-outline" style="justify-content:center">Cancel</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ TRAVEL REIMBURSEMENTS (NEW) ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="reimbursements" style="background:radial-gradient(ellipse 50% 50% at 50% 50%,rgba(242,200,15,0.04) 0%,transparent 70%)">
+  <div class="container">
+    <div class="text-center" style="margin-bottom:48px">
+      <div style="margin-bottom:12px"><span class="tag tag-new">New Feature</span></div>
+      <span class="section-label">Travel Reimbursements</span>
+      <h2 class="section-title">Flat-Rate Per-KM<br/>Reimbursement Workflow</h2>
+      <p class="section-sub">Agents claim travel expenses based on distance. Auto-calculate from GPS data or enter manually. Claims flow through manager recommendation to HQ approval &#8212; with bulk actions.</p>
+    </div>
+
+    <!-- Workflow -->
+    <div class="anim" style="margin-bottom:64px">
+      <h3 class="text-center" style="font-size:18px;margin-bottom:32px;color:var(--muted)">Approval Workflow</h3>
+      <div class="workflow" style="position:relative">
+        <div class="workflow-line"></div>
+        <div class="workflow-step">
+          <div class="workflow-num" style="border-color:#3B82F6;color:#3B82F6;box-shadow:0 0 25px rgba(59,130,246,0.2)">1</div>
+          <div style="font-size:24px;margin-bottom:8px">&#128100;</div>
+          <h4>Agent Submits</h4>
+          <p>Agent enters distance (or auto-calculates from GPS) and submits claim</p>
+          <div class="tag tag-teal" style="margin-top:8px;font-size:10px">Submitted</div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-num" style="border-color:var(--gold);color:var(--gold);box-shadow:0 0 25px rgba(242,200,15,0.2)">2</div>
+          <div style="font-size:24px;margin-bottom:8px">&#128188;</div>
+          <h4>Manager Recommends</h4>
+          <p>Branch manager reviews and recommends with optional remarks</p>
+          <div class="tag tag-gold" style="margin-top:8px;font-size:10px">Recommended</div>
+        </div>
+        <div class="workflow-step">
+          <div class="workflow-num" style="border-color:var(--teal);color:var(--teal)">3</div>
+          <div style="font-size:24px;margin-bottom:8px">&#127970;</div>
+          <h4>HQ Approves / Rejects</h4>
+          <p>Admin reviews and approves or rejects with reason. Supports bulk actions</p>
+          <div style="display:flex;gap:6px;justify-content:center;margin-top:8px">
+            <span class="mockup-badge" style="background:rgba(34,197,94,0.15);color:#22C55E;font-size:10px">Approved</span>
+            <span class="mockup-badge" style="background:rgba(253,98,94,0.15);color:var(--coral);font-size:10px">Rejected</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent View + Config -->
+    <div class="feature-row">
+      <div class="feature-text anim">
+        <h3>Agent: Submit Claims</h3>
+        <p>Agents see their past claims and can submit new ones. The "Auto Calculate" button computes total distance from all GPS-verified visit check-in points for the selected date using the Haversine formula.</p>
+        <ul class="feature-list">
+          <li>Select date and enter or auto-calculate distance</li>
+          <li>Amount auto-calculated: distance (km) &#215; rate per km</li>
+          <li>Add route summary (e.g. "Office &#8594; Client A &#8594; Client B")</li>
+          <li>View all past claims with status badges</li>
+          <li>One claim per day (duplicate prevention)</li>
+        </ul>
+      </div>
+      <div class="anim">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot" style="background:var(--coral)"></div>
+            <div class="mockup-dot" style="background:var(--gold)"></div>
+            <div class="mockup-dot" style="background:var(--teal)"></div>
+            <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">New Reimbursement Claim</span>
+          </div>
+          <div class="mockup-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="mockup-field">
+                <label>Claim Date</label>
+                <div class="value">08 Mar 2026</div>
+              </div>
+              <div class="mockup-field">
+                <label>Rate per KM</label>
+                <div class="value" style="color:var(--dim)">&#8377; 8.50</div>
+              </div>
+            </div>
+            <div class="mockup-field">
+              <label>Distance Travelled (KM)</label>
+              <div style="display:flex;gap:8px">
+                <div class="value" style="flex:1">47.3</div>
+                <div class="mockup-btn mockup-btn-outline" style="padding:8px 12px;font-size:11px">&#128506; Auto Calculate</div>
+              </div>
+              <div style="font-size:11px;color:var(--teal);margin-top:4px">&#128205; Calculated from 6 visit check-in locations</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:10px;background:rgba(1,184,170,0.08);border:1px solid rgba(1,184,170,0.2);margin-bottom:14px">
+              <span style="font-size:13px">47.3 km &#215; &#8377;8.50/km</span>
+              <span style="font-size:20px;font-weight:800;color:var(--teal)">&#8377;402.05</span>
+            </div>
+            <div class="mockup-field">
+              <label>Route Summary</label>
+              <div class="value" style="font-size:12px;color:var(--muted)">Office &#8594; Sharma (Dwarka) &#8594; Patel (Janakpuri) &#8594; Gupta (Rohini) &#8594; Office</div>
+            </div>
+            <div class="mockup-btn mockup-btn-primary" style="width:100%;justify-content:center">&#128663; Submit Claim</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manager + Admin Views -->
+    <div style="margin-top:64px">
+      <div class="feature-row reverse">
+        <div class="feature-text anim">
+          <h3>Manager: Review &amp; Recommend</h3>
+          <p>Branch managers see all submitted claims from their direct reports. They can review each claim, add remarks, and recommend individually or use <strong>bulk recommend</strong> for efficiency.</p>
+          <ul class="feature-list">
+            <li>See all team claims with agent name, distance, and amount</li>
+            <li>Select multiple claims with checkboxes</li>
+            <li>Bulk recommend with one click</li>
+            <li>Add optional remarks for HQ context</li>
+          </ul>
+          <div style="height:24px"></div>
+          <h3>HQ Admin: Approve or Reject</h3>
+          <p>Admins see all claims across the organization. Filter by status, select multiple claims, and perform <strong>bulk approve</strong> or <strong>bulk reject</strong> with optional rejection reasons.</p>
+          <ul class="feature-list">
+            <li>Filter: Recommended, Submitted, Approved, Rejected, All</li>
+            <li>Summary cards: pending count and total approved amount</li>
+            <li>Bulk approve / bulk reject with reason</li>
+            <li>Full audit trail: who recommended, who approved, timestamps</li>
+          </ul>
+        </div>
+        <div class="anim">
+          <div class="mockup" style="margin-bottom:16px">
+            <div class="mockup-header">
+              <div class="mockup-dot" style="background:var(--coral)"></div>
+              <div class="mockup-dot" style="background:var(--gold)"></div>
+              <div class="mockup-dot" style="background:var(--teal)"></div>
+              <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">HQ Approval Queue</span>
+              <span class="mockup-badge" style="background:rgba(253,98,94,0.15);color:var(--coral)">4 Pending</span>
+            </div>
+            <div class="mockup-body" style="padding:12px 16px">
+              <div style="display:flex;gap:6px;margin-bottom:12px">
+                <span class="mockup-badge" style="background:var(--teal);color:var(--bg)">Recommended</span>
+                <span class="mockup-badge" style="background:rgba(255,255,255,0.06);color:var(--muted)">Submitted</span>
+                <span class="mockup-badge" style="background:rgba(255,255,255,0.06);color:var(--muted)">All</span>
+              </div>
+              <!-- Bulk action bar -->
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.04);margin-bottom:12px">
+                <span style="font-size:12px;font-weight:600;flex:1">3 selected</span>
+                <div class="mockup-btn mockup-btn-primary" style="padding:6px 12px;font-size:11px;border-radius:6px">&#10003; Approve All</div>
+                <div class="mockup-btn" style="padding:6px 12px;font-size:11px;border-radius:6px;background:rgba(253,98,94,0.15);color:var(--coral)">&#10007; Reject All</div>
+              </div>
+              <!-- Rows -->
+              <div class="mockup-row" style="padding:8px 0">
+                <input type="checkbox" checked style="accent-color:var(--teal)"/>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600">Ravi Kumar</div>
+                  <div style="font-size:11px;color:var(--dim)">07 Mar &middot; 52.1 km &middot; &#8377;8.50/km</div>
+                </div>
+                <span style="font-size:14px;font-weight:700;color:var(--teal)">&#8377;442.85</span>
+              </div>
+              <div class="mockup-row" style="padding:8px 0">
+                <input type="checkbox" checked style="accent-color:var(--teal)"/>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600">Meera Singh</div>
+                  <div style="font-size:11px;color:var(--dim)">07 Mar &middot; 38.7 km &middot; &#8377;8.50/km</div>
+                </div>
+                <span style="font-size:14px;font-weight:700;color:var(--teal)">&#8377;328.95</span>
+              </div>
+              <div class="mockup-row" style="padding:8px 0">
+                <input type="checkbox" checked style="accent-color:var(--teal)"/>
+                <div style="flex:1">
+                  <div style="font-size:13px;font-weight:600">Amit Verma</div>
+                  <div style="font-size:11px;color:var(--dim)">06 Mar &middot; 61.4 km &middot; &#8377;8.50/km</div>
+                </div>
+                <span style="font-size:14px;font-weight:700;color:var(--teal)">&#8377;521.90</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════ ATTENDANCE ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="attendance">
+  <div class="container">
+    <div class="feature-row">
+      <div class="feature-text anim">
+        <span class="section-label">Attendance &amp; Location</span>
+        <h3>GPS Punch-In with Live Tracking</h3>
+        <p>Agents punch in at the start of their day. GPS location is captured and tracked throughout. Managers see the team's live positions on a territory map and can replay routes.</p>
+        <ul class="feature-list">
+          <li>Punch in/out with automatic GPS and timestamp</li>
+          <li>Real-time attendance timer showing session duration</li>
+          <li>Location tracked every 2 minutes during active shift</li>
+          <li>Route deviation detection (5 km threshold, alerts managers)</li>
+          <li>Route replay with speed control and progress slider</li>
+          <li>Monthly summary with days present, total hours, averages</li>
+        </ul>
+      </div>
+      <div class="anim">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot" style="background:var(--coral)"></div>
+            <div class="mockup-dot" style="background:var(--gold)"></div>
+            <div class="mockup-dot" style="background:var(--teal)"></div>
+            <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">Attendance</span>
+          </div>
+          <div class="mockup-body" style="text-align:center">
+            <div style="font-size:11px;color:var(--dim);margin-bottom:4px">ACTIVE SESSION</div>
+            <div style="font-size:42px;font-weight:800;color:var(--teal);font-family:'JetBrains Mono';margin-bottom:4px">04:32:17</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Punched in at 09:15 AM</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left;margin-bottom:16px">
+              <div style="padding:10px;border-radius:10px;background:rgba(1,184,170,0.08);border:1px solid var(--border)">
+                <div style="font-size:10px;color:var(--dim)">LOCATION</div>
+                <div style="font-size:11px;font-family:'JetBrains Mono'">28.6139, 77.2090</div>
+              </div>
+              <div style="padding:10px;border-radius:10px;background:rgba(1,184,170,0.08);border:1px solid var(--border)">
+                <div style="font-size:10px;color:var(--dim)">VISITS TODAY</div>
+                <div style="font-size:18px;font-weight:700;color:var(--teal)">5</div>
+              </div>
+            </div>
+            <div class="mockup-btn" style="width:100%;justify-content:center;background:rgba(253,98,94,0.15);color:var(--coral);font-weight:600">Punch Out</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ANALYTICS ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="analytics">
+  <div class="container">
+    <div class="feature-row reverse">
+      <div class="feature-text anim">
+        <span class="section-label">Analytics &amp; Performance</span>
+        <h3>Org-Wide Insights at a Glance</h3>
+        <p>Multi-level analytics from individual agent performance to branch comparisons and org-wide trends. Gamification with milestone badges keeps teams motivated.</p>
+        <ul class="feature-list">
+          <li>Role-based dashboards: Agent, Manager, HQ Admin</li>
+          <li>Branch analytics with Gold/Silver/Bronze milestone badges</li>
+          <li>Performance leaderboard with top 10 rankings</li>
+          <li>Policy trends with line and bar charts</li>
+          <li>AI-powered insights tab</li>
+          <li>Territory map view with employee performance overlay</li>
+        </ul>
+      </div>
+      <div class="anim">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot" style="background:var(--coral)"></div>
+            <div class="mockup-dot" style="background:var(--gold)"></div>
+            <div class="mockup-dot" style="background:var(--teal)"></div>
+            <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">Performance Board</span>
+          </div>
+          <div class="mockup-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+              <div style="text-align:center;padding:10px;border-radius:10px;background:rgba(1,184,170,0.08);border:1px solid var(--border)">
+                <div style="font-size:22px;font-weight:800;color:var(--teal)">89%</div>
+                <div style="font-size:9px;color:var(--dim);text-transform:uppercase">Visit Rate</div>
+              </div>
+              <div style="text-align:center;padding:10px;border-radius:10px;background:rgba(242,200,15,0.08);border:1px solid var(--border)">
+                <div style="font-size:22px;font-weight:800;color:var(--gold)">42</div>
+                <div style="font-size:9px;color:var(--dim);text-transform:uppercase">Deals MTD</div>
+              </div>
+              <div style="text-align:center;padding:10px;border-radius:10px;background:rgba(253,98,94,0.08);border:1px solid var(--border)">
+                <div style="font-size:22px;font-weight:800;color:var(--coral)">7</div>
+                <div style="font-size:9px;color:var(--dim);text-transform:uppercase">Overdue</div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">Top Performers</div>
+            <div class="mockup-row">
+              <span style="font-size:16px">&#127942;</span>
+              <div style="flex:1"><div style="font-size:13px;font-weight:600">Ravi Kumar</div><div style="font-size:11px;color:var(--dim)">18 deals &middot; &#8377;4.2L</div></div>
+              <span class="mockup-badge" style="background:rgba(242,200,15,0.15);color:var(--gold)">&#127942; Gold</span>
+            </div>
+            <div class="mockup-row">
+              <span style="font-size:16px">&#129352;</span>
+              <div style="flex:1"><div style="font-size:13px;font-weight:600">Meera Singh</div><div style="font-size:11px;color:var(--dim)">15 deals &middot; &#8377;3.8L</div></div>
+              <span class="mockup-badge" style="background:rgba(138,212,235,0.15);color:var(--cyan)">&#129352; Silver</span>
+            </div>
+            <div class="mockup-row">
+              <span style="font-size:16px">&#129353;</span>
+              <div style="flex:1"><div style="font-size:13px;font-weight:600">Amit Verma</div><div style="font-size:11px;color:var(--dim)">12 deals &middot; &#8377;2.9L</div></div>
+              <span class="mockup-badge" style="background:rgba(166,105,153,0.15);color:var(--purple)">&#129353; Bronze</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ SETTINGS ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="settings">
+  <div class="container">
+    <div class="feature-row">
+      <div class="feature-text anim">
+        <span class="section-label">Organization Settings</span>
+        <h3>Configure Notifications &amp; Rates</h3>
+        <p>Admins configure organization-wide settings including the notification email for orders/collections and the flat rate per kilometer for travel reimbursements.</p>
+        <ul class="feature-list">
+          <li><strong>Notification Email</strong> &#8212; Where sales orders and payment collection reports are sent</li>
+          <li><strong>Rate per KM</strong> &#8212; Flat rate used to calculate travel reimbursement amounts</li>
+          <li>Settings saved to organization profile, accessible from sidebar</li>
+          <li>Only visible to Admin, Super Admin, and Platform Admin roles</li>
+        </ul>
+      </div>
+      <div class="anim">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot" style="background:var(--coral)"></div>
+            <div class="mockup-dot" style="background:var(--gold)"></div>
+            <div class="mockup-dot" style="background:var(--teal)"></div>
+            <span style="flex:1;text-align:center;font-size:12px;color:var(--dim)">Organization Settings</span>
+          </div>
+          <div class="mockup-body">
+            <div style="font-size:14px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px">&#128231; Email Notifications</div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:12px">Where orders and collections are emailed</div>
+            <div class="mockup-field">
+              <label>Notification Email</label>
+              <div class="value">orders@acmeinsurance.com</div>
+            </div>
+            <div style="height:16px;border-bottom:1px solid var(--border);margin-bottom:16px"></div>
+            <div style="font-size:14px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px">&#128663; Travel Reimbursement</div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:12px">Flat rate for distance-based claims</div>
+            <div class="mockup-field">
+              <label>Rate per Kilometer (&#8377;)</label>
+              <div class="value">8.50</div>
+            </div>
+            <div class="mockup-btn mockup-btn-primary" style="width:100%;justify-content:center;margin-top:8px">&#128190; Save All Settings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ROLES ══════════════════ -->
+<div class="divider"></div>
+<section class="section" id="roles">
+  <div class="container text-center">
+    <span class="section-label">Role-Based Access</span>
+    <h2 class="section-title">Every Role Gets the Right View</h2>
+    <p class="section-sub">Three tiers of access ensure everyone sees exactly what they need &#8212; no more, no less.</p>
+    <div class="grid grid-3" style="margin-top:48px">
+      <div class="card anim" style="text-align:center">
+        <div style="font-size:44px;margin-bottom:12px">&#127939;</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--teal);font-weight:600;margin-bottom:6px">Sales Officer / Field Agent</div>
+        <h3>Plan, Visit, Close</h3>
+        <ul style="list-style:none;text-align:left;margin-top:16px">
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Dashboard with personal metrics</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Daily planning with targets</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Visit management with photos</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Orders &amp; payment collection</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Travel reimbursement claims</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Attendance &amp; territory map</li>
+        </ul>
+      </div>
+      <div class="card anim" style="text-align:center;border-color:rgba(242,200,15,0.3)">
+        <div style="font-size:44px;margin-bottom:12px">&#128203;</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:600;margin-bottom:6px">Branch Manager</div>
+        <h3>Coach &amp; Optimize</h3>
+        <ul style="list-style:none;text-align:left;margin-top:16px">
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--gold)">&#10003;</span> Everything in Sales Officer +</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--gold)">&#10003;</span> Team dashboard with aggregates</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--gold)">&#10003;</span> Plan correction with audit trail</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--gold)">&#10003;</span> Reimbursement recommendation</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--gold)">&#10003;</span> Team attendance &amp; live tracking</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);display:flex;gap:8px"><span style="color:var(--gold)">&#10003;</span> Route deviation alerts</li>
+        </ul>
+      </div>
+      <div class="card anim" style="text-align:center;border-color:rgba(1,184,170,0.3)">
+        <div style="font-size:44px;margin-bottom:12px">&#127970;</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--teal);font-weight:600;margin-bottom:6px">Admin / HQ</div>
+        <h3>Full Org Visibility</h3>
+        <ul style="list-style:none;text-align:left;margin-top:16px">
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Everything in Manager +</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Org-wide analytics &amp; KPIs</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> User &amp; branch management</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Bulk reimbursement approvals</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Organization settings &amp; billing</li>
+          <li style="padding:6px 0;font-size:13px;color:var(--muted);display:flex;gap:8px"><span style="color:var(--teal)">&#10003;</span> Subscription management</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<div class="divider"></div>
+<footer style="padding:40px 0;text-align:center">
+  <div class="container">
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">
+      <span style="font-size:24px">&#9670;</span> In-Sync <span style="color:var(--teal)">Field-Sync</span>
+    </div>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:16px">The complete field force management platform</p>
+    <p style="font-size:12px;color:var(--dim)">&copy; 2026 In-Sync Field-Sync by ECR Technical Innovations Pvt. Ltd.</p>
+  </div>
+</footer>
+
+<!-- ══════════════════ SCRIPTS ══════════════════ -->
+<script>
+// Sticky nav
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>50);
+});
+
+// Scroll animations
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:0.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.anim').forEach(el=>observer.observe(el));
+</script>
+
+</body>
+</html>
