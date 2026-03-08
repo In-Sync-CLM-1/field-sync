@@ -188,6 +188,27 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* ── PRODUCT DEMO ── */}
+      <div className="relative z-10 max-w-[900px] mx-auto px-6 -mt-4 mb-0">
+        <div className="rounded-xl overflow-hidden border border-[#01B8AA]/15" style={{ background: "#12282E", boxShadow: "0 30px 80px rgba(0,0,0,0.5), 0 0 60px rgba(1,184,170,0.1)" }}>
+          {/* Browser chrome */}
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#01B8AA]/15">
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FD625E]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#F2C80F]" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#01B8AA]" />
+            </div>
+            <div className="flex-1 text-center text-[11px] text-[#5F6B6D] font-mono">app.insync.live/demo</div>
+          </div>
+          <iframe
+            src="/demo"
+            title="Product Demo"
+            className="w-full border-none"
+            style={{ height: 420, background: "#0B1A1E" }}
+          />
+        </div>
+      </div>
+
       {/* ── TRUST BAR ── */}
       <div className="py-[50px] border-y border-[#01B8AA]/15" style={{ background: "rgba(1,184,170,0.02)" }}>
         <div className="max-w-[1140px] mx-auto px-6 flex items-center justify-center gap-10 flex-wrap">
