@@ -383,7 +383,7 @@ const Landing = () => {
                     <div className="bg-white rounded-md px-3 py-1 text-[11px] text-[#94A3B8] font-mono text-center border border-[#E2E8F0]">app.fieldsync.in/walkthrough</div>
                   </div>
                 </div>
-                <iframe src="/walkthrough" title="Product Walkthrough" className="w-full border-none" style={{ height: 700 }} />
+                <iframe src="/walkthrough" title="Product Walkthrough" className="w-full border-none" style={{ height: 840 }} />
               </div>
             </div>
           </FadeIn>
