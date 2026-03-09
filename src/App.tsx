@@ -53,6 +53,8 @@ import Reimbursements from "./pages/Reimbursements";
 import NotFound from "./pages/NotFound";
 
 import Demo from "./pages/Demo";
+import Walkthrough from "./pages/Walkthrough";
+import WalkthroughFeatures from "./pages/WalkthroughFeatures";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +76,8 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
 
               <Route path="/demo" element={<Demo />} />
+              <Route path="/walkthrough" element={<Walkthrough />} />
+              <Route path="/walkthrough/features" element={<WalkthroughFeatures />} />
               
               {/* Protected but subscription-exempt routes */}
               <Route path="/onboarding" element={

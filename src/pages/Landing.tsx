@@ -359,32 +359,34 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ══════════ HOW IT WORKS ══════════ */}
+      {/* ══════════ HOW IT WORKS — WALKTHROUGH ══════════ */}
       <section id="how-it-works" className="py-24 max-md:py-16 bg-[#F8FAFB]">
-        <div className="max-w-[1200px] mx-auto px-6 text-center">
-          <FadeIn>
+        <div className="max-w-[1200px] mx-auto px-6">
+          <FadeIn className="text-center mb-12">
             <span className="text-[12px] font-semibold tracking-[2.5px] uppercase text-[#01B8AA] mb-4 inline-block">How It Works</span>
-            <h2 className="text-[clamp(28px,4vw,40px)] font-bold leading-[1.2] mb-4 text-[#0F172A]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Up and Running in 10 Minutes</h2>
-            <p className="text-[16px] text-[#64748B] max-w-[500px] mx-auto leading-relaxed mb-16">No complex onboarding. No IT team required. Three steps to full field visibility.</p>
+            <h2 className="text-[clamp(28px,4vw,40px)] font-bold leading-[1.2] mb-4 text-[#0F172A]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>See How Every Role Uses Field-Sync</h2>
+            <p className="text-[16px] text-[#64748B] max-w-[560px] mx-auto leading-relaxed">From the field agent on the ground to HQ overseeing everything — explore the complete workflow for each role.</p>
           </FadeIn>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-[48px] left-[20%] right-[20%] h-[2px]" style={{ background: "linear-gradient(90deg, transparent, #01B8AA30, #01B8AA30, transparent)" }} />
-            {[
-              { n: "1", Icon: Users, title: "Invite Your Team", desc: "Add agents and managers. They download the app and log in — role-based access is pre-configured automatically." },
-              { n: "2", Icon: MapPin, title: "Agents Log Visits", desc: "Every visit is GPS-verified and timestamped. Agents log notes, photos, checklists, and next steps — even offline." },
-              { n: "3", Icon: BarChart3, title: "Track Everything Live", desc: "Real-time dashboards show who's where, what's converting, and where to focus. Branch and org-wide views included." },
-            ].map((s, i) => (
-              <FadeIn key={i} delay={i * 0.15} className="text-center relative">
-                <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center text-lg font-bold text-white mx-auto mb-6 relative z-10" style={{ background: "linear-gradient(135deg, #01B8AA, #059669)", boxShadow: "0 4px 14px rgba(1,184,170,0.25)" }}>{s.n}</div>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(1,184,170,0.08)" }}>
-                  <s.Icon size={22} className="text-[#01B8AA]" />
+          <FadeIn>
+            {/* Glow behind frame */}
+            <div className="relative">
+              <div className="absolute inset-6 rounded-3xl" style={{ background: "radial-gradient(ellipse at center, rgba(1,184,170,0.08), transparent 70%)", filter: "blur(40px)" }} />
+              {/* Browser chrome frame */}
+              <div className="relative rounded-2xl overflow-hidden bg-white border border-[#E2E8F0]" style={{ boxShadow: "0 25px 80px -12px rgba(1,184,170,0.1), 0 20px 60px -15px rgba(0,0,0,0.08)" }}>
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#E2E8F0] bg-[#F8FAFB]">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#FCA5A5]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#FDE68A]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#86EFAC]" />
+                  </div>
+                  <div className="flex-1 mx-8">
+                    <div className="bg-white rounded-md px-3 py-1 text-[11px] text-[#94A3B8] font-mono text-center border border-[#E2E8F0]">app.fieldsync.in/walkthrough</div>
+                  </div>
                 </div>
-                <div className="text-[17px] font-bold mb-2 text-[#0F172A]">{s.title}</div>
-                <div className="text-sm text-[#64748B] leading-relaxed max-w-[280px] mx-auto">{s.desc}</div>
-              </FadeIn>
-            ))}
-          </div>
+                <iframe src="/walkthrough" title="Product Walkthrough" className="w-full border-none" style={{ height: 700 }} />
+              </div>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
