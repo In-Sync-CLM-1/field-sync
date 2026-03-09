@@ -76,6 +76,72 @@ function AnimVal({ value, delay = 0 }: { value: string; delay: number }) {
   return <span>{show ? value : "—"}</span>;
 }
 
+/* ── Mini bar chart ─────────────────────────────────────── */
+
+function MiniBarChart({ bars, delay = 0, height = 50 }: { bars: { value: number; color: string; label?: string }[]; delay?: number; height?: number }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setShow(true), delay * 1000); return () => clearTimeout(t); }, [delay]);
+  const max = Math.max(...bars.map(b => b.value));
+  return (
+    <div className="flex items-end gap-[3px]" style={{ height }}>
+      {bars.map((b, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+          <motion.div
+            className="w-full rounded-t"
+            style={{ background: b.color }}
+            initial={{ height: 0 }}
+            animate={{ height: show ? `${(b.value / max) * 100}%` : 0 }}
+            transition={{ duration: 0.5, delay: i * 0.06 }}
+          />
+          {b.label && <span className="text-[7px] text-[#94A3B8] leading-none">{b.label}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Sparkline ──────────────────────────────────────────── */
+
+function Sparkline({ points, color, delay = 0, w = 60, h = 20 }: { points: number[]; color: string; delay?: number; w?: number; h?: number }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setShow(true), delay * 1000); return () => clearTimeout(t); }, [delay]);
+  const max = Math.max(...points);
+  const min = Math.min(...points);
+  const range = max - min || 1;
+  const path = points.map((p, i) => {
+    const x = (i / (points.length - 1)) * w;
+    const y = h - ((p - min) / range) * (h - 4) - 2;
+    return `${i === 0 ? "M" : "L"}${x},${y}`;
+  }).join(" ");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" style={{ opacity: show ? 1 : 0, transition: "opacity 0.5s" }}>
+      <path d={path} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+/* ── Mini donut ─────────────────────────────────────────── */
+
+function MiniDonut({ value, max, color, size = 36, delay = 0 }: { value: number; max: number; color: string; size?: number; delay?: number }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setShow(true), delay * 1000); return () => clearTimeout(t); }, [delay]);
+  const r = (size - 6) / 2;
+  const circ = 2 * Math.PI * r;
+  const pct = show ? value / max : 0;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F1F5F9" strokeWidth="3" />
+      <motion.circle
+        cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
+        strokeDasharray={circ} initial={{ strokeDashoffset: circ }}
+        animate={{ strokeDashoffset: circ * (1 - pct) }}
+        transition={{ duration: 0.8, delay: delay }} style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
+      />
+      <text x={size / 2} y={size / 2 + 3} textAnchor="middle" className="text-[8px] font-bold" fill={color}>{show ? `${Math.round(pct * 100)}%` : ""}</text>
+    </svg>
+  );
+}
+
 /* ── Phone frame ─────────────────────────────────────────── */
 
 function PhoneFrame({ children, title }: { children: React.ReactNode; title?: string }) {
@@ -291,79 +357,149 @@ function SceneDashboard() {
           </motion.div>
         </motion.div>
 
-        {/* KPIs animate in one by one */}
+        {/* KPIs with sparklines */}
         <div className="grid grid-cols-4 gap-2.5 mb-3">
           {[
-            { label: "Visits Today", value: "5/8", sub: "8 planned", icon: MapPin, color: "#01B8AA", delay: 0.15 },
-            { label: "This Week", value: "23", sub: "18 last week", icon: TrendingUp, color: "#3B82F6", delay: 0.25 },
-            { label: "Active Visit", value: "00:42", sub: "In progress", icon: Clock, color: "#F59E0B", delay: 0.35 },
-            { label: "Overdue", value: "3", sub: "Need attention", icon: AlertTriangle, color: "#EF4444", delay: 0.45 },
+            { label: "Visits Today", value: "5/8", icon: MapPin, color: "#01B8AA", delay: 0.15, spark: [2, 4, 3, 6, 5, 7, 5] },
+            { label: "This Week", value: "23", icon: TrendingUp, color: "#3B82F6", delay: 0.25, spark: [12, 15, 14, 18, 20, 22, 23] },
+            { label: "Active Visit", value: "00:42", icon: Clock, color: "#F59E0B", delay: 0.35, spark: [30, 25, 35, 40, 38, 42] },
+            { label: "Overdue", value: "3", icon: AlertTriangle, color: "#EF4444", delay: 0.45, spark: [5, 4, 6, 3, 4, 3] },
           ].map((k) => (
-            <motion.div key={k.label} {...slideUp(k.delay)} className="relative rounded-xl border border-[#E2E8F0] bg-white p-3 overflow-hidden">
+            <motion.div key={k.label} {...slideUp(k.delay)} className="relative rounded-xl border border-[#E2E8F0] bg-white p-2.5 overflow-hidden">
               <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: k.color }} />
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between mb-1">
                 <div>
-                  <div className="text-[8px] font-semibold text-[#94A3B8] uppercase tracking-wider">{k.label}</div>
-                  <div className="text-xl font-bold mt-0.5" style={{ color: k.color }}><AnimVal value={k.value} delay={k.delay + 0.3} /></div>
+                  <div className="text-[7px] font-semibold text-[#94A3B8] uppercase tracking-wider">{k.label}</div>
+                  <div className="text-lg font-bold leading-tight" style={{ color: k.color }}><AnimVal value={k.value} delay={k.delay + 0.3} /></div>
                 </div>
-                <div className="rounded-lg bg-[#F8FAFB] p-1"><k.icon className="h-3.5 w-3.5 text-[#94A3B8]" /></div>
+                <div className="rounded-lg p-1" style={{ background: `${k.color}10` }}><k.icon className="h-3 w-3" style={{ color: k.color }} /></div>
               </div>
-              <AnimatePresence>
-                {step >= 1 && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-1 text-[9px] text-[#94A3B8]">{k.sub}</motion.div>
-                )}
-              </AnimatePresence>
+              <Sparkline points={k.spark} color={k.color} delay={k.delay + 0.5} w={80} h={16} />
             </motion.div>
           ))}
         </div>
 
-        {/* Pipeline animates */}
-        <AnimatePresence>
-          {step >= 2 && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2 mb-3">
-              {[
-                { l: "Planned", n: 8, c: "#3B82F6" }, { l: "Visited", n: 5, c: "#16A34A" },
-                { l: "Pending", n: 2, c: "#F59E0B" }, { l: "Follow-up", n: 3, c: "#EF4444" },
-              ].map((s, i) => (
-                <motion.div key={s.l} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.12 }}
-                  className="flex-1 text-center py-2 rounded-lg" style={{ background: `${s.c}10`, border: `1px solid ${s.c}25` }}>
-                  <div className="text-lg font-bold" style={{ color: s.c }}>{s.n}</div>
-                  <div className="text-[8px] text-[#94A3B8] uppercase">{s.l}</div>
+        <div className="grid grid-cols-5 gap-2.5">
+          {/* Left column — pipeline + weekly chart */}
+          <div className="col-span-3 space-y-2.5">
+            {/* Pipeline funnel */}
+            <AnimatePresence>
+              {step >= 1 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
+                  <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Today's Pipeline</div>
+                  <div className="flex gap-1.5 items-end mb-2">
+                    {[
+                      { l: "Planned", n: 8, c: "#3B82F6" }, { l: "In Progress", n: 2, c: "#F59E0B" },
+                      { l: "Visited", n: 5, c: "#16A34A" }, { l: "Follow-up", n: 3, c: "#EF4444" },
+                    ].map((s, i) => (
+                      <motion.div key={s.l} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }}
+                        className="flex-1 rounded-lg py-2 text-center relative overflow-hidden" style={{ background: `${s.c}08`, border: `1px solid ${s.c}20` }}>
+                        <div className="text-base font-bold" style={{ color: s.c }}>{s.n}</div>
+                        <div className="text-[7px] text-[#94A3B8] uppercase font-medium">{s.l}</div>
+                        <div className="absolute bottom-0 inset-x-0 h-[2px]" style={{ background: s.c, opacity: 0.5 }} />
+                      </motion.div>
+                    ))}
+                  </div>
+                  {/* Progress bar */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 rounded-full bg-[#F1F5F9] overflow-hidden flex">
+                      <motion.div className="h-full bg-[#16A34A]" initial={{ width: 0 }} animate={{ width: "62.5%" }} transition={{ duration: 0.8 }} />
+                      <motion.div className="h-full bg-[#F59E0B]" initial={{ width: 0 }} animate={{ width: "25%" }} transition={{ duration: 0.6, delay: 0.3 }} />
+                      <motion.div className="h-full bg-[#EF4444]" initial={{ width: 0 }} animate={{ width: "12.5%" }} transition={{ duration: 0.4, delay: 0.5 }} />
+                    </div>
+                    <span className="text-[9px] font-bold text-[#16A34A]">63%</span>
+                  </div>
                 </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              )}
+            </AnimatePresence>
 
-        {/* Quick actions */}
-        <AnimatePresence>
-          {step >= 3 && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="w-full py-2.5 rounded-lg bg-gradient-to-r from-[#01B8AA] to-[#059669] text-white text-xs font-semibold text-center flex items-center justify-center gap-1.5 shadow-lg shadow-[#01B8AA]/20 mb-2">
-                <MapPin className="h-3.5 w-3.5" /> Start Visit
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Follow-ups */}
-        <AnimatePresence>
-          {step >= 4 && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] bg-white p-3">
-              <div className="text-[9px] font-semibold text-[#EF4444] mb-2 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Follow-ups Due (3)</div>
-              {[
-                { name: "Anil Sharma", date: "Overdue · 07 Mar" },
-                { name: "Priya Patel", date: "Today" },
-              ].map((f, i) => (
-                <motion.div key={f.name} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.15 }}
-                  className="flex items-center justify-between py-1.5 border-b border-[#F1F5F9] last:border-0">
-                  <div><div className="text-[11px] font-medium text-[#0F172A]">{f.name}</div><div className="text-[9px] text-[#EF4444]">{f.date}</div></div>
-                  <div className="w-6 h-6 rounded-lg bg-[#01B8AA]/10 flex items-center justify-center"><Phone className="h-3 w-3 text-[#01B8AA]" /></div>
+            {/* Weekly performance chart */}
+            <AnimatePresence>
+              {step >= 2 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider">This Week</div>
+                    <div className="flex gap-3">
+                      <span className="flex items-center gap-1 text-[8px] text-[#94A3B8]"><span className="w-1.5 h-1.5 rounded-full bg-[#01B8AA]" />Visits</span>
+                      <span className="flex items-center gap-1 text-[8px] text-[#94A3B8]"><span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />Target</span>
+                    </div>
+                  </div>
+                  <MiniBarChart delay={0.3} height={55} bars={[
+                    { value: 6, color: "#01B8AA", label: "Mon" }, { value: 5, color: "#01B8AA", label: "Tue" },
+                    { value: 7, color: "#01B8AA", label: "Wed" }, { value: 4, color: "#01B8AA", label: "Thu" },
+                    { value: 5, color: "#01B8AA", label: "Fri" }, { value: 2, color: "#E2E8F0", label: "Sat" },
+                  ]} />
                 </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Right column — actions + follow-ups + activity */}
+          <div className="col-span-2 space-y-2.5">
+            {/* Quick actions */}
+            <AnimatePresence>
+              {step >= 3 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5">
+                  <div className="w-full py-2 rounded-lg bg-gradient-to-r from-[#01B8AA] to-[#059669] text-white text-[10px] font-semibold text-center flex items-center justify-center gap-1 shadow-lg shadow-[#01B8AA]/20">
+                    <MapPin className="h-3 w-3" /> Start Visit
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="py-1.5 rounded-lg border border-[#E2E8F0] text-[9px] font-medium text-[#64748B] text-center flex items-center justify-center gap-1">
+                      <Plus className="h-2.5 w-2.5" /> New Lead
+                    </div>
+                    <div className="py-1.5 rounded-lg border border-[#E2E8F0] text-[9px] font-medium text-[#64748B] text-center flex items-center justify-center gap-1">
+                      <Calendar className="h-2.5 w-2.5" /> Plan
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Follow-ups with donut */}
+            <AnimatePresence>
+              {step >= 4 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] bg-white p-2.5">
+                  <div className="text-[9px] font-semibold text-[#EF4444] mb-2 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Follow-ups (3)</div>
+                  {[
+                    { name: "Anil Sharma", date: "Overdue · 07 Mar", color: "#EF4444" },
+                    { name: "Priya Patel", date: "Today · 3:00 PM", color: "#F59E0B" },
+                    { name: "Suresh Reddy", date: "Tomorrow", color: "#3B82F6" },
+                  ].map((f, i) => (
+                    <motion.div key={f.name} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.12 }}
+                      className="flex items-center justify-between py-1 border-b border-[#F1F5F9] last:border-0">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1 h-5 rounded-full" style={{ background: f.color }} />
+                        <div><div className="text-[10px] font-medium text-[#0F172A]">{f.name}</div><div className="text-[8px]" style={{ color: f.color }}>{f.date}</div></div>
+                      </div>
+                      <Phone className="h-3 w-3 text-[#01B8AA]" />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Live activity feed */}
+            <AnimatePresence>
+              {step >= 5 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] bg-white p-2.5">
+                  <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5">Recent Activity</div>
+                  {[
+                    { t: "Check-in at TechVista Ltd", time: "10:32 AM", c: "#16A34A" },
+                    { t: "Call logged — Anil Sharma", time: "9:45 AM", c: "#3B82F6" },
+                    { t: "Lead added — Green Energy Co", time: "9:15 AM", c: "#01B8AA" },
+                  ].map((a, i) => (
+                    <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.15 }}
+                      className="flex items-start gap-1.5 py-1 text-[9px]">
+                      <div className="w-1 h-1 rounded-full mt-1 shrink-0" style={{ background: a.c }} />
+                      <div className="flex-1 text-[#475569] leading-snug">{a.t}</div>
+                      <span className="text-[#CBD5E1] text-[8px] shrink-0">{a.time}</span>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -885,9 +1021,9 @@ function SceneTeam() {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
-      setTimeout(() => setStep(1), 1000),
-      setTimeout(() => setStep(2), 3000),
-      setTimeout(() => setStep(3), 5500),
+      setTimeout(() => setStep(1), 800),
+      setTimeout(() => setStep(2), 2500),
+      setTimeout(() => setStep(3), 5000),
       setTimeout(() => setStep(4), 7500),
     ];
     return () => t.forEach(clearTimeout);
@@ -899,64 +1035,128 @@ function SceneTeam() {
       <div className="flex-1 overflow-hidden p-4">
         <motion.div {...slideUp(0)} className="flex items-center justify-between mb-3">
           <div>
-            <div className="text-[9px] font-bold text-[#01B8AA] uppercase tracking-wider flex items-center gap-1"><Users className="h-3 w-3" /> Team</div>
-            <div className="text-lg font-bold text-[#0F172A]">Team Dashboard</div>
+            <div className="text-[9px] font-bold text-[#01B8AA] uppercase tracking-wider flex items-center gap-1"><Users className="h-3 w-3" /> Team Leader View</div>
+            <div className="text-lg font-bold text-[#0F172A]">Team — Delhi West</div>
           </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+            className="text-[8px] font-semibold text-white bg-[#16A34A] px-2 py-0.5 rounded-full">8 of 10 active</motion.div>
         </motion.div>
 
+        {/* KPIs with donuts */}
         <div className="grid grid-cols-4 gap-2 mb-3">
           {[
-            { label: "Team Visits", value: "32", icon: MapPin, color: "#01B8AA", delay: 0.1 },
-            { label: "Active", value: "8/10", icon: Users, color: "#3B82F6", delay: 0.2 },
-            { label: "Attendance", value: "87%", icon: Clock, color: "#16A34A", delay: 0.3 },
-            { label: "Plan Done", value: "72%", icon: CheckCircle, color: "#F59E0B", delay: 0.4 },
+            { label: "Visits", value: "32", icon: MapPin, color: "#01B8AA", delay: 0.1, donutVal: 32, donutMax: 45 },
+            { label: "Attendance", value: "87%", icon: Clock, color: "#16A34A", delay: 0.2, donutVal: 87, donutMax: 100 },
+            { label: "Plan Done", value: "72%", icon: CheckCircle, color: "#F59E0B", delay: 0.3, donutVal: 72, donutMax: 100 },
+            { label: "Conversions", value: "18", icon: Target, color: "#8B5CF6", delay: 0.4, donutVal: 18, donutMax: 30 },
           ].map((k) => (
-            <motion.div key={k.label} {...slideUp(k.delay)} className="rounded-xl border border-[#E2E8F0] p-2.5 text-center relative overflow-hidden">
+            <motion.div key={k.label} {...slideUp(k.delay)} className="rounded-xl border border-[#E2E8F0] p-2 relative overflow-hidden">
               <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: k.color }} />
-              <k.icon className="h-3.5 w-3.5 mx-auto mb-1 text-[#94A3B8]" />
-              <div className="text-lg font-bold" style={{ color: k.color }}><AnimVal value={k.value} delay={k.delay + 0.3} /></div>
-              <div className="text-[8px] text-[#94A3B8] uppercase">{k.label}</div>
+              <div className="flex items-center gap-1.5">
+                <MiniDonut value={k.donutVal} max={k.donutMax} color={k.color} size={32} delay={k.delay + 0.3} />
+                <div>
+                  <div className="text-sm font-bold leading-tight" style={{ color: k.color }}><AnimVal value={k.value} delay={k.delay + 0.3} /></div>
+                  <div className="text-[7px] text-[#94A3B8] uppercase font-medium">{k.label}</div>
+                </div>
+              </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Target bars animate */}
-        <AnimatePresence>
-          {step >= 1 && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3 mb-3">
-              <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Target vs Achievement</div>
-              {[{ m: "Prospects", t: 50, a: 38, c: "#01B8AA" }, { m: "Quotes", t: 25, a: 18, c: "#F59E0B" }, { m: "Sales", t: 10, a: 7, c: "#8B5CF6" }].map((r, i) => (
-                <div key={r.m} className="mb-2 last:mb-0">
-                  <div className="flex justify-between text-[10px] mb-1"><span className="font-semibold">{r.m}</span><span className="text-[#94A3B8]">{r.a}/{r.t} ({Math.round(r.a / r.t * 100)}%)</span></div>
-                  <div className="h-1.5 rounded-full bg-[#F1F5F9] overflow-hidden">
-                    <motion.div className="h-full rounded-full" style={{ background: r.c }} initial={{ width: "0%" }} animate={{ width: `${Math.round(r.a / r.t * 100)}%` }} transition={{ duration: 0.8, delay: i * 0.15 }} />
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Leaderboard */}
-        <AnimatePresence>
-          {step >= 2 && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
-              <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Top Performers</div>
-              {[
-                { e: "🏆", n: "Ravi Kumar", d: "18 sales · ₹4.2L", badge: "Gold", bc: "#D97706", bb: "#FFFBEB" },
-                { e: "🥈", n: "Meera Singh", d: "15 sales · ₹3.8L", badge: "Silver", bc: "#0EA5E9", bb: "#F0F9FF" },
-                { e: "🥉", n: "Amit Verma", d: "12 sales · ₹2.9L", badge: "Bronze", bc: "#8B5CF6", bb: "#FAF5FF" },
-              ].map((p, i) => (
-                <motion.div key={p.n} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.15 }}
-                  className="flex items-center gap-2.5 py-1.5 border-b border-[#F1F5F9] last:border-0">
-                  <span className="text-sm">{p.e}</span>
-                  <div className="flex-1"><div className="text-[11px] font-semibold">{p.n}</div><div className="text-[9px] text-[#94A3B8]">{p.d}</div></div>
-                  <span className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold" style={{ background: p.bb, color: p.bc }}>{p.badge}</span>
+        <div className="grid grid-cols-5 gap-2.5">
+          {/* Left — targets + chart */}
+          <div className="col-span-3 space-y-2.5">
+            {/* Target vs Achievement */}
+            <AnimatePresence>
+              {step >= 1 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
+                  <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Target vs Achievement</div>
+                  {[
+                    { m: "Prospects", t: 50, a: 38, c: "#01B8AA" },
+                    { m: "Quotes Sent", t: 25, a: 18, c: "#3B82F6" },
+                    { m: "Sales Closed", t: 10, a: 7, c: "#8B5CF6" },
+                    { m: "Revenue (₹L)", t: 15, a: 10.8, c: "#16A34A" },
+                  ].map((r, i) => (
+                    <div key={r.m} className="mb-2 last:mb-0">
+                      <div className="flex justify-between text-[9px] mb-0.5">
+                        <span className="font-semibold text-[#0F172A]">{r.m}</span>
+                        <span className="text-[#94A3B8]">{r.a}/{r.t} <span className="font-bold" style={{ color: r.c }}>({Math.round(r.a / r.t * 100)}%)</span></span>
+                      </div>
+                      <div className="h-2 rounded-full bg-[#F1F5F9] overflow-hidden relative">
+                        <motion.div className="h-full rounded-full" style={{ background: r.c }} initial={{ width: "0%" }} animate={{ width: `${Math.round(r.a / r.t * 100)}%` }} transition={{ duration: 0.8, delay: i * 0.12 }} />
+                        <div className="absolute top-0 h-full border-r-2 border-dashed" style={{ left: "100%", borderColor: `${r.c}40` }} />
+                      </div>
+                    </div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              )}
+            </AnimatePresence>
+
+            {/* Weekly team chart */}
+            <AnimatePresence>
+              {step >= 3 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
+                  <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Team Weekly Trend</div>
+                  <MiniBarChart delay={0.2} height={45} bars={[
+                    { value: 28, color: "#01B8AA", label: "W1" }, { value: 35, color: "#01B8AA", label: "W2" },
+                    { value: 30, color: "#01B8AA", label: "W3" }, { value: 32, color: "#3B82F6", label: "W4" },
+                  ]} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Right — leaderboard + live map */}
+          <div className="col-span-2 space-y-2.5">
+            {/* Leaderboard */}
+            <AnimatePresence>
+              {step >= 2 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-2.5">
+                  <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5">Top Performers</div>
+                  {[
+                    { rank: 1, n: "Ravi Kumar", v: 8, s: "₹4.2L", badge: "Gold", bc: "#D97706", bb: "#FFFBEB" },
+                    { rank: 2, n: "Meera Singh", v: 7, s: "₹3.8L", badge: "Silver", bc: "#0EA5E9", bb: "#F0F9FF" },
+                    { rank: 3, n: "Amit Verma", v: 6, s: "₹2.9L", badge: "Bronze", bc: "#8B5CF6", bb: "#FAF5FF" },
+                  ].map((p, i) => (
+                    <motion.div key={p.n} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.12 }}
+                      className="flex items-center gap-2 py-1.5 border-b border-[#F1F5F9] last:border-0">
+                      <span className="text-[10px] font-bold w-4 text-center" style={{ color: p.bc }}>#{p.rank}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] font-semibold text-[#0F172A] truncate">{p.n}</div>
+                        <div className="text-[8px] text-[#94A3B8]">{p.v} visits · {p.s}</div>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded-full text-[7px] font-bold shrink-0" style={{ background: p.bb, color: p.bc }}>{p.badge}</span>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Live location */}
+            <AnimatePresence>
+              {step >= 4 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-2.5 bg-[#F0FDF9]">
+                  <div className="text-[9px] font-semibold text-[#01B8AA] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
+                    Live Locations
+                  </div>
+                  {[
+                    { n: "Ravi K.", loc: "TechVista, Dwarka", t: "2m ago" },
+                    { n: "Meera S.", loc: "GreenTech, Janakpuri", t: "5m ago" },
+                    { n: "Amit V.", loc: "In transit...", t: "1m ago" },
+                  ].map((a, i) => (
+                    <motion.div key={a.n} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.1 }}
+                      className="flex items-start gap-1.5 py-1 text-[9px]">
+                      <MapPin className="h-2.5 w-2.5 text-[#01B8AA] mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0"><span className="font-semibold text-[#0F172A]">{a.n}</span> <span className="text-[#64748B]">{a.loc}</span></div>
+                      <span className="text-[7px] text-[#94A3B8] shrink-0">{a.t}</span>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -968,9 +1168,10 @@ function SceneBranch() {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
-      setTimeout(() => setStep(1), 1000),
-      setTimeout(() => setStep(2), 3500),
-      setTimeout(() => setStep(3), 6000),
+      setTimeout(() => setStep(1), 800),
+      setTimeout(() => setStep(2), 2500),
+      setTimeout(() => setStep(3), 5000),
+      setTimeout(() => setStep(4), 7000),
     ];
     return () => t.forEach(clearTimeout);
   }, []);
@@ -981,51 +1182,128 @@ function SceneBranch() {
       <div className="flex-1 overflow-hidden p-4">
         <motion.div {...slideUp(0)} className="flex items-center justify-between mb-3">
           <div>
-            <div className="text-[9px] font-bold text-[#8B5CF6] uppercase tracking-wider flex items-center gap-1"><Building2 className="h-3 w-3" /> Branch</div>
+            <div className="text-[9px] font-bold text-[#8B5CF6] uppercase tracking-wider flex items-center gap-1"><Building2 className="h-3 w-3" /> Branch Manager View</div>
             <div className="text-lg font-bold text-[#0F172A]">Delhi West — Branch Analytics</div>
           </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+            className="text-[8px] font-semibold text-white bg-[#8B5CF6] px-2 py-0.5 rounded-full">3 Teams · 22 Agents</motion.div>
         </motion.div>
 
-        <div className="grid grid-cols-3 gap-2.5 mb-3">
+        {/* KPIs with sparklines */}
+        <div className="grid grid-cols-4 gap-2 mb-3">
           {[
-            { label: "Visits MTD", value: "156", color: "#01B8AA", delay: 0.15 },
-            { label: "Total Sales", value: "₹12.4L", color: "#16A34A", delay: 0.25 },
-            { label: "Attendance", value: "91%", color: "#3B82F6", delay: 0.35 },
+            { label: "Visits MTD", value: "156", color: "#01B8AA", delay: 0.1, spark: [80, 95, 110, 125, 140, 156] },
+            { label: "Sales", value: "₹12.4L", color: "#16A34A", delay: 0.2, spark: [4, 6.2, 8.1, 9.5, 11, 12.4] },
+            { label: "Attendance", value: "91%", color: "#3B82F6", delay: 0.3, spark: [85, 88, 90, 87, 92, 91] },
+            { label: "Conversion", value: "24%", color: "#F59E0B", delay: 0.4, spark: [18, 20, 19, 22, 23, 24] },
           ].map((k) => (
-            <motion.div key={k.label} {...slideUp(k.delay)} className="rounded-xl border border-[#E2E8F0] p-3 text-center relative overflow-hidden">
+            <motion.div key={k.label} {...slideUp(k.delay)} className="rounded-xl border border-[#E2E8F0] p-2 relative overflow-hidden">
               <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: k.color }} />
-              <div className="text-xl font-bold" style={{ color: k.color }}><AnimVal value={k.value} delay={k.delay + 0.3} /></div>
-              <div className="text-[8px] text-[#94A3B8] uppercase">{k.label}</div>
+              <div className="text-[7px] font-semibold text-[#94A3B8] uppercase tracking-wider">{k.label}</div>
+              <div className="flex items-end justify-between">
+                <div className="text-base font-bold leading-tight" style={{ color: k.color }}><AnimVal value={k.value} delay={k.delay + 0.3} /></div>
+                <Sparkline points={k.spark} color={k.color} delay={k.delay + 0.5} w={50} h={16} />
+              </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Agent table appears row by row */}
-        <AnimatePresence>
-          {step >= 1 && (
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
-              <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Agent Performance</div>
-              <div className="text-[8px] grid grid-cols-6 gap-1 py-1 text-[#94A3B8] font-semibold border-b border-[#E2E8F0]">
-                <div className="col-span-2">Officer</div><div className="text-center">Prospects</div><div className="text-center">Quotes</div><div className="text-center">Sales</div><div className="text-center">Badge</div>
-              </div>
-              {[
-                { n: "Ravi Kumar", p: "18/20", q: "8/10", s: "5/5", badge: "Gold", bc: "#D97706", bb: "#FFFBEB" },
-                { n: "Meera Singh", p: "15/20", q: "7/10", s: "3/5", badge: "Silver", bc: "#0EA5E9", bb: "#F0F9FF" },
-                { n: "Amit Verma", p: "12/20", q: "5/10", s: "2/5", badge: "Bronze", bc: "#8B5CF6", bb: "#FAF5FF" },
-                { n: "Neha Joshi", p: "8/20", q: "3/10", s: "1/5", badge: "—", bc: "#94A3B8", bb: "#F8FAFB" },
-              ].map((a, i) => (
-                <motion.div key={a.n} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.2 }}
-                  className="text-[10px] grid grid-cols-6 gap-1 py-1.5 border-b border-[#F1F5F9] last:border-0 items-center">
-                  <div className="col-span-2 font-semibold text-[#0F172A]">{a.n}</div>
-                  <div className="text-center text-[#64748B]">{a.p}</div>
-                  <div className="text-center text-[#64748B]">{a.q}</div>
-                  <div className="text-center text-[#64748B]">{a.s}</div>
-                  <div className="text-center"><span className="px-1.5 py-0.5 rounded-full text-[8px] font-semibold" style={{ background: a.bb, color: a.bc }}>{a.badge}</span></div>
+        <div className="grid grid-cols-5 gap-2.5">
+          {/* Left — team comparison + chart */}
+          <div className="col-span-3 space-y-2.5">
+            {/* Team comparison */}
+            <AnimatePresence>
+              {step >= 1 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
+                  <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Team Performance</div>
+                  <div className="text-[7px] grid grid-cols-7 gap-1 py-1 text-[#94A3B8] font-semibold border-b border-[#E2E8F0]">
+                    <div className="col-span-2">Team</div><div className="text-center">Visits</div><div className="text-center">Sales</div><div className="text-center">Conv.</div><div className="text-center">Attend.</div><div className="text-center">Score</div>
+                  </div>
+                  {[
+                    { n: "Team Alpha", v: 58, s: "₹4.8L", conv: "28%", att: "94%", score: 92, c: "#16A34A" },
+                    { n: "Team Beta", v: 52, s: "₹4.2L", conv: "24%", att: "90%", score: 85, c: "#01B8AA" },
+                    { n: "Team Gamma", v: 46, s: "₹3.4L", conv: "20%", att: "88%", score: 72, c: "#F59E0B" },
+                  ].map((t, i) => (
+                    <motion.div key={t.n} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.15 }}
+                      className="text-[9px] grid grid-cols-7 gap-1 py-1.5 border-b border-[#F1F5F9] last:border-0 items-center">
+                      <div className="col-span-2 font-semibold text-[#0F172A] flex items-center gap-1">
+                        <div className="w-1 h-4 rounded-full" style={{ background: t.c }} />{t.n}
+                      </div>
+                      <div className="text-center text-[#64748B]">{t.v}</div>
+                      <div className="text-center text-[#64748B]">{t.s}</div>
+                      <div className="text-center text-[#64748B]">{t.conv}</div>
+                      <div className="text-center text-[#64748B]">{t.att}</div>
+                      <div className="text-center">
+                        <span className="px-1 py-0.5 rounded text-[8px] font-bold" style={{ background: `${t.c}15`, color: t.c }}>{t.score}</span>
+                      </div>
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+              )}
+            </AnimatePresence>
+
+            {/* Monthly trend chart */}
+            <AnimatePresence>
+              {step >= 3 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider">Monthly Sales Trend</div>
+                    <span className="text-[8px] text-[#16A34A] font-bold flex items-center gap-0.5"><TrendingUp className="h-2.5 w-2.5" /> +18%</span>
+                  </div>
+                  <MiniBarChart delay={0.2} height={50} bars={[
+                    { value: 8.2, color: "#01B8AA20", label: "Oct" }, { value: 9.5, color: "#01B8AA40", label: "Nov" },
+                    { value: 10.1, color: "#01B8AA60", label: "Dec" }, { value: 9.8, color: "#01B8AA80", label: "Jan" },
+                    { value: 11.2, color: "#01B8AAC0", label: "Feb" }, { value: 12.4, color: "#01B8AA", label: "Mar" },
+                  ]} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Right — agent table + alerts */}
+          <div className="col-span-2 space-y-2.5">
+            {/* Top agents */}
+            <AnimatePresence>
+              {step >= 2 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-2.5">
+                  <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5">Agent Leaderboard</div>
+                  {[
+                    { r: 1, n: "Ravi Kumar", v: "18/20", s: "₹4.2L", bc: "#D97706", bb: "#FFFBEB", badge: "Gold" },
+                    { r: 2, n: "Meera Singh", v: "15/20", s: "₹3.8L", bc: "#0EA5E9", bb: "#F0F9FF", badge: "Silver" },
+                    { r: 3, n: "Amit Verma", v: "12/20", s: "₹2.9L", bc: "#8B5CF6", bb: "#FAF5FF", badge: "Bronze" },
+                    { r: 4, n: "Neha Joshi", v: "8/20", s: "₹1.5L", bc: "#94A3B8", bb: "#F8FAFB", badge: "—" },
+                  ].map((a, i) => (
+                    <motion.div key={a.n} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
+                      className="flex items-center gap-1.5 py-1 border-b border-[#F1F5F9] last:border-0">
+                      <span className="text-[9px] font-bold w-3 text-center" style={{ color: a.bc }}>#{a.r}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[9px] font-semibold text-[#0F172A] truncate">{a.n}</div>
+                        <div className="text-[7px] text-[#94A3B8]">{a.v} visits · {a.s}</div>
+                      </div>
+                      <span className="px-1 py-0.5 rounded-full text-[7px] font-bold shrink-0" style={{ background: a.bb, color: a.bc }}>{a.badge}</span>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Alerts & insights */}
+            <AnimatePresence>
+              {step >= 4 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5">
+                  <div className="rounded-xl border border-[#DCFCE7] bg-[#F0FDF4] p-2.5">
+                    <div className="text-[9px] font-semibold text-[#16A34A] flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Best week this quarter</div>
+                    <div className="text-[8px] text-[#64748B] mt-0.5">58 visits this week — 22% above branch average</div>
+                  </div>
+                  <div className="rounded-xl border border-[#FEF3C7] bg-[#FFFBEB] p-2.5">
+                    <div className="text-[9px] font-semibold text-[#D97706] flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> 3 agents below target</div>
+                    <div className="text-[8px] text-[#64748B] mt-0.5">Neha, Suresh, and Pooja need coaching</div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -1037,10 +1315,10 @@ function SceneHQ() {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const t = [
-      setTimeout(() => setStep(1), 1000),
-      setTimeout(() => setStep(2), 3500),
-      setTimeout(() => setStep(3), 6000),
-      setTimeout(() => setStep(4), 8000),
+      setTimeout(() => setStep(1), 800),
+      setTimeout(() => setStep(2), 2500),
+      setTimeout(() => setStep(3), 5000),
+      setTimeout(() => setStep(4), 7500),
     ];
     return () => t.forEach(clearTimeout);
   }, []);
@@ -1049,102 +1327,133 @@ function SceneHQ() {
     <motion.div {...fade} className="flex h-full">
       <MockSidebar active="Dashboard" />
       <div className="flex-1 overflow-hidden p-4">
-        <motion.div {...slideUp(0)} className="mb-3">
-          <div className="text-[9px] font-bold text-[#01B8AA] uppercase tracking-wider">Head Office</div>
-          <div className="text-lg font-bold text-[#0F172A]">Organization Dashboard</div>
+        <motion.div {...slideUp(0)} className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-[9px] font-bold text-[#01B8AA] uppercase tracking-wider flex items-center gap-1"><Eye className="h-3 w-3" /> Head Office</div>
+            <div className="text-lg font-bold text-[#0F172A]">Organization Overview</div>
+          </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+            className="text-[8px] font-semibold text-white bg-[#0F172A] px-2 py-0.5 rounded-full">4 Branches · 50 Agents</motion.div>
         </motion.div>
 
-        <div className="grid grid-cols-4 gap-2 mb-3">
+        {/* Top KPIs with donuts */}
+        <div className="grid grid-cols-5 gap-2 mb-3">
           {[
-            { label: "Visits", value: "248", color: "#01B8AA", delay: 0.1 },
-            { label: "Active Agents", value: "42/50", color: "#3B82F6", delay: 0.2 },
-            { label: "Attendance", value: "89%", color: "#16A34A", delay: 0.3 },
-            { label: "Plan Done", value: "76%", color: "#F59E0B", delay: 0.4 },
+            { label: "Total Visits", value: "1,248", color: "#01B8AA", delay: 0.1, dv: 1248, dm: 1600 },
+            { label: "Revenue", value: "₹56.6L", color: "#16A34A", delay: 0.15, dv: 56.6, dm: 75 },
+            { label: "Active", value: "42/50", color: "#3B82F6", delay: 0.2, dv: 42, dm: 50 },
+            { label: "Attendance", value: "89%", color: "#F59E0B", delay: 0.25, dv: 89, dm: 100 },
+            { label: "Plan Done", value: "76%", color: "#8B5CF6", delay: 0.3, dv: 76, dm: 100 },
           ].map((k) => (
-            <motion.div key={k.label} {...slideUp(k.delay)} className="rounded-xl border border-[#E2E8F0] p-2.5 text-center relative overflow-hidden">
+            <motion.div key={k.label} {...slideUp(k.delay)} className="rounded-xl border border-[#E2E8F0] p-2 relative overflow-hidden text-center">
               <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: k.color }} />
-              <div className="text-lg font-bold" style={{ color: k.color }}><AnimVal value={k.value} delay={k.delay + 0.3} /></div>
-              <div className="text-[8px] text-[#94A3B8] uppercase">{k.label}</div>
+              <MiniDonut value={k.dv} max={k.dm} color={k.color} size={30} delay={k.delay + 0.3} />
+              <div className="text-xs font-bold leading-tight mt-0.5" style={{ color: k.color }}><AnimVal value={k.value} delay={k.delay + 0.3} /></div>
+              <div className="text-[7px] text-[#94A3B8] uppercase font-medium">{k.label}</div>
             </motion.div>
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {/* Branch comparison */}
-          <AnimatePresence>
-            {step >= 1 && (
-              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
-                <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Branch Performance</div>
-                {[
-                  { n: "Delhi West", a: "12", s: "₹18.5L", pct: 92, c: "#16A34A" },
-                  { n: "Mumbai Central", a: "15", s: "₹22.1L", pct: 88, c: "#01B8AA" },
-                  { n: "Bangalore East", a: "8", s: "₹9.8L", pct: 74, c: "#F59E0B" },
-                  { n: "Chennai South", a: "7", s: "₹6.2L", pct: 45, c: "#EF4444" },
-                ].map((b, i) => (
-                  <motion.div key={b.n} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.15 }}
-                    className="flex items-center gap-2 py-1.5 border-b border-[#F1F5F9] last:border-0">
-                    <div className="flex-1">
-                      <div className="text-[11px] font-semibold text-[#0F172A]">{b.n}</div>
-                      <div className="text-[9px] text-[#94A3B8]">{b.a} agents &middot; {b.s}</div>
-                    </div>
-                    <div className="w-12">
-                      <div className="h-1 rounded-full bg-[#F1F5F9] overflow-hidden">
-                        <motion.div className="h-full rounded-full" style={{ background: b.c }} initial={{ width: "0%" }} animate={{ width: `${b.pct}%` }} transition={{ duration: 0.6, delay: 0.3 + i * 0.1 }} />
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold w-8 text-right" style={{ color: b.c }}>{b.pct}%</span>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Org KPIs */}
-          <AnimatePresence>
-            {step >= 2 && (
-              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-2.5">
-                <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-5 gap-2.5">
+          {/* Left — branch comparison table */}
+          <div className="col-span-3 space-y-2.5">
+            <AnimatePresence>
+              {step >= 1 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
+                  <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">Branch Performance</div>
+                  <div className="text-[7px] grid grid-cols-8 gap-1 py-1 text-[#94A3B8] font-semibold border-b border-[#E2E8F0]">
+                    <div className="col-span-2">Branch</div><div className="text-center">Agents</div><div className="text-center">Visits</div><div className="text-center">Sales</div><div className="text-center">Conv.</div><div className="text-center">Attend.</div><div className="text-center">Score</div>
+                  </div>
                   {[
-                    { v: "₹50.6L", l: "Total Sales" },
-                    { v: "74%", l: "Avg Achievement" },
-                    { v: "1,248", l: "Total Visits" },
-                    { v: "89%", l: "Attendance" },
-                  ].map((k, i) => (
-                    <motion.div key={k.l} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }}
-                      className="rounded-xl border border-[#E2E8F0] p-2.5 text-center">
-                      <div className="text-sm font-bold text-[#01B8AA]">{k.v}</div>
-                      <div className="text-[8px] text-[#94A3B8] uppercase">{k.l}</div>
+                    { n: "Delhi West", a: 12, v: 156, s: "₹18.5L", conv: "28%", att: "94%", score: 92, c: "#16A34A" },
+                    { n: "Mumbai Central", a: 15, v: 198, s: "₹22.1L", conv: "24%", att: "90%", score: 88, c: "#01B8AA" },
+                    { n: "Bangalore East", a: 16, v: 145, s: "₹9.8L", conv: "18%", att: "86%", score: 74, c: "#F59E0B" },
+                    { n: "Chennai South", a: 7, v: 62, s: "₹6.2L", conv: "14%", att: "72%", score: 45, c: "#EF4444" },
+                  ].map((b, i) => (
+                    <motion.div key={b.n} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.12 }}
+                      className="text-[9px] grid grid-cols-8 gap-1 py-1.5 border-b border-[#F1F5F9] last:border-0 items-center">
+                      <div className="col-span-2 font-semibold text-[#0F172A] flex items-center gap-1">
+                        <div className="w-1 h-4 rounded-full" style={{ background: b.c }} />{b.n}
+                      </div>
+                      <div className="text-center text-[#64748B]">{b.a}</div>
+                      <div className="text-center text-[#64748B]">{b.v}</div>
+                      <div className="text-center text-[#64748B]">{b.s}</div>
+                      <div className="text-center text-[#64748B]">{b.conv}</div>
+                      <div className="text-center text-[#64748B]">{b.att}</div>
+                      <div className="text-center">
+                        <span className="px-1 py-0.5 rounded text-[8px] font-bold" style={{ background: `${b.c}15`, color: b.c }}>{b.score}</span>
+                      </div>
                     </motion.div>
                   ))}
-                </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                {/* Alert */}
-                <AnimatePresence>
-                  {step >= 3 && (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-2.5">
-                      <div className="text-[9px] font-semibold text-[#EF4444] flex items-center gap-1 mb-1"><AlertTriangle className="h-3 w-3" /> Low Attendance Alert</div>
-                      <div className="text-[10px] text-[#64748B]">Chennai South: 45% — below 50% threshold</div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* Quarterly revenue chart */}
+            <AnimatePresence>
+              {step >= 3 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-[#E2E8F0] p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[9px] font-semibold text-[#94A3B8] uppercase tracking-wider">Quarterly Revenue (₹L)</div>
+                    <span className="text-[8px] text-[#16A34A] font-bold flex items-center gap-0.5"><TrendingUp className="h-2.5 w-2.5" /> +24% YoY</span>
+                  </div>
+                  <MiniBarChart delay={0.2} height={50} bars={[
+                    { value: 32, color: "#01B8AA40", label: "Q1'25" }, { value: 38, color: "#01B8AA60", label: "Q2'25" },
+                    { value: 41, color: "#01B8AA80", label: "Q3'25" }, { value: 45, color: "#01B8AAA0", label: "Q4'25" },
+                    { value: 50, color: "#01B8AAD0", label: "Q1'26" }, { value: 56.6, color: "#01B8AA", label: "Q2'26" },
+                  ]} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-                {/* Admin actions */}
-                <AnimatePresence>
-                  {step >= 4 && (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex gap-2">
-                      <div className="flex-1 py-2 rounded-lg border border-[#E2E8F0] text-[10px] font-semibold text-[#64748B] text-center flex items-center justify-center gap-1">
-                        <Building2 className="h-3 w-3" /> Branches
-                      </div>
-                      <div className="flex-1 py-2 rounded-lg border border-[#E2E8F0] text-[10px] font-semibold text-[#64748B] text-center flex items-center justify-center gap-1">
-                        <Users className="h-3 w-3" /> Users
-                      </div>
+          {/* Right — summary stats + alerts */}
+          <div className="col-span-2 space-y-2.5">
+            {/* Key metrics grid */}
+            <AnimatePresence>
+              {step >= 2 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { v: "₹56.6L", l: "Total Revenue", c: "#16A34A", icon: TrendingUp },
+                    { v: "74%", l: "Avg Achievement", c: "#01B8AA", icon: Target },
+                    { v: "561", l: "Visits/Month", c: "#3B82F6", icon: MapPin },
+                    { v: "22%", l: "Conversion Rate", c: "#8B5CF6", icon: Sparkles },
+                  ].map((k, i) => (
+                    <motion.div key={k.l} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.08 }}
+                      className="rounded-xl border border-[#E2E8F0] p-2 text-center">
+                      <k.icon className="h-3 w-3 mx-auto mb-0.5" style={{ color: k.c }} />
+                      <div className="text-sm font-bold" style={{ color: k.c }}>{k.v}</div>
+                      <div className="text-[7px] text-[#94A3B8] uppercase">{k.l}</div>
                     </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Alerts */}
+            <AnimatePresence>
+              {step >= 4 && (
+                <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5">
+                  <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-2.5">
+                    <div className="text-[9px] font-semibold text-[#EF4444] flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Critical Alert</div>
+                    <div className="text-[8px] text-[#64748B] mt-0.5">Chennai South: 45% attendance — below threshold. 3 agents inactive for 2+ days.</div>
+                  </div>
+                  <div className="rounded-xl border border-[#DCFCE7] bg-[#F0FDF4] p-2.5">
+                    <div className="text-[9px] font-semibold text-[#16A34A] flex items-center gap-1"><Trophy className="h-3 w-3" /> Top Branch</div>
+                    <div className="text-[8px] text-[#64748B] mt-0.5">Delhi West: 92 score, 28% conversion — highest this quarter.</div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <div className="flex-1 py-1.5 rounded-lg bg-[#0F172A] text-[9px] font-semibold text-white text-center flex items-center justify-center gap-1">
+                      <FileText className="h-2.5 w-2.5" /> Export Report
+                    </div>
+                    <div className="flex-1 py-1.5 rounded-lg border border-[#E2E8F0] text-[9px] font-semibold text-[#64748B] text-center flex items-center justify-center gap-1">
+                      <Users className="h-2.5 w-2.5" /> Manage
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </motion.div>
