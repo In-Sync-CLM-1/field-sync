@@ -5,24 +5,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 import { useAuthStore } from '@/store/authStore';
 import { LeadsUpload } from '@/components/LeadsUpload';
 import insyncLogo from '@/assets/in-sync-logo.png';
-import { LEAD_STATUSES, getStatusLabel, getStatusColor } from '@/components/LeadStatusPipeline';
-import { 
-  Search, 
-  MapPin, 
-  Phone, 
+import { toast } from 'sonner';
+import { useImageParser } from '@/hooks/useImageParser';
+import { useNearbyDiscovery } from '@/hooks/useNearbyDiscovery';
+import { useRef, useState } from 'react';
+
+const CUSTOMER_STATUSES = [
+  { value: 'active', label: 'Active', color: 'bg-green-500' },
+  { value: 'converted', label: 'Converted', color: 'bg-blue-500' },
+  { value: 'lost', label: 'Lost', color: 'bg-red-500' },
+];
+
+function getStatusLabel(status: string): string {
+  const found = CUSTOMER_STATUSES.find(s => s.value === status);
+  return found ? found.label : status;
+}
+
+function getStatusColor(status: string): string {
+  const found = CUSTOMER_STATUSES.find(s => s.value === status);
+  return found ? found.color : 'bg-gray-500';
+}
+import {
+  Search,
+  MapPin,
+  Phone,
   User,
   RefreshCw,
-  Building2,
-  IndianRupee,
-  Calendar,
   ArrowLeft,
   Plus,
-  AlertCircle,
-  MessageSquare,
+  Camera,
+  Compass,
 } from 'lucide-react';
 import {
   Pagination,
@@ -33,35 +52,87 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { format, isToday, isBefore, startOfDay } from 'date-fns';
 
 export default function Leads() {
   const navigate = useNavigate();
   const { currentOrganization } = useAuthStore();
-  const { 
-    leads, 
-    syncing, 
-    searchQuery, 
-    setSearchQuery, 
-    filterStatus, 
+  const {
+    leads,
+    syncing,
+    searchQuery,
+    setSearchQuery,
+    filterStatus,
     setFilterStatus,
-    syncFromDatabase 
+    syncFromDatabase,
+    addLead,
   } = useLeads();
 
-  // Count leads per status for filter chips (use all leads before status filter)
-  const { leads: allLeadsForCount } = { leads: leads }; // leads already filtered by org+search
-  // We need the unfiltered-by-status leads to get counts. Re-derive from useLeads.
-  // Actually, useLeads already applies filterStatus. For counts, we need all statuses.
-  // We'll compute counts from the full list by temporarily considering all.
+  // Scan Card state
+  const { parseImage, isLoading: isParsing } = useImageParser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [scannedData, setScannedData] = useState<any>(null);
+  const [showScanDialog, setShowScanDialog] = useState(false);
 
-  const getFollowUpIndicator = (followUpDate?: string) => {
-    if (!followUpDate) return null;
-    const date = new Date(followUpDate);
-    const today = startOfDay(new Date());
-    if (isBefore(date, today)) return 'overdue';
-    if (isToday(date)) return 'today';
-    return 'upcoming';
+  // Explore Nearby state
+  const { businesses, discoverNearby, isLoading: isDiscovering } = useNearbyDiscovery();
+  const [showNearby, setShowNearby] = useState(false);
+
+  const handleScanCard = () => {
+    fileInputRef.current?.click();
   };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const result = await parseImage(file, 'business_card');
+    if (result) {
+      setScannedData(result);
+      setShowScanDialog(true);
+    } else {
+      toast.error('Could not read the card. Try again with better lighting.');
+    }
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSaveScanned = async () => {
+    if (!scannedData) return;
+    await addLead({
+      name: scannedData.name || '',
+      mobileNo: scannedData.phone || '',
+      villageCity: scannedData.city || '',
+      state: scannedData.state || '',
+      notes: [scannedData.company, scannedData.designation, scannedData.email, scannedData.website].filter(Boolean).join(' | '),
+      status: 'active',
+      organizationId: currentOrganization?.id,
+    });
+    setShowScanDialog(false);
+    setScannedData(null);
+    toast.success('Customer saved!');
+  };
+
+  const handleExploreNearby = () => {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      await discoverNearby(pos.coords.latitude, pos.coords.longitude, 500);
+      setShowNearby(true);
+    }, () => {
+      toast.error('Location access required');
+    });
+  };
+
+  const handleAddNearbyAsCustomer = async (biz: any) => {
+    await addLead({
+      name: biz.name,
+      villageCity: biz.address || '',
+      latitude: biz.lat,
+      longitude: biz.lon,
+      notes: `Type: ${biz.type}${biz.phone ? ` | Phone: ${biz.phone}` : ''}`,
+      status: 'active',
+      organizationId: currentOrganization?.id,
+    });
+    toast.success(`${biz.name} added as customer!`);
+  };
+
   const {
     currentPage,
     totalPages,
@@ -92,9 +163,9 @@ export default function Leads() {
               <span className="hidden sm:inline">Dashboard</span>
             </Button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold tracking-tight text-primary">Prospects</h1>
+              <h1 className="text-xl font-bold tracking-tight text-primary">Customers</h1>
               <span className="text-xs text-muted-foreground truncate">
-                {leads.length} prospects
+                {leads.length} customers
               </span>
             </div>
             {currentOrganization && (
@@ -102,17 +173,37 @@ export default function Leads() {
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button 
+            <Button
               onClick={() => navigate('/dashboard/leads/new')}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
               size="sm"
             >
               <Plus className="h-3 w-3 mr-1" />
-              Add Lead
+              Add
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={handleScanCard}
+              disabled={isParsing}
+            >
+              <Camera className="h-3 w-3" />
+              {isParsing ? 'Scanning...' : 'Scan Card'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={handleExploreNearby}
+              disabled={isDiscovering}
+            >
+              <Compass className="h-3 w-3" />
+              {isDiscovering ? 'Searching...' : 'Explore Nearby'}
             </Button>
             <LeadsUpload />
-            <Button 
-              onClick={syncFromDatabase} 
+            <Button
+              onClick={syncFromDatabase}
               disabled={syncing || !currentOrganization}
               className="btn-outline-info"
               size="sm"
@@ -130,7 +221,7 @@ export default function Leads() {
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name, proposal no., customer ID, location..."
+              placeholder="Search by name, phone, city..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 h-5 text-xs"
@@ -142,20 +233,20 @@ export default function Leads() {
             <button
               onClick={() => setFilterStatus('all')}
               className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${
-                filterStatus === 'all' 
-                  ? 'bg-primary text-primary-foreground' 
+                filterStatus === 'all'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
               All ({leads.length})
             </button>
-            {LEAD_STATUSES.map((status) => (
+            {CUSTOMER_STATUSES.map((status) => (
               <button
                 key={status.value}
                 onClick={() => setFilterStatus(status.value)}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${
-                  filterStatus === status.value 
-                    ? `${status.color} text-white` 
+                  filterStatus === status.value
+                    ? `${status.color} text-white`
                     : 'bg-muted text-muted-foreground hover:bg-accent'
                 }`}
               >
@@ -167,7 +258,7 @@ export default function Leads() {
         </CardContent>
       </Card>
 
-      {/* Lead List */}
+      {/* Customer List */}
       <div className="space-y-2" data-tour="prospects-list">
         {totalItems > 0 && (
           <p className="text-xs text-muted-foreground">
@@ -179,23 +270,23 @@ export default function Leads() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8">
               <User className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-sm font-medium mb-1">No prospects found</p>
+              <p className="text-sm font-medium mb-1">No customers found</p>
               <p className="text-xs text-muted-foreground mb-3">
-                {searchQuery 
-                  ? 'Try a different search' 
-                  : !currentOrganization 
+                {searchQuery
+                  ? 'Try a different search'
+                  : !currentOrganization
                     ? 'Select an organization'
-                    : 'Sync or add prospects'}
+                    : 'Sync or add customers'}
               </p>
               {currentOrganization && (
                 <div className="flex gap-2">
-                    <Button 
+                    <Button
                     onClick={() => navigate('/dashboard/leads/new')}
                     className="bg-primary text-primary-foreground hover:bg-primary/90"
                     size="sm"
                   >
                     <Plus className="h-3 w-3 mr-1" />
-                    Add Lead
+                    Add Customer
                   </Button>
                   <Button onClick={syncFromDatabase} disabled={syncing} variant="outline" size="sm">
                     <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
@@ -218,42 +309,14 @@ export default function Leads() {
                 <div className="flex items-start justify-between mb-1">
                   <div>
                     <CardTitle className="text-sm font-medium">{lead.name}</CardTitle>
-                    {lead.policyTypeCategory && (
-                      <p className="text-xs text-muted-foreground">{lead.policyTypeCategory}</p>
-                    )}
                   </div>
                   <div className="flex gap-1 items-center">
-                    {lead.followUpDate && (() => {
-                      const indicator = getFollowUpIndicator(lead.followUpDate);
-                      if (indicator === 'overdue') return <AlertCircle className="h-3 w-3 text-red-500" />;
-                      if (indicator === 'today') return <AlertCircle className="h-3 w-3 text-amber-500" />;
-                      return null;
-                    })()}
                     {lead.status && (
                       <Badge className={`text-[10px] h-5 ${getStatusBadgeColor(lead.status)}`}>
                         {getStatusLabel(lead.status)}
                       </Badge>
                     )}
                   </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-2">
-                  {lead.proposalNumber && (
-                    <span className="flex items-center gap-1">
-                      <span className="font-medium">Prop:</span> {lead.proposalNumber}
-                    </span>
-                  )}
-                  {lead.customerId && (
-                    <span className="flex items-center gap-1">
-                      <span className="font-medium">Cust:</span> {lead.customerId}
-                    </span>
-                  )}
-                  {lead.premiumAmount && (
-                    <span className="flex items-center gap-1">
-                      <IndianRupee className="h-3 w-3" />
-                      {lead.premiumAmount.toLocaleString()}
-                    </span>
-                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
@@ -269,44 +332,6 @@ export default function Leads() {
                       {lead.mobileNo}
                     </span>
                   )}
-                  {lead.followUpDate && (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(lead.followUpDate), 'dd MMM')}
-                    </span>
-                  )}
-                </div>
-
-                {/* Call & WhatsApp action buttons */}
-                <div className="flex gap-2 mt-2 justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    disabled={!lead.mobileNo}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (lead.mobileNo) window.location.href = `tel:${lead.mobileNo}`;
-                    }}
-                  >
-                    <Phone className="h-3 w-3" /> Call
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1"
-                    disabled={!lead.mobileNo}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (lead.mobileNo) {
-                        const num = lead.mobileNo.replace(/\D/g, '');
-                        const waNum = num.startsWith('91') ? num : `91${num}`;
-                        window.open(`https://wa.me/${waNum}`, '_blank');
-                      }
-                    }}
-                  >
-                    <MessageSquare className="h-3 w-3" /> WhatsApp
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -319,18 +344,18 @@ export default function Leads() {
           <Pagination className="mt-6">
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious 
+                <PaginationPrevious
                   onClick={previousPage}
                   className={!canGoPrevious ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                 />
               </PaginationItem>
-              
+
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                const showPage = 
-                  page === 1 || 
-                  page === totalPages || 
+                const showPage =
+                  page === 1 ||
+                  page === totalPages ||
                   (page >= currentPage - 1 && page <= currentPage + 1);
-                
+
                 const showEllipsisBefore = page === currentPage - 2 && currentPage > 3;
                 const showEllipsisAfter = page === currentPage + 2 && currentPage < totalPages - 2;
 
@@ -358,7 +383,7 @@ export default function Leads() {
               })}
 
               <PaginationItem>
-                <PaginationNext 
+                <PaginationNext
                   onClick={nextPage}
                   className={!canGoNext ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                 />
@@ -367,6 +392,57 @@ export default function Leads() {
           </Pagination>
         )}
       </div>
+
+      {/* Hidden file input for card scanning */}
+      <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelected} />
+
+      {/* Scanned Business Card Dialog */}
+      <Dialog open={showScanDialog} onOpenChange={setShowScanDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Scanned Business Card</DialogTitle>
+          </DialogHeader>
+          {scannedData && (
+            <div className="space-y-3">
+              <div><Label>Name</Label><Input value={scannedData.name || ''} onChange={e => setScannedData({...scannedData, name: e.target.value})} /></div>
+              <div><Label>Phone</Label><Input value={scannedData.phone || ''} onChange={e => setScannedData({...scannedData, phone: e.target.value})} /></div>
+              <div><Label>Company</Label><Input value={scannedData.company || ''} onChange={e => setScannedData({...scannedData, company: e.target.value})} /></div>
+              <div><Label>Email</Label><Input value={scannedData.email || ''} onChange={e => setScannedData({...scannedData, email: e.target.value})} /></div>
+              <div><Label>City</Label><Input value={scannedData.city || ''} onChange={e => setScannedData({...scannedData, city: e.target.value})} /></div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowScanDialog(false)}>Cancel</Button>
+            <Button onClick={handleSaveScanned}>Save Customer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Nearby Businesses Sheet */}
+      <Sheet open={showNearby} onOpenChange={setShowNearby}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Nearby Businesses</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-2">
+            {isDiscovering ? (
+              <p className="text-muted-foreground text-center py-8">Searching nearby...</p>
+            ) : businesses.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">No businesses found within 500m</p>
+            ) : (
+              businesses.map(biz => (
+                <div key={biz.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{biz.name}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{biz.type}{biz.address ? ` \u00b7 ${biz.address}` : ''}</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => handleAddNearbyAsCustomer(biz)}>Add</Button>
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

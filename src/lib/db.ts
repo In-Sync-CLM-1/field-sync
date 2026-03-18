@@ -4,39 +4,34 @@ import Dexie, { Table } from 'dexie';
 export interface Lead {
   id: string;
   organizationId?: string;
-  
+
   // Core Lead Fields
   branch?: string;
-  proposalNumber?: string;  // Renamed from leadId - Proposal/Policy number
   customerId?: string;  // Custom customer identifier (e.g., CUST-001)
   status?: string;
   assignedUserId?: string;
-  policyTypeCategory?: string;  // Renamed from entityName - Life/Health/Motor/General
   name: string;
-  
-  // Policy Details (renamed from Loan Details)
-  premiumAmount?: number;  // Renamed from loanAmount - Annual premium
-  policyType?: string;  // Renamed from loanPurpose - Type of policy
-  
+
   // Location
   villageCity?: string;
   district?: string;
   state?: string;
   latitude?: number;
   longitude?: number;
-  
+
   // Contact & Follow-up
   customerResponse?: string;
   mobileNo?: string;
   followUpDate?: string;
   leadSource?: string;
-  
+  notes?: string;
+
   // Audit Fields
   createdBy?: string;
   createdAt?: Date;
   approvedBy?: string;
   approvedAt?: Date;
-  
+
   // Sync
   syncStatus: 'synced' | 'pending' | 'failed';
   lastSyncedAt?: Date;
@@ -82,29 +77,41 @@ export interface Photo {
   lastSyncedAt?: Date;
 }
 
-export interface FormSchema {
-  id: string;
-  name: string;
-  description?: string;
-  schema: any; // JSON schema for form fields
-  version: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+export interface OrderLocal {
+  id?: string;
+  customer_id?: string;
+  user_id?: string;
+  items_text?: string;
+  total_amount?: number;
+  notes?: string;
+  photo_url?: string;
+  organization_id?: string;
+  created_at?: string;
+  synced?: boolean;
 }
 
-export interface FormResponse {
-  id: string;
-  visitId: string;
-  formId: string;
-  userId: string;
-  responses: any; // JSON of field responses
-  signature?: string; // Base64 signature
-  completedAt?: Date;
-  syncStatus: 'draft' | 'synced' | 'pending' | 'failed';
-  lastSyncedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+export interface FieldInvoiceLocal {
+  id?: string;
+  customer_id?: string;
+  user_id?: string;
+  extracted_data?: any;
+  photo_url?: string;
+  amount?: number;
+  organization_id?: string;
+  created_at?: string;
+  synced?: boolean;
+}
+
+export interface CollectionLocal {
+  id?: string;
+  customer_id?: string;
+  user_id?: string;
+  amount?: number;
+  description?: string;
+  receipt_photo_url?: string;
+  organization_id?: string;
+  created_at?: string;
+  synced?: boolean;
 }
 
 export interface DailyPlanLocal {
@@ -135,21 +142,9 @@ export interface DailyPlanLocal {
   updatedAt: Date;
 }
 
-export interface PlanEnrollment {
-  id: string;
-  dailyPlanId: string;
-  customerId: string;
-  organizationId: string;
-  enrolledAt: Date;
-  notes?: string;
-  syncStatus: 'synced' | 'pending' | 'failed';
-  lastSyncedAt?: Date;
-  createdAt: Date;
-}
-
 export interface SyncQueueItem {
   id: string;
-  type: 'visit' | 'photo' | 'form' | 'communication' | 'customer' | 'lead' | 'daily_plan' | 'plan_enrollment';
+  type: 'visit' | 'photo' | 'customer' | 'lead' | 'daily_plan' | 'order' | 'field_invoice' | 'collection';
   entityId: string;
   action: 'create' | 'update' | 'delete';
   data: any;
@@ -161,48 +156,38 @@ export interface SyncQueueItem {
   createdAt: Date;
 }
 
-export interface Communication {
-  id: string;
-  customerId: string;
-  visitId?: string;
-  userId: string;
-  type: 'call' | 'whatsapp' | 'sms' | 'email';
-  initiatedAt: Date;
-  confirmed: boolean;
-  notes?: string;
-  syncStatus: 'synced' | 'pending' | 'failed';
-  lastSyncedAt?: Date;
-}
-
 // Database version - INCREMENT when schema changes
-// Current: 16 (insurance terminology update)
-export const DB_VERSION = 17;
+// Current: 18 (add orders, fieldInvoices, collections; remove unused stores)
+export const DB_VERSION = 18;
 
 class FieldSyncDatabase extends Dexie {
   leads!: Table<Lead, string>;
   visits!: Table<Visit, string>;
   photos!: Table<Photo, string>;
-  forms!: Table<FormSchema, string>;
-  formResponses!: Table<FormResponse, string>;
   syncQueue!: Table<SyncQueueItem, string>;
-  communications!: Table<Communication, string>;
   dailyPlans!: Table<DailyPlanLocal, string>;
-  planEnrollments!: Table<PlanEnrollment, string>;
+  orders!: Table<OrderLocal, string>;
+  fieldInvoices!: Table<FieldInvoiceLocal, string>;
+  collections!: Table<CollectionLocal, string>;
 
   constructor() {
     super('FieldSyncDB');
-    
+
     // Define schema - Dexie handles all version upgrades automatically
     this.version(DB_VERSION).stores({
-      leads: 'id, organizationId, name, villageCity, district, state, status, proposalNumber, customerId, syncStatus, updatedAt',
+      leads: 'id, organizationId, name, villageCity, district, state, status, customerId, syncStatus, updatedAt',
       visits: 'id, customerId, userId, checkInTime, status, syncStatus, createdAt',
       photos: 'id, visitId, timestamp, syncStatus',
-      forms: 'id, name, isActive, version, createdAt',
-      formResponses: 'id, visitId, formId, userId, syncStatus, createdAt',
       syncQueue: 'id, type, priority, createdAt, retryCount',
-      communications: 'id, customerId, visitId, userId, type, initiatedAt, syncStatus',
       dailyPlans: 'id, odataId, userId, organizationId, planDate, syncStatus, updatedAt',
-      planEnrollments: 'id, dailyPlanId, customerId, organizationId, syncStatus, createdAt'
+      orders: '++id, customer_id, user_id, organization_id, created_at',
+      fieldInvoices: '++id, customer_id, user_id, organization_id, created_at',
+      collections: '++id, customer_id, user_id, organization_id, created_at',
+      // Remove old stores
+      forms: null,
+      formResponses: null,
+      communications: null,
+      planEnrollments: null,
     });
   }
 }

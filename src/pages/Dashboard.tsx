@@ -5,9 +5,7 @@ import { Calendar, MapPin, ClipboardList, TrendingUp, Users, Sparkles, Clock, Al
 import { useMyStats } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { RecentVisitsSection } from '@/components/dashboard/RecentVisitsSection';
-import { SetupChecklist } from '@/components/dashboard/SetupChecklist';
 import { useNavigate } from 'react-router-dom';
-import { AppTour, TourTriggerButton } from '@/components/AppTour';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -277,9 +275,6 @@ export default function Dashboard() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 space-y-3 page-gradient min-h-screen">
-      {/* App-wide Tour */}
-      <AppTour />
-
       {/* Hero Welcome Section */}
       <div className="hero-gradient animate-fade-in">
         <div className="relative z-10 flex items-center justify-between">
@@ -295,8 +290,6 @@ export default function Dashboard() {
               {user?.user_metadata?.full_name || user?.email}
             </p>
           </div>
-          {/* Tour trigger button */}
-          <TourTriggerButton />
         </div>
       </div>
 
@@ -330,8 +323,6 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {/* Setup Checklist - shows for new users */}
-      <SetupChecklist />
 
       {/* Stats Grid - 2 columns on mobile */}
       <div data-tour="metrics" className="grid grid-cols-2 gap-2 lg:grid-cols-4">

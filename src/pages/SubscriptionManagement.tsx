@@ -11,7 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { UpgradeDialog } from '@/components/UpgradeDialog';
 
 interface Invoice {
   id: string;
@@ -43,7 +42,7 @@ export default function SubscriptionManagement() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan | null>(null);
   const [loading, setLoading] = useState(true);
-  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [_upgradeDialogOpen, _setUpgradeDialogOpen] = useState(false);
 
   useEffect(() => {
     if (currentOrganization) {
@@ -223,7 +222,7 @@ export default function SubscriptionManagement() {
             </div>
 
             {currentOrganization?.subscription_status === 'trial' && (
-              <Button className="w-full" onClick={() => setUpgradeDialogOpen(true)}>
+              <Button className="w-full" onClick={() => toast.info('Contact support to upgrade')}>
                 <CreditCard className="h-4 w-4 mr-2" />
                 Upgrade Now
               </Button>
@@ -372,7 +371,6 @@ export default function SubscriptionManagement() {
         </CardContent>
       </Card>
 
-      <UpgradeDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen} />
     </div>
   );
 }

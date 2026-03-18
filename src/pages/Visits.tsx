@@ -7,8 +7,7 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Clock, ArrowLeft, CalendarDays, List, Route, Navigation } from 'lucide-react';
+import { Plus, Clock, ArrowLeft, Navigation } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -19,16 +18,12 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { format } from 'date-fns';
-import VisitCalendar from '@/pages/VisitCalendar';
-import { BulkVisitCreator } from '@/components/BulkVisitCreator';
-import { RouteOptimizer } from '@/components/RouteOptimizer';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   scheduled: { label: 'SCHEDULED', className: 'bg-blue-500 text-white border-0' },
   in_progress: { label: 'IN PROGRESS', className: 'status-badge-warning' },
   completed: { label: 'COMPLETED', className: 'status-badge-success' },
   cancelled: { label: 'CANCELLED', className: 'bg-destructive text-destructive-foreground border-0' },
-  rescheduled: { label: 'RESCHEDULED', className: 'bg-purple-500 text-white border-0' },
 };
 
 export default function Visits() {
@@ -36,8 +31,6 @@ export default function Visits() {
   const { visits, isLoading } = useVisits();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
-  const [showRoute, setShowRoute] = useState(false);
 
   const filteredVisits = visits.filter((visit) => {
     const matchesSearch =
@@ -102,12 +95,6 @@ export default function Visits() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <BulkVisitCreator>
-              <Button size="sm" variant="outline" className="gap-1 hidden sm:flex">
-                <CalendarDays className="h-4 w-4" />
-                Bulk
-              </Button>
-            </BulkVisitCreator>
             <Button size="icon" onClick={() => navigate('/dashboard/visits/new')} className="btn-gradient-primary text-primary-foreground">
               <Plus className="w-4 h-4" />
             </Button>
@@ -115,68 +102,30 @@ export default function Visits() {
         </div>
       </div>
 
-      {/* View Toggle & Filters */}
-      <div className="flex flex-col gap-2 mb-3">
-        <div className="flex items-center justify-between gap-2">
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-auto">
-            <TabsList className="h-8">
-              <TabsTrigger value="list" className="gap-1 text-xs px-3">
-                <List className="h-3 w-3" /> List
-              </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-1 text-xs px-3">
-                <CalendarDays className="h-3 w-3" /> Calendar
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          {viewMode === 'list' && (
-            <Button
-              size="sm"
-              variant={showRoute ? 'default' : 'outline'}
-              className="gap-1 text-xs"
-              onClick={() => setShowRoute(!showRoute)}
-            >
-              <Route className="h-3 w-3" />
-              Route
-            </Button>
-          )}
-        </div>
-
-        {viewMode === 'list' && (
-          <div className="flex gap-2">
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-xs h-5 text-sm"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] h-5 text-sm">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="rescheduled">Rescheduled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+      {/* Filters */}
+      <div className="flex gap-2 mb-3">
+        <Input
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-xs h-5 text-sm"
+        />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[140px] h-5 text-sm">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="scheduled">Scheduled</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Route Optimizer */}
-      {viewMode === 'list' && showRoute && (
-        <div className="mb-3">
-          <RouteOptimizer visits={visits} />
-        </div>
-      )}
-
       {/* Content */}
-      {viewMode === 'calendar' ? (
-        <VisitCalendar />
-      ) : (
+      {(
         <div className="space-y-2">
           {totalItems > 0 && (
             <p className="text-xs text-muted-foreground">

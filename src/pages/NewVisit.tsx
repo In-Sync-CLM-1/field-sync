@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLeads } from '@/hooks/useLeads';
-import { useVisits, useChecklistTemplates, ChecklistItem } from '@/hooks/useVisits';
+import { useVisits } from '@/hooks/useVisits';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -14,17 +15,29 @@ import { Check, ChevronsUpDown, MapPin, Loader2, ArrowLeft, Plus } from 'lucide-
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+const formatDistance = (km: number): string => {
+  if (km < 0.1) return `${Math.round(km * 1000)}m`;
+  if (km < 1) return `${Math.round(km * 1000)}m`;
+  return `${km.toFixed(1)}km`;
 };
 
-const formatDistance = (km: number): string => (km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`);
+const PURPOSE_OPTIONS = [
+  { value: 'first_visit', label: 'First Visit' },
+  { value: 'follow-up', label: 'Follow-up' },
+  { value: 'collection', label: 'Collection' },
+  { value: 'delivery', label: 'Delivery' },
+  { value: 'other', label: 'Other' },
+];
 
 export default function NewVisit() {
   const navigate = useNavigate();
@@ -34,7 +47,6 @@ export default function NewVisit() {
 
   const { leads, syncing: loadingLeads, syncFromDatabase } = useLeads();
   const { createVisit, isCreating } = useVisits();
-  const { templates } = useChecklistTemplates();
 
   const [leadId, setLeadId] = useState(preselectedLeadId || '');
   const [notes, setNotes] = useState('');
@@ -44,11 +56,11 @@ export default function NewVisit() {
   const [scheduledDate, setScheduledDate] = useState(preselectedDate || '');
   const [scheduledTime, setScheduledTime] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [templateId, setTemplateId] = useState('');
   const [manualAddress, setManualAddress] = useState('');
   const [manualLatitude, setManualLatitude] = useState('');
   const [manualLongitude, setManualLongitude] = useState('');
   const [useManualLocation, setUseManualLocation] = useState(false);
+  const [autoSelectedNearest, setAutoSelectedNearest] = useState(false);
 
   const selectedLead = leads.find((l) => l.id === leadId);
   const leadHasLocation = selectedLead?.latitude && selectedLead?.longitude;
@@ -59,7 +71,7 @@ export default function NewVisit() {
       .map((lead) => {
         let distance: number | null = null;
         if (location && lead.latitude && lead.longitude) {
-          distance = calculateDistance(location.latitude, location.longitude, lead.latitude, lead.longitude);
+          distance = getDistanceKm(location.latitude, location.longitude, lead.latitude, lead.longitude);
         }
         return { ...lead, distance };
       })
@@ -70,6 +82,17 @@ export default function NewVisit() {
         return 0;
       });
   }, [leads, location]);
+
+  // Auto-select nearest customer once location is acquired
+  useEffect(() => {
+    if (location && !preselectedLeadId && !autoSelectedNearest && leadsWithDistance.length > 0) {
+      const nearest = leadsWithDistance[0];
+      if (nearest.distance !== null) {
+        setLeadId(nearest.id);
+        setAutoSelectedNearest(true);
+      }
+    }
+  }, [location, leadsWithDistance, preselectedLeadId, autoSelectedNearest]);
 
   useEffect(() => {
     getCurrentLocation();
@@ -118,7 +141,7 @@ export default function NewVisit() {
 
   const handleSubmit = () => {
     if (!leadId) {
-      toast.error('Please select a lead');
+      toast.error('Please select a customer');
       return;
     }
 
@@ -138,14 +161,6 @@ export default function NewVisit() {
       checkInLng = parseFloat(manualLongitude);
     }
 
-    let checklist: ChecklistItem[] | undefined;
-    if (templateId && templateId !== 'none') {
-      const tpl = templates.find((t) => t.id === templateId);
-      if (tpl) {
-        checklist = tpl.items.map((item) => ({ ...item, completed: false }));
-      }
-    }
-
     createVisit(
       {
         customer_id: leadId,
@@ -155,7 +170,6 @@ export default function NewVisit() {
         purpose: purpose || undefined,
         scheduled_date: scheduledDate || undefined,
         scheduled_time: scheduledTime || undefined,
-        checklist,
         updateLeadLocation: shouldUpdateLeadLocation && (checkInLat !== 0 || checkInLng !== 0),
       },
       {
@@ -183,7 +197,7 @@ export default function NewVisit() {
           </h1>
         </div>
         <p className="text-muted-foreground">
-          {isScheduling ? 'Schedule a future visit' : 'Select lead and check in'}
+          {isScheduling ? 'Schedule a future visit' : 'Select customer and check in'}
         </p>
       </div>
 
@@ -212,30 +226,38 @@ export default function NewVisit() {
                 <SelectValue placeholder="Select purpose" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="meeting">Meeting</SelectItem>
-                <SelectItem value="follow-up">Follow-up</SelectItem>
-                <SelectItem value="delivery">Delivery</SelectItem>
-                <SelectItem value="survey">Survey</SelectItem>
-                <SelectItem value="collection">Collection</SelectItem>
-                <SelectItem value="sales_order">Sales Order</SelectItem>
+                {PURPOSE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Lead selector */}
+          {/* Customer selector */}
           <div>
-            <Label>Lead *</Label>
+            <Label>Customer *</Label>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between" disabled={loadingLeads}>
-                  {selectedLead ? selectedLead.name : 'Select lead...'}
+                  {selectedLead ? (
+                    <span className="flex items-center gap-2">
+                      {selectedLead.name}
+                      {selectedLead && location && selectedLead.latitude && selectedLead.longitude && (
+                        <Badge variant="secondary" className="text-xs">
+                          {formatDistance(getDistanceKm(location.latitude, location.longitude, selectedLead.latitude, selectedLead.longitude))}
+                        </Badge>
+                      )}
+                    </span>
+                  ) : 'Select customer...'}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0">
                 <Command>
-                  <CommandInput placeholder="Search leads..." />
-                  <CommandEmpty>No lead found.</CommandEmpty>
+                  <CommandInput placeholder="Search customers..." />
+                  <CommandEmpty>No customer found.</CommandEmpty>
                   <CommandGroup>
                     {leadsWithDistance.map((lead) => (
                       <CommandItem
@@ -252,7 +274,9 @@ export default function NewVisit() {
                           <>
                             <MapPin className="ml-2 h-3 w-3 text-green-500" />
                             {lead.distance !== null && (
-                              <span className="ml-1 text-xs text-muted-foreground">{formatDistance(lead.distance)}</span>
+                              <Badge variant="secondary" className="ml-1 text-xs">
+                                {formatDistance(lead.distance)}
+                              </Badge>
                             )}
                           </>
                         ) : (
@@ -268,14 +292,14 @@ export default function NewVisit() {
               </PopoverContent>
             </Popover>
             <div className="flex items-center gap-2 text-sm mt-2">
-              <span className="text-muted-foreground">Can't find the prospect?</span>
+              <span className="text-muted-foreground">Can't find the customer?</span>
               <Button
                 variant="link"
                 size="sm"
                 className="p-0 h-auto text-primary font-medium"
                 onClick={() => navigate('/dashboard/leads/new?returnTo=new-visit')}
               >
-                <Plus className="h-3 w-3 mr-1" /> Add New Lead
+                <Plus className="h-3 w-3 mr-1" /> Add New Customer
               </Button>
             </div>
           </div>
@@ -287,7 +311,7 @@ export default function NewVisit() {
                 <span>
                   {useManualLocation
                     ? 'Enter the address or coordinates manually below.'
-                    : 'This lead doesn\'t have a location. Your current location will be saved to the lead record.'}
+                    : 'This customer doesn\'t have a location. Your current location will be saved to the customer record.'}
                 </span>
               </div>
               <Button
@@ -331,28 +355,10 @@ export default function NewVisit() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    If you provide coordinates, they will be saved to the lead record. Otherwise only the address is saved.
+                    If you provide coordinates, they will be saved to the customer record. Otherwise only the address is saved.
                   </p>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Checklist Template */}
-          {templates.length > 0 && (
-            <div>
-              <Label>Checklist Template</Label>
-              <Select value={templateId} onValueChange={setTemplateId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="None" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name} ({t.items.length} items)</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           )}
 

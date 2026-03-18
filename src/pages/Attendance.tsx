@@ -1,28 +1,22 @@
 import { useState } from 'react';
 import { useAttendance } from '@/hooks/useAttendance';
-import { useLocationHistory } from '@/hooks/useLocationHistory';
-import { useDeviationDetector } from '@/hooks/useDeviationDetector';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { AttendanceTimer } from '@/components/AttendanceTimer';
-import { DeviationAlert } from '@/components/DeviationAlert';
-import { RouteReplayMap } from '@/components/RouteReplayMap';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MapPin, Clock, LogIn, LogOut, AlertTriangle, Navigation } from 'lucide-react';
+import { MapPin, Clock, LogIn, LogOut, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
 
 export default function Attendance() {
   const { user } = useAuth();
   const { currentOrganization } = useAuthStore();
   const { todayAttendance, myHistory, teamAttendance, punchIn, punchOut } = useAttendance();
   const [loading, setLoading] = useState(false);
-  const [replayUser, setReplayUser] = useState<{ userId: string; date: string; name: string; attendanceId?: string } | null>(null);
   const [userRole, setUserRole] = useState<string>('sales_officer');
 
   // Check role
@@ -46,27 +40,6 @@ export default function Attendance() {
   const activeAttendance = todayAttendance.data;
   const activeAttendanceId = activeAttendance?.status === 'active' ? activeAttendance.id : null;
 
-  // Track location history when punched in
-  useLocationHistory(activeAttendanceId);
-  useDeviationDetector(activeAttendanceId);
-
-  // Fetch deviations for managers
-  const { data: deviations = [] } = useQuery({
-    queryKey: ['route_deviations', format(new Date(), 'yyyy-MM-dd')],
-    queryFn: async () => {
-      if (!isManagerOrAdmin || !currentOrganization) return [];
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const { data, error } = await supabase
-        .from('route_deviations' as any)
-        .select('*, profiles:user_id(full_name)')
-        .eq('organization_id', currentOrganization.id)
-        .gte('detected_at', `${today}T00:00:00`)
-        .order('detected_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: isManagerOrAdmin && !!currentOrganization,
-  });
 
   const handlePunchIn = async () => {
     setLoading(true);
@@ -125,8 +98,6 @@ export default function Attendance() {
         </Badge>
       </div>
 
-      {/* Deviation Alerts for managers */}
-      {isManagerOrAdmin && <DeviationAlert deviations={deviations as any[]} />}
 
       {/* Agent Punch Card */}
       <Card>
@@ -192,24 +163,6 @@ export default function Attendance() {
         </CardContent>
       </Card>
 
-      {/* Route Replay */}
-      {replayUser && (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">
-                Route Replay — {replayUser.name} ({replayUser.date})
-              </CardTitle>
-              <Button size="sm" variant="ghost" onClick={() => setReplayUser(null)}>
-                Close
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <RouteReplayMap userId={replayUser.userId} date={replayUser.date} attendanceId={replayUser.attendanceId} />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Manager: Team Attendance */}
       {isManagerOrAdmin && (
@@ -225,13 +178,12 @@ export default function Attendance() {
                   <TableHead>Punch In</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Hours</TableHead>
-                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teamAttendance.data?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground text-sm py-6">
+                    <TableCell colSpan={4} className="text-center text-muted-foreground text-sm py-6">
                       No attendance records for today
                     </TableCell>
                   </TableRow>
@@ -251,23 +203,6 @@ export default function Attendance() {
                     </TableCell>
                     <TableCell className="text-sm">
                       {a.total_hours ? `${a.total_hours.toFixed(1)}h` : a.status === 'active' ? 'In progress' : '--'}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-xs"
-                        onClick={() =>
-                          setReplayUser({
-                            userId: a.user_id,
-                            date: a.date,
-                            name: a.profiles?.full_name || 'Agent',
-                            attendanceId: a.id,
-                          })
-                        }
-                      >
-                        <MapPin className="h-3 w-3 mr-1" /> Route
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -291,13 +226,12 @@ export default function Attendance() {
                 <TableHead>Punch Out</TableHead>
                 <TableHead>Hours</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {myHistory.data?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground text-sm py-6">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground text-sm py-6">
                     No attendance history yet
                   </TableCell>
                 </TableRow>
@@ -316,23 +250,6 @@ export default function Attendance() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={statusColor(a.status)} className="text-xs">{a.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-xs"
-                      onClick={() =>
-                        setReplayUser({
-                          userId: a.user_id,
-                          date: a.date,
-                          name: 'My Route',
-                          attendanceId: a.id,
-                        })
-                      }
-                    >
-                      <MapPin className="h-3 w-3 mr-1" /> Replay
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

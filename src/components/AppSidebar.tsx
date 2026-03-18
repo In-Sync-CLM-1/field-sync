@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, BarChart3, Globe, Award, Users, ClipboardList, LogOut, CreditCard, Building2, Clock, MapPin, TrendingUp, UserCheck, GitBranch, Settings, Car } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, CalendarCheck, MapPin, UserCog } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import insyncLogoColor from '@/assets/insync-logo-color.png';
 
-type RoleType = 'platform_admin' | 'super_admin' | 'admin' | 'branch_manager' | 'sales_officer';
+type RoleType = 'agent' | 'manager' | 'admin';
 
 interface NavSection {
   label: string;
@@ -29,122 +29,39 @@ interface NavSection {
 }
 
 function getSectionsForRole(role: RoleType): NavSection[] {
-  switch (role) {
-    case 'sales_officer':
-      return [
-        {
-          label: 'MY WORK',
-          items: [
-            { icon: Home, label: 'Dashboard', path: '/dashboard' },
-            { icon: ClipboardList, label: 'Daily Plan', path: '/dashboard/planning' },
-            { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
-            { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
-            { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
-            { icon: BarChart3, label: 'Attendance Summary', path: '/dashboard/attendance-summary' },
-            { icon: Car, label: 'Reimbursements', path: '/dashboard/reimbursements' },
-            { icon: Globe, label: 'Territory', path: '/dashboard/territory' },
-          ],
-        },
-      ];
-
-    case 'branch_manager':
-      return [
-        {
-          label: 'MY WORK',
-          items: [
-            { icon: Home, label: 'Dashboard', path: '/dashboard' },
-            { icon: ClipboardList, label: 'Daily Plan', path: '/dashboard/planning' },
-            { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
-            { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
-            { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
-            { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
-          ],
-        },
-        {
-          label: 'TEAM',
-          items: [
-            { icon: Users, label: 'Teams', path: '/dashboard/teams' },
-            { icon: BarChart3, label: 'Attendance Summary', path: '/dashboard/attendance-summary' },
-            { icon: Car, label: 'Reimbursements', path: '/dashboard/reimbursements' },
-          ],
-        },
-      ];
-
-    case 'admin':
-    case 'super_admin':
-      return [
-        {
-          label: 'OVERVIEW',
-          items: [
-            { icon: Building2, label: 'Dashboard', path: '/dashboard' },
-          ],
-        },
-        {
-          label: 'MANAGEMENT',
-          items: [
-            { icon: Building2, label: 'Branches', path: '/dashboard/branches' },
-            { icon: Users, label: 'Teams', path: '/dashboard/teams' },
-            { icon: Users, label: 'Users', path: '/dashboard/users' },
-            { icon: GitBranch, label: 'Org Chart', path: '/dashboard/org-chart' },
-            { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
-            { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
-            { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
-            { icon: BarChart3, label: 'Attendance Summary', path: '/dashboard/attendance-summary' },
-            { icon: Car, label: 'Reimbursements', path: '/dashboard/reimbursements' },
-          ],
-        },
-        {
-          label: 'SETTINGS',
-          items: [
-            { icon: CreditCard, label: 'Subscription', path: '/dashboard/subscription' },
-            { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
-          ],
-        },
-      ];
-
-    case 'platform_admin':
-      return [
-        {
-          label: 'OVERVIEW',
-          items: [
-            { icon: Building2, label: 'Dashboard', path: '/dashboard' },
-          ],
-        },
-        {
-          label: 'MANAGEMENT',
-          items: [
-            { icon: Building2, label: 'Branches', path: '/dashboard/branches' },
-            { icon: Users, label: 'Teams', path: '/dashboard/teams' },
-            { icon: Users, label: 'Users', path: '/dashboard/users' },
-            { icon: GitBranch, label: 'Org Chart', path: '/dashboard/org-chart' },
-            { icon: UserCheck, label: 'Leads', path: '/dashboard/leads' },
-            { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
-            { icon: Globe, label: 'Territory Map', path: '/dashboard/territory' },
-            { icon: BarChart3, label: 'Attendance Summary', path: '/dashboard/attendance-summary' },
-            { icon: Car, label: 'Reimbursements', path: '/dashboard/reimbursements' },
-          ],
-        },
-        {
-          label: 'PLATFORM',
-          items: [
-            { icon: Building2, label: 'Platform Admin', path: '/platform-admin/organizations' },
-            { icon: CreditCard, label: 'Subscription', path: '/dashboard/subscription' },
-            { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
-          ],
-        },
-      ];
-
-    default:
-      return [
-        {
-          label: 'MY WORK',
-          items: [
-            { icon: Home, label: 'Dashboard', path: '/dashboard' },
-            { icon: Clock, label: 'Attendance', path: '/dashboard/attendance' },
-          ],
-        },
-      ];
+  if (role === 'agent') {
+    return [
+      {
+        label: 'MY WORK',
+        items: [
+          { icon: CalendarCheck, label: 'Today', path: '/dashboard/today' },
+          { icon: Users, label: 'Customers', path: '/dashboard/customers' },
+          { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
+          { icon: ShoppingBag, label: 'Orders', path: '/dashboard/orders' },
+        ],
+      },
+    ];
   }
+
+  // manager and admin
+  return [
+    {
+      label: 'OVERVIEW',
+      items: [
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+        { icon: CalendarCheck, label: 'Today', path: '/dashboard/today' },
+      ],
+    },
+    {
+      label: 'MANAGEMENT',
+      items: [
+        { icon: ClipboardList, label: 'Plan', path: '/dashboard/plan' },
+        { icon: Users, label: 'Customers', path: '/dashboard/customers' },
+        { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
+        { icon: UserCog, label: 'Team', path: '/dashboard/team' },
+      ],
+    },
+  ];
 }
 
 export function AppSidebar() {
@@ -152,28 +69,25 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const { user } = useAuth();
-  const [userRole, setUserRole] = useState<RoleType>('sales_officer');
+  const [userRole, setUserRole] = useState<RoleType>('agent');
 
   useEffect(() => {
     async function checkRole() {
       if (!user) return;
-      
+
       const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id);
-      
+
       const userRoles = roles?.map(r => r.role) || [];
-      const primaryRole: RoleType = userRoles.includes('platform_admin') 
-        ? 'platform_admin' 
-        : userRoles.includes('super_admin')
-        ? 'super_admin'
-        : userRoles.includes('admin')
-        ? 'admin'
-        : userRoles.includes('branch_manager')
-        ? 'branch_manager'
-        : 'sales_officer';
-      
+      const primaryRole: RoleType =
+        userRoles.some(r => ['admin', 'super_admin', 'platform_admin'].includes(r))
+          ? 'admin'
+          : userRoles.some(r => ['branch_manager', 'sales_manager', 'manager'].includes(r))
+          ? 'manager'
+          : 'agent';
+
       setUserRole(primaryRole);
     }
 

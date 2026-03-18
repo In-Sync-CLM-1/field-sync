@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useVisit, useVisits, ChecklistItem } from '@/hooks/useVisits';
+import { useVisit, useVisits } from '@/hooks/useVisits';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,11 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { AssignUserDialog } from '@/components/AssignUserDialog';
-import { VisitChecklist } from '@/components/VisitChecklist';
 import { VisitPhotoCapture } from '@/components/VisitPhotoCapture';
-import { RescheduleDialog } from '@/components/RescheduleDialog';
 import { CancelVisitDialog } from '@/components/CancelVisitDialog';
-import { OrderCollectionForm } from '@/components/OrderCollectionForm';
 import { toast } from 'sonner';
 import { MapPin, Clock, Loader2, ArrowLeft, Navigation, CalendarClock, Ban } from 'lucide-react';
 import { format } from 'date-fns';
@@ -22,8 +19,25 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   in_progress: { label: 'IN PROGRESS', className: 'bg-amber-500 text-white border-0' },
   completed: { label: 'COMPLETED', className: 'bg-green-500 text-white border-0' },
   cancelled: { label: 'CANCELLED', className: 'bg-destructive text-destructive-foreground border-0' },
-  rescheduled: { label: 'RESCHEDULED', className: 'bg-purple-500 text-white border-0' },
 };
+
+const PURPOSE_LABELS: Record<string, string> = {
+  first_visit: 'First Visit',
+  'first-visit': 'First Visit',
+  follow_up: 'Follow-up',
+  'follow-up': 'Follow-up',
+  collection: 'Collection',
+  delivery: 'Delivery',
+  meeting: 'Meeting',
+  survey: 'Survey',
+  sales_order: 'Sales Order',
+  other: 'Other',
+};
+
+function formatPurpose(purpose?: string): string {
+  if (!purpose) return 'Visit';
+  return PURPOSE_LABELS[purpose] || purpose.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
 
 export default function VisitDetail() {
   const { id } = useParams<{ id: string }>();
@@ -92,19 +106,12 @@ export default function VisitDetail() {
     );
   };
 
-  const handleChecklistToggle = (index: number) => {
-    if (!visit?.checklist || !id) return;
-    const updated = [...visit.checklist];
-    updated[index] = { ...updated[index], completed: !updated[index].completed };
-    updateVisit({ id, checklist: updated } as any);
-  };
-
   const handleNavigate = (lat: number, lng: number) => {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
   };
 
   useEffect(() => {
-    if (visit && !visit.check_out_time && visit.status !== 'cancelled' && visit.status !== 'rescheduled') {
+    if (visit && !visit.check_out_time && visit.status !== 'cancelled') {
       getCurrentLocation();
     }
   }, [visit]);
@@ -160,10 +167,8 @@ export default function VisitDetail() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">{visit.lead?.name || 'Unknown Lead'}</CardTitle>
-          {visit.purpose && (
-            <p className="text-sm text-muted-foreground capitalize">{visit.purpose}</p>
-          )}
+          <CardTitle className="text-2xl">{visit.lead?.name || 'Customer'}</CardTitle>
+          <p className="text-sm text-muted-foreground">{formatPurpose(visit.purpose)}</p>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Scheduled info */}
@@ -183,7 +188,7 @@ export default function VisitDetail() {
             </div>
           )}
 
-          {/* Lead Details */}
+          {/* Customer Details */}
           {visit.lead && (visit.lead.village_city || visit.lead.district || (visit.lead.latitude && visit.lead.longitude)) && (
             <div className="space-y-2 pb-4 border-b">
               {(visit.lead.village_city || visit.lead.district) && (
@@ -259,17 +264,6 @@ export default function VisitDetail() {
             </div>
           )}
 
-          {/* Checklist */}
-          {visit.checklist && visit.checklist.length > 0 && (
-            <div className="pt-4 border-t">
-              <VisitChecklist
-                items={visit.checklist}
-                onToggle={isActive ? handleChecklistToggle : undefined}
-                readOnly={!isActive}
-              />
-            </div>
-          )}
-
           {/* Notes */}
           {isActive && (
             <div>
@@ -315,16 +309,6 @@ export default function VisitDetail() {
         />
       )}
 
-      {/* Orders & Collections Section */}
-      {(visit.status === 'in_progress' || isCompleted) && (
-        <OrderCollectionForm
-          visitId={id!}
-          leadName={visit.lead?.name}
-          leadPhone={visit.lead?.mobile_no}
-          leadId={visit.lead?.id}
-          isActive={visit.status === 'in_progress'}
-        />
-      )}
 
       {/* Action Buttons */}
       {isActive && (
@@ -341,12 +325,6 @@ export default function VisitDetail() {
             </Button>
           )}
           <div className="flex gap-2">
-            <RescheduleDialog visitId={id!} onRescheduled={() => navigate('/dashboard/visits')}>
-              <Button variant="outline" className="flex-1 gap-2">
-                <CalendarClock className="h-4 w-4" />
-                Reschedule
-              </Button>
-            </RescheduleDialog>
             <CancelVisitDialog visitId={id!} onCancelled={() => navigate('/dashboard/visits')}>
               <Button variant="outline" className="flex-1 gap-2 text-destructive hover:text-destructive">
                 <Ban className="h-4 w-4" />

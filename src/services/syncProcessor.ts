@@ -20,7 +20,9 @@ export async function processSyncQueue() {
     await syncPendingLeads();
     await syncPendingVisits();
     await syncPendingPhotos();
-    await syncPendingCommunications();
+    await syncPendingOrders();
+    await syncPendingFieldInvoices();
+    await syncPendingCollections();
 
     console.log('[SyncProcessor] Sync complete');
   } catch (error) {
@@ -60,12 +62,8 @@ async function syncPendingLeads() {
             id: lead.id,
             name: lead.name,
             branch: lead.branch || null,
-            proposal_number: lead.proposalNumber || null,
             customer_id: lead.customerId || null,
             status: lead.status || 'new',
-            policy_type_category: lead.policyTypeCategory || null,
-            premium_amount: lead.premiumAmount || null,
-            policy_type: lead.policyType || null,
             village_city: lead.villageCity || null,
             district: lead.district || null,
             state: lead.state || null,
@@ -252,34 +250,169 @@ async function syncPendingPhotos() {
   }
 }
 
-// Sync pending communications
-async function syncPendingCommunications() {
+// Sync pending orders
+async function syncPendingOrders() {
   const pendingItems = await db.syncQueue
     .where('type')
-    .equals('communication')
+    .equals('order')
     .toArray();
+
+  if (pendingItems.length === 0) return;
 
   for (const item of pendingItems) {
     if (item.retryCount >= item.maxRetries) {
-      console.log('[SyncProcessor] Max retries reached for communication:', item.entityId);
+      console.log('[SyncProcessor] Max retries reached for order:', item.entityId);
       continue;
     }
 
     try {
-      const comm = await db.communications.get(item.entityId);
-      if (!comm) {
+      const order = await db.orders.get(item.entityId);
+      if (!order) {
         await db.syncQueue.delete(item.id);
         continue;
       }
 
-      // Communications don't have a Supabase table yet - just mark as synced
-      await db.communications.update(comm.id, {
-        syncStatus: 'synced',
-        lastSyncedAt: new Date(),
-      });
-      await db.syncQueue.delete(item.id);
+      const { error } = await supabase
+        .from('orders')
+        .upsert({
+          id: order.id,
+          customer_id: order.customer_id || null,
+          user_id: order.user_id || null,
+          items_text: order.items_text || null,
+          total_amount: order.total_amount || null,
+          notes: order.notes || null,
+          photo_url: order.photo_url || null,
+          organization_id: order.organization_id || null,
+          created_at: order.created_at || new Date().toISOString(),
+        });
+
+      if (!error) {
+        await db.orders.update(order.id!, { synced: true });
+        await db.syncQueue.delete(item.id);
+        console.log('[SyncProcessor] Order synced:', order.id);
+      } else {
+        await db.syncQueue.update(item.id, {
+          retryCount: item.retryCount + 1,
+          lastAttemptAt: new Date(),
+          error: error.message,
+        });
+      }
     } catch (err: any) {
-      console.error('[SyncProcessor] Communication sync failed:', err);
+      console.error('[SyncProcessor] Order sync failed:', err);
+      await db.syncQueue.update(item.id, {
+        retryCount: item.retryCount + 1,
+        lastAttemptAt: new Date(),
+        error: err.message,
+      });
+    }
+  }
+}
+
+// Sync pending field invoices
+async function syncPendingFieldInvoices() {
+  const pendingItems = await db.syncQueue
+    .where('type')
+    .equals('field_invoice')
+    .toArray();
+
+  if (pendingItems.length === 0) return;
+
+  for (const item of pendingItems) {
+    if (item.retryCount >= item.maxRetries) {
+      console.log('[SyncProcessor] Max retries reached for field invoice:', item.entityId);
+      continue;
+    }
+
+    try {
+      const invoice = await db.fieldInvoices.get(item.entityId);
+      if (!invoice) {
+        await db.syncQueue.delete(item.id);
+        continue;
+      }
+
+      const { error } = await supabase
+        .from('field_invoices')
+        .upsert({
+          id: invoice.id,
+          customer_id: invoice.customer_id || null,
+          user_id: invoice.user_id || null,
+          extracted_data: invoice.extracted_data || null,
+          photo_url: invoice.photo_url || null,
+          amount: invoice.amount || null,
+          organization_id: invoice.organization_id || null,
+          created_at: invoice.created_at || new Date().toISOString(),
+        });
+
+      if (!error) {
+        await db.fieldInvoices.update(invoice.id!, { synced: true });
+        await db.syncQueue.delete(item.id);
+        console.log('[SyncProcessor] Field invoice synced:', invoice.id);
+      } else {
+        await db.syncQueue.update(item.id, {
+          retryCount: item.retryCount + 1,
+          lastAttemptAt: new Date(),
+          error: error.message,
+        });
+      }
+    } catch (err: any) {
+      console.error('[SyncProcessor] Field invoice sync failed:', err);
+      await db.syncQueue.update(item.id, {
+        retryCount: item.retryCount + 1,
+        lastAttemptAt: new Date(),
+        error: err.message,
+      });
+    }
+  }
+}
+
+// Sync pending collections
+async function syncPendingCollections() {
+  const pendingItems = await db.syncQueue
+    .where('type')
+    .equals('collection')
+    .toArray();
+
+  if (pendingItems.length === 0) return;
+
+  for (const item of pendingItems) {
+    if (item.retryCount >= item.maxRetries) {
+      console.log('[SyncProcessor] Max retries reached for collection:', item.entityId);
+      continue;
+    }
+
+    try {
+      const collection = await db.collections.get(item.entityId);
+      if (!collection) {
+        await db.syncQueue.delete(item.id);
+        continue;
+      }
+
+      const { error } = await supabase
+        .from('collections')
+        .upsert({
+          id: collection.id,
+          customer_id: collection.customer_id || null,
+          user_id: collection.user_id || null,
+          amount: collection.amount || null,
+          description: collection.description || null,
+          receipt_photo_url: collection.receipt_photo_url || null,
+          organization_id: collection.organization_id || null,
+          created_at: collection.created_at || new Date().toISOString(),
+        });
+
+      if (!error) {
+        await db.collections.update(collection.id!, { synced: true });
+        await db.syncQueue.delete(item.id);
+        console.log('[SyncProcessor] Collection synced:', collection.id);
+      } else {
+        await db.syncQueue.update(item.id, {
+          retryCount: item.retryCount + 1,
+          lastAttemptAt: new Date(),
+          error: error.message,
+        });
+      }
+    } catch (err: any) {
+      console.error('[SyncProcessor] Collection sync failed:', err);
       await db.syncQueue.update(item.id, {
         retryCount: item.retryCount + 1,
         lastAttemptAt: new Date(),
@@ -300,7 +433,9 @@ export async function getSyncQueueStatus() {
       daily_plan: items.filter(i => i.type === 'daily_plan').length,
       customer: items.filter(i => i.type === 'customer').length,
       visit: items.filter(i => i.type === 'visit').length,
-      communication: items.filter(i => i.type === 'communication').length,
+      order: items.filter(i => i.type === 'order').length,
+      field_invoice: items.filter(i => i.type === 'field_invoice').length,
+      collection: items.filter(i => i.type === 'collection').length,
     },
   };
 }

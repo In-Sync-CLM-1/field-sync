@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, FileText, Users, Trophy, ArrowLeft, PlusCircle } from 'lucide-react';
+import { CalendarIcon, Target, CheckCircle, Cloud, CloudOff, Users, ArrowLeft, PlusCircle, MapPin, Circle, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,119 +10,76 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { 
-  useMyPlanOffline, 
-  useCreatePlanOffline, 
-  useUpdatePlanOffline 
+import {
+  useMyPlanOffline,
+  useCreatePlanOffline,
+  useUpdatePlanOffline
 } from '@/hooks/useDailyPlansOffline';
-import { 
-  useIsManager, 
-  useTeamAggregates, 
-  useTeamIncentiveToppers 
+import {
+  useIsManager,
 } from '@/hooks/useManagerView';
-import { EnrollmentDialog } from '@/components/EnrollmentDialog';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
-
+import { useVisits } from '@/hooks/useVisits';
 
 export default function Planning() {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const planDate = format(selectedDate, 'yyyy-MM-dd');
-  
+
   const { data: plan, isLoading, isOnline } = useMyPlanOffline(planDate);
   const createPlan = useCreatePlanOffline();
   const updatePlan = useUpdatePlanOffline();
+  const { visits } = useVisits();
 
   // Manager view hooks
   const { data: isManager, isLoading: isLoadingManager } = useIsManager();
-  const { data: teamAggregates, isLoading: isLoadingAggregates } = useTeamAggregates(planDate);
-  const { data: teamToppers, isLoading: isLoadingToppers } = useTeamIncentiveToppers(selectedDate);
-
 
   const [formData, setFormData] = useState({
     prospects_target: 0,
-    quotes_target: 0,
-    policies_target: 0,
-    prospects_market: '',
-    quotes_market: '',
   });
 
-  // Manager's own Life/Health targets
-  const [managerTargets, setManagerTargets] = useState({
-    life_insurance_target: 0,
-    health_insurance_target: 0,
-  });
-
-  const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
-
-  // Get enrolled leads for current plan
-  const enrolledContacts = useLiveQuery(
-    async () => {
-      if (!plan?.id) return [];
-      const enrollments = await db.planEnrollments
-        .where('dailyPlanId')
-        .equals(plan.id)
-        .toArray();
-      
-      const leads = [];
-      for (const enrollment of enrollments) {
-        const lead = await db.leads.get(enrollment.customerId);
-        if (lead) leads.push(lead);
-      }
-      return leads;
-    },
-    [plan?.id],
-    []
-  );
+  // Get visits for the selected date
+  const scheduledVisits = visits?.filter(v => {
+    if (v.scheduled_date === planDate) return true;
+    if (v.check_in_time) {
+      const visitDate = format(new Date(v.check_in_time), 'yyyy-MM-dd');
+      return visitDate === planDate;
+    }
+    return false;
+  }) || [];
 
   useEffect(() => {
     if (plan) {
       setFormData({
         prospects_target: plan.prospectsTarget,
-        quotes_target: plan.quotesTarget,
-        policies_target: plan.policiesTarget,
-        prospects_market: plan.prospectsMarket || '',
-        quotes_market: plan.quotesMarket || '',
-      });
-      setManagerTargets({
-        life_insurance_target: plan.lifeInsuranceTarget || 0,
-        health_insurance_target: plan.healthInsuranceTarget || 0,
       });
     }
   }, [plan]);
 
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (plan) {
       await updatePlan.mutateAsync({
         id: plan.id,
         prospects_target: formData.prospects_target,
-        quotes_target: formData.quotes_target,
-        policies_target: formData.policies_target,
-        prospects_market: formData.prospects_market,
-        quotes_market: formData.quotes_market,
-        life_insurance_target: managerTargets.life_insurance_target,
-        health_insurance_target: managerTargets.health_insurance_target,
+        quotes_target: 0,
+        policies_target: 0,
+        prospects_market: '',
+        quotes_market: '',
+        life_insurance_target: 0,
+        health_insurance_target: 0,
       });
     } else {
       await createPlan.mutateAsync({
         plan_date: planDate,
-        ...formData,
-        life_insurance_target: managerTargets.life_insurance_target,
-        health_insurance_target: managerTargets.health_insurance_target,
+        prospects_target: formData.prospects_target,
+        quotes_target: 0,
+        policies_target: 0,
+        prospects_market: '',
+        quotes_market: '',
+        life_insurance_target: 0,
+        health_insurance_target: 0,
       });
     }
   };
@@ -133,8 +90,6 @@ export default function Planning() {
         return <Badge variant="outline" className="text-xs h-5">Draft</Badge>;
       case 'submitted':
         return <Badge className="bg-primary text-primary-foreground text-xs h-5">Submitted</Badge>;
-      case 'corrected':
-        return <Badge className="bg-warning text-warning-foreground text-xs h-5">Corrected</Badge>;
       case 'approved':
         return <Badge className="bg-success text-success-foreground text-xs h-5">Approved</Badge>;
       default:
@@ -155,21 +110,11 @@ export default function Planning() {
     }
   };
 
-  const getProgress = (actual: number, target: number) => {
-    if (target === 0) return { percent: 0, color: 'text-muted-foreground' };
-    const percent = Math.round((actual / target) * 100);
-    if (percent >= 100) return { percent, color: 'text-success' };
-    if (percent >= 75) return { percent, color: 'text-primary' };
-    if (percent >= 50) return { percent, color: 'text-warning' };
-    return { percent, color: 'text-accent' };
-  };
-
-
   // Render Manager View
   if (isManager && !isLoadingManager) {
     return (
       <div className="p-4 space-y-4 page-gradient min-h-screen">
-        {/* Manager Header - Enhanced */}
+        {/* Manager Header */}
         <div className="hero-gradient">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -180,27 +125,10 @@ export default function Planning() {
               <div className="icon-circle icon-circle-primary h-8 w-8">
                 <Users className="h-4 w-4" />
               </div>
-              <h1 className="text-xl font-bold gradient-text-primary">Branch Planning</h1>
+              <h1 className="text-xl font-bold gradient-text-primary">Team Planning</h1>
             </div>
-            
-            <div className="flex items-center gap-1">
-              {!isOnline && (
-                <Badge className="status-badge-warning text-xs h-5">
-                  <CloudOff className="h-3 w-3 mr-1" />Offline
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
 
-        {/* Team Aggregates Card */}
-        <Card className="glass-card">
-          <CardHeader className="compact-header pb-1">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-primary" />
-                Team Targets (Aggregated)
-              </span>
+            <div className="flex items-center gap-1">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-5 text-xs px-2">
@@ -218,142 +146,94 @@ export default function Planning() {
                   />
                 </PopoverContent>
               </Popover>
+              {!isOnline && (
+                <Badge className="status-badge-warning text-xs h-5">
+                  <CloudOff className="h-3 w-3 mr-1" />Offline
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Visit Target */}
+        <Card className="glass-card">
+          <CardHeader className="compact-header pb-1">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              Visit Target
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
-            {isLoadingAggregates ? (
-              <Skeleton className="h-32" />
-            ) : (
-              <div className="border rounded overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="text-left py-1.5 px-3 text-xs font-medium text-muted-foreground">Metric</th>
-                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Target</th>
-                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Actual</th>
-                      <th className="text-right py-1.5 px-3 text-xs font-medium text-muted-foreground">%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Prospects */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Prospects</td>
-                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.prospects_target || 0}</td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.prospects_actual || 0}</td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        teamAggregates ? getProgress(teamAggregates.prospects_actual, teamAggregates.prospects_target).color : 'text-muted-foreground')}>
-                        {teamAggregates ? getProgress(teamAggregates.prospects_actual, teamAggregates.prospects_target).percent : 0}%
-                      </td>
-                    </tr>
-                    {/* Quotes */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Quotes</td>
-                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.quotes_target || 0}</td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.quotes_actual || 0}</td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        teamAggregates ? getProgress(teamAggregates.quotes_actual, teamAggregates.quotes_target).color : 'text-muted-foreground')}>
-                        {teamAggregates ? getProgress(teamAggregates.quotes_actual, teamAggregates.quotes_target).percent : 0}%
-                      </td>
-                    </tr>
-                    {/* Policies */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Sales</td>
-                      <td className="py-1.5 px-3 text-center text-xs">{teamAggregates?.policies_target || 0}</td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">{teamAggregates?.policies_actual || 0}</td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", 
-                        teamAggregates ? getProgress(teamAggregates.policies_actual, teamAggregates.policies_target).color : 'text-muted-foreground')}>
-                        {teamAggregates ? getProgress(teamAggregates.policies_actual, teamAggregates.policies_target).percent : 0}%
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+            <form onSubmit={handleSubmit}>
+              <div className="flex items-center gap-3 mb-3">
+                <label className="text-sm font-medium whitespace-nowrap">Visits planned:</label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={formData.prospects_target}
+                  onChange={(e) => setFormData({ prospects_target: parseInt(e.target.value) || 0 })}
+                  className="h-8 w-20 text-center"
+                />
               </div>
-            )}
-
-            {/* Save Button for Manager Targets */}
-            <div className="mt-3 flex justify-end">
-              <Button 
+              <Button
                 size="sm"
-                className="h-6 px-4 text-xs"
-                onClick={handleSubmit}
+                className="w-full"
+                type="submit"
                 disabled={createPlan.isPending || updatePlan.isPending}
               >
-                Save Targets
+                {plan ? 'Update Plan' : 'Save Plan'}
               </Button>
-            </div>
+            </form>
           </CardContent>
         </Card>
 
-        {/* Team Incentive Toppers Card */}
+        {/* Scheduled Visits for Date */}
         <Card className="glass-card">
           <CardHeader className="compact-header pb-1">
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-yellow-500" />
-                Team Incentives - {format(selectedDate, 'MMM yyyy')}
+                <MapPin className="h-4 w-4 text-primary" />
+                Visits for {format(selectedDate, 'MMM d')}
               </span>
+              <Badge variant="outline" className="text-xs">{scheduledVisits.length} visits</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
-            {isLoadingToppers ? (
-              <Skeleton className="h-40" />
-            ) : teamToppers && teamToppers.length > 0 ? (
-              <div className="border rounded overflow-hidden">
-                <Table className="compact-table">
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="py-2 px-3 text-xs w-8">#</TableHead>
-                      <TableHead className="py-2 px-3 text-xs">Agent</TableHead>
-                      <TableHead className="py-2 px-3 text-xs text-center">Sales</TableHead>
-                      <TableHead className="py-2 px-3 text-xs text-right">Incentives</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teamToppers.map((member, idx) => (
-                      <TableRow key={member.user_id} className={cn(
-                        "hover:bg-muted/30",
-                        idx === 0 && member.incentive_earned > 0 && "bg-yellow-500/10",
-                        idx === 1 && member.incentive_earned > 0 && "bg-slate-400/10",
-                        idx === 2 && member.incentive_earned > 0 && "bg-amber-600/10",
-                      )}>
-                        <TableCell className="py-1.5 px-3 text-sm font-medium">
-                          {idx === 0 && member.incentive_earned > 0 ? (
-                            <Trophy className="h-4 w-4 text-yellow-500" />
-                          ) : idx === 1 && member.incentive_earned > 0 ? (
-                            <Trophy className="h-4 w-4 text-slate-400" />
-                          ) : idx === 2 && member.incentive_earned > 0 ? (
-                            <Trophy className="h-4 w-4 text-amber-600" />
-                          ) : (
-                            <span className="text-muted-foreground">{idx + 1}</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-1.5 px-3 text-sm font-medium">{member.full_name}</TableCell>
-                        <TableCell className="py-1.5 px-3 text-sm text-center">{member.total_policies}</TableCell>
-                        <TableCell className={cn(
-                          "py-1.5 px-3 text-sm text-right font-semibold",
-                          member.incentive_earned > 0 ? "text-success" : "text-muted-foreground"
-                        )}>
-                          ₹{member.incentive_earned.toLocaleString('en-IN')}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            {scheduledVisits.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No visits scheduled</p>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="mt-1"
+                  onClick={() => navigate(`/dashboard/visits/new?date=${planDate}`)}
+                >
+                  + Schedule a visit
+                </Button>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No team members found</p>
-              </div>
-            )}
-
-            {/* Total Team Commission */}
-            {teamToppers && teamToppers.length > 0 && (
-              <div className="mt-3 p-3 bg-primary/5 border border-primary/10 rounded flex items-center justify-between">
-                <span className="text-sm font-medium">Total Team Incentives</span>
-                <span className="text-lg font-bold text-success">
-                  ₹{teamToppers.reduce((sum, m) => sum + m.incentive_earned, 0).toLocaleString('en-IN')}
-                </span>
+              <div className="space-y-1.5">
+                {scheduledVisits.map((visit) => (
+                  <div
+                    key={visit.id}
+                    className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                    onClick={() => navigate(`/dashboard/visits/${visit.id}`)}
+                  >
+                    {visit.status === 'completed' ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{visit.lead?.name || 'Customer'}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{visit.purpose || 'Visit'}</p>
+                    </div>
+                    <Badge variant={visit.status === 'completed' ? 'default' : 'outline'} className="text-xs">
+                      {visit.status?.replace('_', ' ')}
+                    </Badge>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
@@ -362,7 +242,7 @@ export default function Planning() {
     );
   }
 
-  // Regular Agent View (existing code)
+  // Regular Agent View
   return (
     <div className="p-4 space-y-4 page-gradient min-h-screen">
       {/* Enhanced Header */}
@@ -378,7 +258,7 @@ export default function Planning() {
             </div>
             <h1 className="text-xl font-bold gradient-text-primary">Daily Planning</h1>
           </div>
-          
+
           <div className="flex items-center gap-1">
             {plan && getStatusBadge(plan.status)}
             {plan && getSyncBadge(plan.syncStatus)}
@@ -401,17 +281,17 @@ export default function Planning() {
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">
-                Set Your Targets for {format(selectedDate, 'MMM d, yyyy')}
+                Set Your Target for {format(selectedDate, 'MMM d, yyyy')}
               </p>
               <p className="text-xs text-muted-foreground">
-                Enter your Prospects, Quotes & Sales targets below and tap Save Plan
+                Enter how many visits you plan to make and tap Save Plan
               </p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Target vs Achievement Card - Second */}
+      {/* Visit Target Card */}
       {isLoading ? (
         <Card className="glass-card"><CardContent className="p-3"><Skeleton className="h-24" /></CardContent></Card>
       ) : (
@@ -420,7 +300,7 @@ export default function Planning() {
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-primary" />
-                Target vs Achievement
+                Visit Target
               </span>
               <Popover>
                 <PopoverTrigger asChild>
@@ -443,195 +323,105 @@ export default function Planning() {
           </CardHeader>
           <CardContent className="p-3 pt-0">
             <form onSubmit={handleSubmit}>
-              {/* Target vs Achievement Table */}
-              <div className="border rounded overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="text-left py-1.5 px-3 text-xs font-medium text-muted-foreground">Metric</th>
-                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Target</th>
-                      <th className="text-center py-1.5 px-3 text-xs font-medium text-muted-foreground">Actual</th>
-                      <th className="text-right py-1.5 px-3 text-xs font-medium text-muted-foreground">%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Prospects Row */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Prospects</td>
-                      <td className="py-1 px-2 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={formData.prospects_target}
-                          onChange={(e) => setFormData(prev => ({ ...prev, prospects_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-14 text-xs text-center mx-auto px-1"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.prospectsActual ?? 0}
-                      </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.prospectsActual, plan.prospectsTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.prospectsActual, plan.prospectsTarget).percent : 0}%
-                      </td>
-                    </tr>
-                    
-                    {/* Quotes Row */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Quotes</td>
-                      <td className="py-1 px-2 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={formData.quotes_target}
-                          onChange={(e) => setFormData(prev => ({ ...prev, quotes_target: parseInt(e.target.value) || 0 }))}
-                          className="h-5 w-14 text-xs text-center mx-auto px-1"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-center text-xs font-medium">
-                        {plan?.quotesActual ?? 0}
-                      </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.quotesActual, plan.quotesTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.quotesActual, plan.quotesTarget).percent : 0}%
-                      </td>
-                    </tr>
-                    
-                    {/* Policies Row */}
-                    <tr className="border-t border-border/50">
-                      <td className="py-1.5 px-3 text-xs font-medium">Sales</td>
-                      <td className="py-1 px-2 text-center">
-                        <Input
-                          type="number"
-                          min="0"
-                          value={formData.policies_target}
-                          onChange={(e) => {
-                            const newTarget = parseInt(e.target.value) || 0;
-                            setFormData(prev => ({ ...prev, policies_target: newTarget }));
-                            if (newTarget > 0) {
-                              setEnrollmentDialogOpen(true);
-                            }
-                          }}
-                          className="h-5 w-14 text-xs text-center mx-auto px-1"
-                        />
-                      </td>
-                      <td className="py-1.5 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="text-xs font-medium">{plan?.policiesActual ?? 0}</span>
-                          {plan && plan.policiesActual > 0 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-5 w-5 p-0"
-                              onClick={() => setEnrollmentDialogOpen(true)}
-                              title="View/Edit planned policies"
-                            >
-                              <FileText className="h-3 w-3 text-primary" />
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                      <td className={cn("py-1.5 px-3 text-right text-xs font-semibold", plan ? getProgress(plan.policiesActual, plan.policiesTarget).color : 'text-muted-foreground')}>
-                        {plan ? getProgress(plan.policiesActual, plan.policiesTarget).percent : 0}%
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="flex items-center gap-3 mb-3">
+                <label className="text-sm font-medium whitespace-nowrap">Visits planned:</label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={formData.prospects_target}
+                  onChange={(e) => setFormData({ prospects_target: parseInt(e.target.value) || 0 })}
+                  className="h-8 w-20 text-center"
+                />
+                {plan && (
+                  <span className="text-sm text-muted-foreground">
+                    Done: <span className="font-medium">{plan.prospectsActual ?? 0}</span>
+                  </span>
+                )}
               </div>
-
-              {/* Market Selection */}
-              <div className="mt-3 space-y-2">
-                <h4 className="text-xs font-medium text-muted-foreground">Markets to Visit</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[10px] text-muted-foreground mb-0.5 block">For Prospects</label>
-                    <Input
-                      type="text"
-                      value={formData.prospects_market}
-                      onChange={(e) => setFormData(prev => ({ ...prev, prospects_market: e.target.value }))}
-                      placeholder="e.g., Main Market, Sector 5"
-                      className="h-6 text-xs px-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-muted-foreground mb-0.5 block">For Quotes</label>
-                    <Input
-                      type="text"
-                      value={formData.quotes_market}
-                      onChange={(e) => setFormData(prev => ({ ...prev, quotes_market: e.target.value }))}
-                      placeholder="e.g., Industrial Area, Block B"
-                      className="h-6 text-xs px-2"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {enrolledContacts.length > 0 && (
-                <div className="mt-2 p-2 bg-primary/5 border border-primary/20 rounded">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-muted-foreground">Planned Policies</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 text-xs px-2"
-                      onClick={() => setEnrollmentDialogOpen(true)}
-                    >
-                      Edit
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {enrolledContacts.map(contact => (
-                      <Badge key={contact.id} variant="secondary" className="text-xs">
-                        {contact.applicationId}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {plan?.originalValues && (
-                <div className="mt-2 p-1.5 bg-warning-bg border border-warning/20 rounded text-xs flex items-center gap-1.5">
+                <div className="mb-3 p-1.5 bg-warning-bg border border-warning/20 rounded text-xs flex items-center gap-1.5">
                   <CheckCircle className="h-3 w-3 text-warning" />
                   <span className="text-warning-foreground">Adjusted by manager</span>
                 </div>
               )}
 
-              {/* Submit Button at bottom */}
-              <div className="mt-3">
-                <Button 
-                  size="default"
-                  className="w-full h-9 text-sm font-medium gap-2"
-                  type="submit"
-                  disabled={createPlan.isPending || updatePlan.isPending}
-                >
-                  {plan ? (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Update Plan
-                    </>
-                  ) : (
-                    <>
-                      <PlusCircle className="h-4 w-4" />
-                      Save Plan
-                    </>
-                  )}
-                </Button>
-              </div>
+              {/* Submit Button */}
+              <Button
+                size="default"
+                className="w-full h-9 text-sm font-medium gap-2"
+                type="submit"
+                disabled={createPlan.isPending || updatePlan.isPending}
+              >
+                {plan ? (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    Update Plan
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="h-4 w-4" />
+                    Save Plan
+                  </>
+                )}
+              </Button>
             </form>
           </CardContent>
         </Card>
       )}
 
-      {/* Enrollment Dialog */}
-      {plan && (
-        <EnrollmentDialog
-          open={enrollmentDialogOpen}
-          onOpenChange={setEnrollmentDialogOpen}
-          dailyPlanId={plan.id}
-          enrollCount={formData.policies_target}
-          onSave={() => {}}
-        />
-      )}
+      {/* Scheduled Visits for Date */}
+      <Card className="glass-card">
+        <CardHeader className="compact-header pb-1">
+          <CardTitle className="text-sm font-semibold flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" />
+              Visits for {format(selectedDate, 'MMM d')}
+            </span>
+            <Badge variant="outline" className="text-xs">{scheduledVisits.length} visits</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 pt-0">
+          {scheduledVisits.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">No visits scheduled</p>
+              <Button
+                variant="link"
+                size="sm"
+                className="mt-1"
+                onClick={() => navigate(`/dashboard/visits/new?date=${planDate}`)}
+              >
+                + Schedule a visit
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {scheduledVisits.map((visit) => (
+                <div
+                  key={visit.id}
+                  className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                  onClick={() => navigate(`/dashboard/visits/${visit.id}`)}
+                >
+                  {visit.status === 'completed' ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{visit.lead?.name || 'Customer'}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{visit.purpose || 'Visit'}</p>
+                  </div>
+                  <Badge variant={visit.status === 'completed' ? 'default' : 'outline'} className="text-xs">
+                    {visit.status?.replace('_', ' ')}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
     </div>
   );
 }

@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
-import HQDashboard from './HQDashboard';
-import ManagerDashboard from './ManagerDashboard';
 import AgentDashboard from './AgentDashboard';
 
 type DashboardTier = 'hq' | 'manager' | 'agent';
@@ -51,12 +49,6 @@ export default function RoleDashboard() {
     );
   }
 
-  switch (tier) {
-    case 'hq':
-      return <HQDashboard />;
-    case 'manager':
-      return <ManagerDashboard />;
-    case 'agent':
-      return <AgentDashboard />;
-  }
+  // All roles use AgentDashboard for now
+  return <AgentDashboard />;
 }

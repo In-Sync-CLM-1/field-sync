@@ -14,8 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { TrialBanner } from '@/components/TrialBanner';
-import { UpgradeDialog } from '@/components/UpgradeDialog';
 import { LogOut, User, Activity, RefreshCw, Locate } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import inSyncLogo from '@/assets/in-sync-logo.png';
@@ -23,7 +21,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { swManager } from '@/lib/serviceWorker';
 import { useAgentLocationTracker } from '@/hooks/useAgentLocationTracker';
-import { TourProvider } from '@/contexts/TourContext';
 import { AttendanceGate } from '@/components/AttendanceGate';
 
 export default function Layout() {
@@ -32,7 +29,7 @@ export default function Layout() {
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [_showUpgradeDialog, _setShowUpgradeDialog] = useState(false);
 
   const pendingCount = useLiveQuery(
     async () => {
@@ -76,15 +73,13 @@ export default function Layout() {
   };
 
   return (
-    <TourProvider>
     <AttendanceGate>
     <SidebarProvider>
       <div className="flex min-h-screen w-full overflow-x-hidden bg-background">
         <AppSidebar />
         
         <div className="flex flex-1 flex-col min-w-0">
-          {/* Trial Banner */}
-          <TrialBanner onUpgrade={() => setShowUpgradeDialog(true)} />
+          {/* Header area */}
           
           {/* Header with gradient accent line */}
           <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 relative shadow-sm">
@@ -141,14 +136,6 @@ export default function Layout() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isAdmin && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard/sync-monitoring" className="cursor-pointer hover:bg-muted">
-                      <Activity className="mr-2 h-4 w-4" />
-                      <span>Sync Monitoring</span>
-                    </Link>
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard/profile" className="cursor-pointer hover:bg-muted">
                     <User className="mr-2 h-4 w-4" />
@@ -173,10 +160,7 @@ export default function Layout() {
         </div>
       </div>
       
-      {/* Upgrade Dialog */}
-      <UpgradeDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog} />
     </SidebarProvider>
     </AttendanceGate>
-    </TourProvider>
   );
 }

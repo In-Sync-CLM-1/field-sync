@@ -1,13 +1,8 @@
-import { useState } from 'react';
 import { useMyStats } from '@/hooks/useDashboardData';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
-import { DashboardViewControl, DashboardPeriod } from './DashboardViewControl';
 import { StatusKPICard } from './StatusKPICard';
-import { PipelineCard } from './PipelineCard';
 import { RecentVisitsSection } from './RecentVisitsSection';
-import { SetupChecklist } from './SetupChecklist';
-import { AppTour, TourTriggerButton } from '@/components/AppTour';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +16,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, isBefore, startOfDay } from 'date-fns';
 
 export default function AgentDashboard() {
-  const [period, setPeriod] = useState<DashboardPeriod>('today');
   const { user } = useAuth();
   const { currentOrganization } = useAuthStore();
   const myStats = useMyStats();
@@ -46,22 +40,13 @@ export default function AgentDashboard() {
     enabled: !!currentOrganization?.id,
   });
 
-  const pipelineStages = [
-    { label: 'Planned', count: myStats?.plannedVisitsToday || 0, color: 'blue' as const },
-    { label: 'Visited', count: myStats?.visitsToday || 0, color: 'green' as const },
-    { label: 'Pending', count: myStats?.pendingVisitsToday || 0, color: 'amber' as const },
-    { label: 'Follow-up', count: myStats?.overdueFollowUps || 0, color: 'red' as const },
-  ];
-
   const currentHour = new Date().getHours();
   const primaryAction = currentHour < 17
     ? { icon: MapPin, label: 'Start Visit', action: '/dashboard/visits/new' }
-    : { icon: FileText, label: 'Daily Report', action: '/dashboard/planning' };
+    : { icon: FileText, label: 'Daily Report', action: '/dashboard/visits' };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-3 space-y-3 min-h-screen">
-      <AppTour />
-
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -72,12 +57,7 @@ export default function AgentDashboard() {
           <h1 className="text-xl font-bold tracking-tight text-foreground">Welcome back!</h1>
           <p className="text-sm text-muted-foreground">{user?.user_metadata?.full_name || user?.email}</p>
         </div>
-        <TourTriggerButton />
       </div>
-
-      <DashboardViewControl period={period} onPeriodChange={setPeriod} />
-
-      <SetupChecklist />
 
       {/* KPI Cards */}
       <div data-tour="metrics" className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -112,12 +92,9 @@ export default function AgentDashboard() {
           subtitle="Need attention"
           icon={AlertTriangle}
           accent={myStats?.overdueFollowUps && myStats.overdueFollowUps > 0 ? 'destructive' : 'success'}
-          onClick={() => navigate('/dashboard/leads?filter=overdue')}
+          onClick={() => navigate('/dashboard/customers?filter=overdue')}
         />
       </div>
-
-      {/* Pipeline */}
-      <PipelineCard title="Today's Plan" icon={ClipboardList} stages={pipelineStages} />
 
       {/* Quick Actions */}
       <div data-tour="quick-actions">
@@ -134,17 +111,17 @@ export default function AgentDashboard() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-medium text-foreground">All Visits</span>
           </Button>
-          <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/planning')}>
+          <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/today')}>
             <ClipboardList className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-foreground">Daily Plan</span>
+            <span className="text-xs font-medium text-foreground">Today</span>
           </Button>
-          <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/territory')}>
+          <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/orders')}>
             <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-foreground">Territory</span>
+            <span className="text-xs font-medium text-foreground">Orders</span>
           </Button>
-          <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/leads')}>
+          <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/customers')}>
             <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-foreground">Leads</span>
+            <span className="text-xs font-medium text-foreground">Customers</span>
           </Button>
         </div>
       </div>
@@ -165,7 +142,7 @@ export default function AgentDashboard() {
                 <div
                   key={lead.id}
                   className="flex items-center justify-between p-2 rounded-md bg-muted/50 cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => navigate(`/dashboard/leads/${lead.id}`)}
+                  onClick={() => navigate(`/dashboard/customers/${lead.id}`)}
                 >
                   <div>
                     <p className="text-sm font-medium">{lead.name}</p>

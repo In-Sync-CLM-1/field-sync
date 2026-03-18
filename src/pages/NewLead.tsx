@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
-import { ArrowLeft, MapPin, CalendarIcon, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, MapPin, Loader2, Save, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,54 +16,22 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { useLeads } from '@/hooks/useLeads';
 import { useAuthStore } from '@/store/authStore';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
   mobileNo: z.string().optional(),
-  policyTypeCategory: z.string().optional(),
-  policyType: z.string().optional(),
-  premiumAmount: z.coerce.number().optional(),
-  villageCity: z.string().optional(),
-  district: z.string().optional(),
+  address: z.string().optional(),
+  village_city: z.string().optional(),
   state: z.string().optional(),
-  leadSource: z.string().optional(),
-  customerResponse: z.string().optional(),
-  followUpDate: z.date().optional(),
+  notes: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
-
-const POLICY_CATEGORIES = [
-  { value: 'life', label: 'Life Insurance' },
-  { value: 'health', label: 'Health Insurance' },
-  { value: 'motor', label: 'Motor Insurance' },
-  { value: 'general', label: 'General Insurance' },
-];
-
-const LEAD_SOURCES = [
-  { value: 'direct', label: 'Direct/Walk-in' },
-  { value: 'referral', label: 'Referral' },
-  { value: 'digital', label: 'Digital/Online' },
-  { value: 'campaign', label: 'Branch Campaign' },
-  { value: 'other', label: 'Other' },
-];
 
 const NewLead = () => {
   const navigate = useNavigate();
@@ -73,24 +40,24 @@ const NewLead = () => {
   const { currentOrganization, user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCapturingLocation, setIsCapturingLocation] = useState(false);
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       mobileNo: '',
-      policyTypeCategory: '',
-      policyType: '',
-      premiumAmount: undefined,
-      villageCity: '',
-      district: '',
+      address: '',
+      village_city: '',
       state: '',
-      leadSource: '',
-      customerResponse: '',
-      followUpDate: undefined,
+      notes: '',
+      latitude: undefined,
+      longitude: undefined,
     },
   });
+
+  const { setValue, watch } = form;
+  const latitude = watch('latitude');
+  const longitude = watch('longitude');
 
   const captureLocation = async () => {
     if (!navigator.geolocation) {
@@ -108,10 +75,8 @@ const NewLead = () => {
         });
       });
 
-      setCoordinates({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      });
+      setValue('latitude', position.coords.latitude);
+      setValue('longitude', position.coords.longitude);
       toast.success('Location captured successfully');
     } catch (error) {
       console.error('Error capturing location:', error);
@@ -119,6 +84,37 @@ const NewLead = () => {
     } finally {
       setIsCapturingLocation(false);
     }
+  };
+
+  const handleUseMyLocation = () => {
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude: lat, longitude: lng } = position.coords;
+      setValue('latitude', lat);
+      setValue('longitude', lng);
+      // Reverse geocode via Nominatim (free, no API key)
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+          { headers: { 'User-Agent': 'FieldSync/1.0' } }
+        );
+        const data = await res.json();
+        if (data.address) {
+          setValue('village_city', data.address.city || data.address.town || data.address.village || '');
+          setValue('state', data.address.state || '');
+          setValue('address', data.display_name?.split(',').slice(0, 3).join(', ') || '');
+        }
+        toast.success('Location and address filled');
+      } catch (e) {
+        console.log('Reverse geocode failed:', e);
+        toast.info('Location captured but address lookup failed');
+      }
+    }, (error) => {
+      console.error('Geolocation error:', error);
+      toast.error('Failed to get location');
+    }, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+    });
   };
 
   const onSubmit = async (data: FormData) => {
@@ -132,19 +128,14 @@ const NewLead = () => {
       const newLead = await addLead({
         name: data.name,
         mobileNo: data.mobileNo || undefined,
-        policyTypeCategory: data.policyTypeCategory || undefined,
-        policyType: data.policyType || undefined,
-        premiumAmount: data.premiumAmount || undefined,
-        villageCity: data.villageCity || undefined,
-        district: data.district || undefined,
+        district: data.address || undefined,
+        villageCity: data.village_city || undefined,
         state: data.state || undefined,
-        leadSource: data.leadSource || undefined,
-        customerResponse: data.customerResponse || undefined,
-        followUpDate: data.followUpDate ? format(data.followUpDate, 'yyyy-MM-dd') : undefined,
-        latitude: coordinates?.lat,
-        longitude: coordinates?.lng,
+        customerResponse: data.notes || undefined,
+        latitude: data.latitude,
+        longitude: data.longitude,
         organizationId: currentOrganization.id,
-        status: 'lead',
+        status: 'active',
         createdBy: user?.id,
       });
 
@@ -156,7 +147,7 @@ const NewLead = () => {
         navigate('/dashboard/leads');
       }
     } catch (error) {
-      console.error('Error saving lead:', error);
+      console.error('Error saving customer:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -173,21 +164,21 @@ const NewLead = () => {
           className="text-muted-foreground"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Prospects
+          Back to Customers
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Add New Lead</CardTitle>
-          <CardDescription>Create a new prospect/lead</CardDescription>
+          <CardTitle>New Customer</CardTitle>
+          <CardDescription>Add a new customer</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Personal Details */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Personal Details</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Customer Details</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -207,91 +198,54 @@ const NewLead = () => {
                     name="mobileNo"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
+                        <FormLabel>Phone</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter mobile number" {...field} />
+                          <Input placeholder="Enter phone number" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-              </div>
-
-              {/* Policy Details */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Sales Details</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="policyTypeCategory"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sales Category</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {POLICY_CATEGORIES.map((cat) => (
-                              <SelectItem key={cat.value} value={cat.value}>
-                                {cat.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="policyType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sales Type</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter sales type" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="premiumAmount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Premium Amount (Annual)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="₹ Enter amount"
-                          {...field}
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               {/* Location */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Location</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-muted-foreground">Location</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUseMyLocation}
+                    className="gap-1"
+                  >
+                    <Navigation className="h-3 w-3" />
+                    Use My Location
+                  </Button>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name="villageCity"
+                    name="village_city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Village/City</FormLabel>
+                        <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter village or city" {...field} />
+                          <Input placeholder="Enter city" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -299,31 +253,18 @@ const NewLead = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="district"
+                    name="state"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>District</FormLabel>
+                        <FormLabel>State</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter district" {...field} />
+                          <Input placeholder="Enter state" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>State</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter state" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
@@ -337,94 +278,27 @@ const NewLead = () => {
                     ) : (
                       <MapPin className="h-4 w-4 mr-1" />
                     )}
-                    Capture Current Location
+                    Capture GPS
                   </Button>
-                  {coordinates && (
+                  {latitude && longitude && (
                     <span className="text-xs text-muted-foreground">
-                      📍 {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
+                      {latitude.toFixed(4)}, {longitude.toFixed(4)}
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Additional Details */}
+              {/* Notes */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Additional Details</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="leadSource"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Lead Source</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select source" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {LEAD_SOURCES.map((src) => (
-                              <SelectItem key={src.value} value={src.value}>
-                                {src.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="followUpDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Follow-up Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  'w-full pl-3 text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, 'PPP')
-                                ) : (
-                                  <span>Select date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < new Date()}
-                              initialFocus
-                              className={cn("p-3 pointer-events-auto")}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
                 <FormField
                   control={form.control}
-                  name="customerResponse"
+                  name="notes"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Notes</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Add any notes or customer response..."
+                          placeholder="Add any notes..."
                           className="resize-none"
                           rows={3}
                           {...field}
@@ -447,7 +321,7 @@ const NewLead = () => {
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                Save Lead
+                Save Customer
               </Button>
             </form>
           </Form>
