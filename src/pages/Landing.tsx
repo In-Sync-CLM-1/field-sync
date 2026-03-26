@@ -384,7 +384,7 @@ const Landing = () => {
               <p className="text-[15px] text-amber-800 leading-[1.7]">
                 15 agents &times; &#8377;299 = <strong>&#8377;4,485/month</strong>. If even one agent is padding their visit report, you are already losing more than this costs.
               </p>
-              <p className="text-[13px] text-amber-600 mt-2">Still 3&times; cheaper than BeatRoute, Lystloc, or any alternative that actually works.</p>
+              <p className="text-[13px] text-amber-600 mt-2">Priced for Indian field teams. Not enterprise budgets.</p>
             </div>
           </FadeIn>
 
