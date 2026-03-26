@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'Field-Sync',
-        short_name: 'Field-Sync',
+        name: 'In-Sync Field',
+        short_name: 'In-Sync Field',
         description: 'Manage field visits efficiently with offline support',
         theme_color: '#000000',
         background_color: '#ffffff',

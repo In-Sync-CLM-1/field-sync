@@ -43,7 +43,7 @@ export function applyOrganizationBranding(org: Organization) {
   }
 
   // Update document title with org name
-  document.title = `${org.name} - Field-Sync`;
+  document.title = `${org.name} - In-Sync Field`;
 
   // Store for use in UI components (header, sidebar, etc.)
   localStorage.setItem('org_branding', JSON.stringify({
@@ -78,5 +78,5 @@ export function clearBranding() {
     existingStyle.remove();
   }
   
-  document.title = 'Field-Sync';
+  document.title = 'In-Sync Field';
 }

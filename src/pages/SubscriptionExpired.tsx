@@ -35,7 +35,7 @@ export default function SubscriptionExpired() {
   const [signingOut, setSigningOut] = useState(false);
 
   const userCount = currentOrganization?.user_count || 1;
-  const pricePerUser = 99;
+  const pricePerUser = 299;
   const monthlyTotal = userCount * pricePerUser;
 
   const handleUpgrade = async () => {

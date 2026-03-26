@@ -202,7 +202,7 @@ export default function SubscriptionManagement() {
             <div>
               <h3 className="text-xl font-semibold">{currentPlan?.name || 'Pro Plan'}</h3>
               <p className="text-3xl font-bold text-primary">
-                ₹{currentPlan?.price_per_user || 99}
+                ₹{currentPlan?.price_per_user || 299}
                 <span className="text-sm font-normal text-muted-foreground">/user/month</span>
               </p>
             </div>
@@ -261,7 +261,7 @@ export default function SubscriptionManagement() {
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-sm text-muted-foreground">Monthly Total</span>
                 <span className="font-semibold text-lg">
-                  ₹{((currentPlan?.price_per_user || 99) * (currentOrganization?.user_count || 1)).toLocaleString()}
+                  ₹{((currentPlan?.price_per_user || 299) * (currentOrganization?.user_count || 1)).toLocaleString()}
                 </span>
               </div>
               {currentOrganization?.billing_email && (
