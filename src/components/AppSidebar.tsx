@@ -61,7 +61,6 @@ function getSectionsForRole(role: RoleType): NavSection[] {
       label: 'OVERVIEW',
       items: [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-        { icon: CalendarCheck, label: 'Today', path: '/dashboard/today' },
       ],
     },
     {
