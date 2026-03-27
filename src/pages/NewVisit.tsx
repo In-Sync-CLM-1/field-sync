@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Check, ChevronsUpDown, MapPin, Loader2, ArrowLeft, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { AgentSelector } from '@/components/AgentSelector';
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -61,6 +62,7 @@ export default function NewVisit() {
   const [manualLongitude, setManualLongitude] = useState('');
   const [useManualLocation, setUseManualLocation] = useState(false);
   const [autoSelectedNearest, setAutoSelectedNearest] = useState(false);
+  const [onBehalfUserId, setOnBehalfUserId] = useState<string | null>(null);
 
   const selectedLead = leads.find((l) => l.id === leadId);
   const leadHasLocation = selectedLead?.latitude && selectedLead?.longitude;
@@ -171,6 +173,7 @@ export default function NewVisit() {
         scheduled_date: scheduledDate || undefined,
         scheduled_time: scheduledTime || undefined,
         updateLeadLocation: shouldUpdateLeadLocation && (checkInLat !== 0 || checkInLng !== 0),
+        target_user_id: onBehalfUserId || undefined,
       },
       {
         onSuccess: (visit: any) => {
@@ -200,6 +203,9 @@ export default function NewVisit() {
           {isScheduling ? 'Schedule a future visit' : 'Select customer and check in'}
         </p>
       </div>
+
+      {/* Agent selector for managers/admins */}
+      <AgentSelector onAgentChange={(userId) => setOnBehalfUserId(userId)} />
 
       <Card>
         <CardHeader>

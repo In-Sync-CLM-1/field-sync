@@ -53,6 +53,7 @@ export interface VisitInput {
   scheduled_time?: string;
   checklist?: ChecklistItem[];
   updateLeadLocation?: boolean;
+  target_user_id?: string; // Create visit on behalf of another user (manager/admin)
 }
 
 export interface BulkVisitInput {
@@ -62,6 +63,7 @@ export interface BulkVisitInput {
   purpose?: string;
   notes?: string;
   checklist?: ChecklistItem[];
+  target_user_id?: string;
 }
 
 export interface ChecklistTemplate {
@@ -124,7 +126,7 @@ export const useVisits = () => {
           status: isScheduled ? 'scheduled' : 'in_progress',
           checklist: input.checklist as any,
           organization_id: currentOrganization.id,
-          user_id: user.id,
+          user_id: input.target_user_id || user.id,
         })
         .select()
         .single();
@@ -169,7 +171,7 @@ export const useVisits = () => {
         status: 'scheduled' as const,
         checklist: input.checklist as any,
         organization_id: currentOrganization.id,
-        user_id: user.id,
+        user_id: input.target_user_id || user.id,
       }));
 
       const { data, error } = await supabase

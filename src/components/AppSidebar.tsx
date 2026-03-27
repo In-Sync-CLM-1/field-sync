@@ -1,7 +1,8 @@
-import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, CalendarCheck, MapPin, UserCog } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, CalendarCheck, MapPin, UserCog, Globe } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,7 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import insyncLogoColor from '@/assets/insync-logo-color.png';
 
-type RoleType = 'agent' | 'manager' | 'admin';
+type RoleType = 'agent' | 'manager' | 'admin' | 'platform';
 
 interface NavSection {
   label: string;
@@ -29,6 +30,17 @@ interface NavSection {
 }
 
 function getSectionsForRole(role: RoleType): NavSection[] {
+  if (role === 'platform') {
+    return [
+      {
+        label: 'PLATFORM',
+        items: [
+          { icon: Globe, label: 'Platform Overview', path: '/dashboard' },
+        ],
+      },
+    ];
+  }
+
   if (role === 'agent') {
     return [
       {
@@ -69,11 +81,17 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const { user } = useAuth();
+  const isPlatformAdmin = useAuthStore((s) => s.isPlatformAdmin);
   const [userRole, setUserRole] = useState<RoleType>('agent');
 
   useEffect(() => {
     async function checkRole() {
       if (!user) return;
+
+      if (isPlatformAdmin) {
+        setUserRole('platform');
+        return;
+      }
 
       const { data: roles } = await supabase
         .from('user_roles')
@@ -81,18 +99,20 @@ export function AppSidebar() {
         .eq('user_id', user.id);
 
       const userRoles = roles?.map(r => r.role) || [];
-      const primaryRole: RoleType =
-        userRoles.some(r => ['admin', 'super_admin', 'platform_admin'].includes(r))
-          ? 'admin'
-          : userRoles.some(r => ['branch_manager', 'sales_manager', 'manager'].includes(r))
-          ? 'manager'
-          : 'agent';
 
-      setUserRole(primaryRole);
+      if (userRoles.includes('platform_admin')) {
+        setUserRole('platform');
+      } else if (userRoles.some(r => ['admin', 'super_admin'].includes(r))) {
+        setUserRole('admin');
+      } else if (userRoles.some(r => ['branch_manager', 'sales_manager', 'manager'].includes(r))) {
+        setUserRole('manager');
+      } else {
+        setUserRole('agent');
+      }
     }
 
     checkRole();
-  }, [user]);
+  }, [user, isPlatformAdmin]);
 
   const sections = getSectionsForRole(userRole);
   const currentPath = location.pathname;
@@ -111,6 +131,9 @@ export function AppSidebar() {
           <p className="text-xs text-white/60 mt-1.5 truncate text-center max-w-full">
             {user?.user_metadata?.full_name || user?.email}
           </p>
+        )}
+        {userRole === 'platform' && !collapsed && (
+          <span className="mt-1 text-[10px] font-semibold tracking-wider uppercase text-amber-400/80">Platform Admin</span>
         )}
       </SidebarHeader>
       <SidebarContent>

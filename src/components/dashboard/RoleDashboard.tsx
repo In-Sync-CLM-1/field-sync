@@ -1,18 +1,28 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import AgentDashboard from './AgentDashboard';
+import PlatformDashboard from '@/pages/PlatformDashboard';
 
-type DashboardTier = 'hq' | 'manager' | 'agent';
+type DashboardTier = 'platform' | 'hq' | 'manager' | 'agent';
 
 export default function RoleDashboard() {
   const { user } = useAuth();
+  const isPlatformAdmin = useAuthStore((s) => s.isPlatformAdmin);
   const [tier, setTier] = useState<DashboardTier | null>(null);
 
   useEffect(() => {
     async function detectRole() {
       if (!user) return;
+
+      // If already detected as platform admin by SubscriptionGate, skip query
+      if (isPlatformAdmin) {
+        setTier('platform');
+        return;
+      }
+
       const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
@@ -20,20 +30,21 @@ export default function RoleDashboard() {
 
       const userRoles = roles?.map((r) => r.role) || [];
 
-      if (
-        userRoles.includes('platform_admin') ||
+      if (userRoles.includes('platform_admin')) {
+        setTier('platform');
+      } else if (
         userRoles.includes('super_admin') ||
         userRoles.includes('admin')
       ) {
         setTier('hq');
-      } else if (userRoles.includes('branch_manager')) {
+      } else if (userRoles.includes('branch_manager') || userRoles.includes('manager')) {
         setTier('manager');
       } else {
         setTier('agent');
       }
     }
     detectRole();
-  }, [user]);
+  }, [user, isPlatformAdmin]);
 
   if (!tier) {
     return (
@@ -49,6 +60,9 @@ export default function RoleDashboard() {
     );
   }
 
-  // All roles use AgentDashboard for now
+  if (tier === 'platform') {
+    return <PlatformDashboard />;
+  }
+
   return <AgentDashboard />;
 }

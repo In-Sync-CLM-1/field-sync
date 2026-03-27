@@ -8,7 +8,7 @@ interface SubscriptionGateProps {
 }
 
 export function SubscriptionGate({ children }: SubscriptionGateProps) {
-  const { user, currentOrganization, setCurrentOrganization } = useAuthStore();
+  const { user, currentOrganization, setCurrentOrganization, setIsPlatformAdmin } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [isExpired, setIsExpired] = useState(false);
 
@@ -20,6 +20,20 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
       }
 
       try {
+        // Check if user is platform_admin
+        const { data: isPlatformAdminRole } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'platform_admin' as any,
+        });
+
+        if (isPlatformAdminRole) {
+          setIsPlatformAdmin(true);
+          setLoading(false);
+          return; // Platform admins bypass subscription checks
+        }
+
+        setIsPlatformAdmin(false);
+
         // Get user's profile to find their organization
         const { data: profile } = await supabase
           .from('profiles')
@@ -48,7 +62,7 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
         // Update the current organization in store with fresh data
         if (org) {
           setCurrentOrganization(org);
-          
+
           // Check if subscription is expired
           const expired = org.subscription_status === 'expired';
           setIsExpired(expired);
@@ -61,7 +75,7 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
     };
 
     checkSubscription();
-  }, [user, setCurrentOrganization]);
+  }, [user, setCurrentOrganization, setIsPlatformAdmin]);
 
   // Show loading state
   if (loading) {

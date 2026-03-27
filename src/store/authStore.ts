@@ -34,10 +34,12 @@ interface AuthStore {
   session: Session | null;
   loading: boolean;
   currentOrganization: Organization | null;
+  isPlatformAdmin: boolean;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
   setLoading: (loading: boolean) => void;
   setCurrentOrganization: (organization: Organization | null) => void;
+  setIsPlatformAdmin: (isPlatformAdmin: boolean) => void;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -45,6 +47,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   session: null,
   loading: true,
   currentOrganization: null,
+  isPlatformAdmin: false,
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
   setLoading: (loading) => set({ loading }),
@@ -57,4 +60,5 @@ export const useAuthStore = create<AuthStore>((set) => ({
       localStorage.removeItem('currentOrganization');
     }
   },
+  setIsPlatformAdmin: (isPlatformAdmin) => set({ isPlatformAdmin }),
 }));

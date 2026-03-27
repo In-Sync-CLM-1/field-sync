@@ -132,6 +132,8 @@ export interface DailyPlanLocal {
   healthInsuranceActual: number | null;  // Renamed from dbActual
   prospectsMarket?: string | null;  // Renamed from leadsMarket
   quotesMarket?: string | null;  // Renamed from loginsMarket
+  plannedLeadIds?: string[]; // Ordered list of lead IDs to visit
+  assignedBy?: string; // Manager/admin who assigned this plan
   status: string;
   correctedBy: string | null;
   originalValues: Record<string, unknown> | null;

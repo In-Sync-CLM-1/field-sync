@@ -313,15 +313,19 @@ export function useCreatePlanOffline() {
       health_insurance_target?: number;
       prospects_market?: string;
       quotes_market?: string;
+      planned_lead_ids?: string[];
+      target_user_id?: string; // Create plan for another user (manager assigning)
+      agent_full_name?: string; // Display name of target agent
     }) => {
       if (!user || !currentOrganization) throw new Error('Not authenticated');
 
       const localId = generateLocalId();
       const now = new Date();
-      
+      const targetUserId = input.target_user_id || user.id;
+
       const localPlan: DailyPlanLocal = {
         id: localId,
-        userId: user.id,
+        userId: targetUserId,
         organizationId: currentOrganization.id,
         planDate: input.plan_date,
         prospectsTarget: input.prospects_target,
@@ -336,6 +340,9 @@ export function useCreatePlanOffline() {
         healthInsuranceActual: 0,
         prospectsMarket: input.prospects_market || null,
         quotesMarket: input.quotes_market || null,
+        plannedLeadIds: input.planned_lead_ids || [],
+        assignedBy: input.target_user_id ? user.id : undefined,
+        agentFullName: input.agent_full_name || undefined,
         status: 'submitted',
         correctedBy: null,
         originalValues: null,

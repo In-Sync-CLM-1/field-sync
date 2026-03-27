@@ -11,10 +11,14 @@ import { useImageParser } from '@/hooks/useImageParser';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { db } from '@/lib/db';
+import { AgentSelector } from '@/components/AgentSelector';
 
 const OrdersPage = () => {
   const [activeTab, setActiveTab] = useState('orders');
   const { currentOrganization } = useAuthStore();
+
+  // Agent selector for managers/admins
+  const [onBehalfUserId, setOnBehalfUserId] = useState<string | null>(null);
 
   // Image parser
   const { parseImage, isLoading: isParsing } = useImageParser();
@@ -65,7 +69,7 @@ const OrdersPage = () => {
       const orderId = crypto.randomUUID();
       const orderRecord = {
         id: orderId,
-        user_id: user?.id || null,
+        user_id: onBehalfUserId || user?.id || null,
         items_text: orderData.items_text || orderData.items || '',
         total_amount: parseFloat(orderData.total_amount || orderData.total || '0') || 0,
         notes: orderData.notes || '',
@@ -128,7 +132,7 @@ const OrdersPage = () => {
       const invoiceId = crypto.randomUUID();
       const invoiceRecord = {
         id: invoiceId,
-        user_id: user?.id || null,
+        user_id: onBehalfUserId || user?.id || null,
         extracted_data: invoiceData,
         amount: parseFloat(invoiceData.total || invoiceData.amount || '0') || 0,
         organization_id: currentOrganization?.id || null,
@@ -197,7 +201,7 @@ const OrdersPage = () => {
       const collectionId = crypto.randomUUID();
       const collectionRecord = {
         id: collectionId,
-        user_id: user?.id || null,
+        user_id: onBehalfUserId || user?.id || null,
         amount: parseFloat(collectionAmount) || 0,
         description: collectionDescription || null,
         organization_id: currentOrganization?.id || null,
@@ -241,6 +245,9 @@ const OrdersPage = () => {
         </h1>
         <p className="text-muted-foreground">Orders, invoices, and collections</p>
       </div>
+
+      {/* Agent selector for managers/admins */}
+      <AgentSelector onAgentChange={(userId) => setOnBehalfUserId(userId)} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
