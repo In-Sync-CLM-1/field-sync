@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,13 +16,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, AlertCircle, Users, Search, UserPlus, KeyRound, Edit2, Trash2 } from 'lucide-react';
+import { Loader2, AlertCircle, Users, Search, UserPlus, KeyRound, Edit2, Trash2, CheckCircle2, Phone, Mail } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { usePagination } from '@/hooks/usePagination';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 type UserRole = {
   role: string;
@@ -90,6 +91,8 @@ const getRoleBadgeVariant = (role: string) => {
   }
 };
 
+type CreateStep = 'details' | 'phone-otp' | 'email-otp';
+
 export default function Forms() {
   const { user } = useAuth();
   const { currentOrganization } = useAuthStore();
@@ -104,6 +107,16 @@ export default function Forms() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // OTP verification state for create user
+  const [createStep, setCreateStep] = useState<CreateStep>('details');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -214,11 +227,108 @@ export default function Forms() {
     checkAdminRole();
   }, [user]);
 
-  const onSubmit = async (values: CreateUserForm) => {
-    setIsCreating(true);
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
+  const resetCreateDialog = useCallback(() => {
+    setCreateStep('details');
+    setPhoneOtp('');
+    setEmailOtp('');
+    setPhoneVerified(false);
+    setEmailVerified(false);
+    setResendCooldown(0);
+    form.reset();
+  }, [form]);
+
+  const sendOtp = async (channel: 'whatsapp' | 'email') => {
+    const values = form.getValues();
+    setIsSendingOtp(true);
     try {
-      // Call edge function to create user (doesn't log out current admin)
+      const { data, error } = await supabase.functions.invoke('send-public-otp', {
+        body: {
+          action: 'send',
+          channel,
+          ...(channel === 'whatsapp' ? { phone: values.phone } : { email: values.email }),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setResendCooldown(60);
+      toast({
+        title: 'OTP Sent',
+        description: channel === 'whatsapp'
+          ? `WhatsApp OTP sent to ${values.phone}`
+          : `Email OTP sent to ${values.email}`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Failed to send OTP',
+        description: err instanceof Error ? err.message : 'Try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const verifyOtp = async (channel: 'whatsapp' | 'email') => {
+    const values = form.getValues();
+    const code = channel === 'whatsapp' ? phoneOtp : emailOtp;
+    if (code.length !== 6) return;
+
+    setIsVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-public-otp', {
+        body: {
+          action: 'verify',
+          channel,
+          ...(channel === 'whatsapp' ? { phone: values.phone } : { email: values.email }),
+          otp: code,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (channel === 'whatsapp') {
+        setPhoneVerified(true);
+        // Move to email OTP step
+        setCreateStep('email-otp');
+        setResendCooldown(0);
+        // Auto-send email OTP
+        await sendOtp('email');
+      } else {
+        setEmailVerified(true);
+        // Both verified — create the user
+        await createUserAfterVerification();
+      }
+    } catch (err) {
+      toast({
+        title: 'Verification failed',
+        description: err instanceof Error ? err.message : 'Invalid OTP',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleDetailsSubmit = async () => {
+    // Validate form first
+    const valid = await form.trigger();
+    if (!valid) return;
+    // Move to phone OTP step and send OTP
+    setCreateStep('phone-otp');
+    await sendOtp('whatsapp');
+  };
+
+  const createUserAfterVerification = async () => {
+    const values = form.getValues();
+    setIsCreating(true);
+    try {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
           email: values.email,
@@ -238,7 +348,7 @@ export default function Forms() {
         description: `${values.fullName} has been successfully created with ${ROLE_DISPLAY_NAMES[values.role]} role.`,
       });
 
-      form.reset();
+      resetCreateDialog();
       setDialogOpen(false);
       refetchUsers();
     } catch (error) {
@@ -408,122 +518,229 @@ export default function Forms() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetCreateDialog(); }}>
             <DialogTrigger asChild>
               <Button size="lg" className="font-bold text-base" data-tour="add-user-button">
                 <UserPlus className="h-5 w-5 mr-2" />
                 Add User
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px]" onInteractOutside={(e) => { if (createStep !== 'details') e.preventDefault(); }}>
             <DialogHeader>
-              <DialogTitle>Create New User</DialogTitle>
+              <DialogTitle>
+                {createStep === 'details' && 'Create New User'}
+                {createStep === 'phone-otp' && 'Verify Phone Number'}
+                {createStep === 'email-otp' && 'Verify Email Address'}
+              </DialogTitle>
               <DialogDescription>
-                Add a new user to the application with their details and role.
+                {createStep === 'details' && 'Add a new user with their details and role.'}
+                {createStep === 'phone-otp' && (
+                  <>Enter the 6-digit OTP sent via WhatsApp to <strong>{form.getValues('phone')}</strong></>
+                )}
+                {createStep === 'email-otp' && (
+                  <>Enter the 6-digit OTP sent to <strong>{form.getValues('email')}</strong></>
+                )}
               </DialogDescription>
             </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="John Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="john@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+1234567890" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+
+            {/* Progress indicator */}
+            {createStep !== 'details' && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className={`flex items-center gap-1 ${phoneVerified ? 'text-green-600' : 'text-primary'}`}>
+                  <Phone className="h-3 w-3" />
+                  {phoneVerified ? <CheckCircle2 className="h-3 w-3" /> : <span>Phone</span>}
+                </div>
+                <span>→</span>
+                <div className={`flex items-center gap-1 ${emailVerified ? 'text-green-600' : createStep === 'email-otp' ? 'text-primary' : 'text-muted-foreground'}`}>
+                  <Mail className="h-3 w-3" />
+                  {emailVerified ? <CheckCircle2 className="h-3 w-3" /> : <span>Email</span>}
+                </div>
+                <span>→</span>
+                <span className={isCreating ? 'text-primary' : 'text-muted-foreground'}>Create</span>
+              </div>
+            )}
+
+            {/* Step 1: Details */}
+            {createStep === 'details' && (
+              <Form {...form}>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a role" />
-                          </SelectTrigger>
+                          <Input placeholder="John Doe" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="agent">Agent</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button type="submit" disabled={isCreating}>
-                    {isCreating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating...
-                      </>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="john@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone (WhatsApp)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="9876543210" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="agent">Agent</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <Button type="button" onClick={handleDetailsSubmit} disabled={isSendingOtp}>
+                      {isSendingOtp ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending OTP...</>
+                      ) : (
+                        'Verify & Create'
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </div>
+              </Form>
+            )}
+
+            {/* Step 2: Phone OTP */}
+            {createStep === 'phone-otp' && (
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <InputOTP maxLength={6} value={phoneOtp} onChange={setPhoneOtp}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={resendCooldown > 0 || isSendingOtp}
+                    onClick={() => sendOtp('whatsapp')}
+                  >
+                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
+                  </Button>
+                  <Button
+                    disabled={phoneOtp.length !== 6 || isVerifyingOtp}
+                    onClick={() => verifyOtp('whatsapp')}
+                  >
+                    {isVerifyingOtp ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</>
                     ) : (
-                      'Create User'
+                      'Verify Phone'
                     )}
                   </Button>
-                </DialogFooter>
-              </form>
-            </Form>
+                </div>
+                <Button variant="ghost" size="sm" className="w-full" onClick={() => { setCreateStep('details'); setPhoneOtp(''); }}>
+                  Back to details
+                </Button>
+              </div>
+            )}
+
+            {/* Step 3: Email OTP */}
+            {createStep === 'email-otp' && (
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <InputOTP maxLength={6} value={emailOtp} onChange={setEmailOtp}>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={resendCooldown > 0 || isSendingOtp}
+                    onClick={() => sendOtp('email')}
+                  >
+                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
+                  </Button>
+                  <Button
+                    disabled={emailOtp.length !== 6 || isVerifyingOtp || isCreating}
+                    onClick={() => verifyOtp('email')}
+                  >
+                    {isVerifyingOtp || isCreating ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isCreating ? 'Creating...' : 'Verifying...'}</>
+                    ) : (
+                      'Verify & Create'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
         </div>
