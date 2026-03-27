@@ -97,7 +97,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const myStats = useMyStats();
   const { currentOrganization } = useAuthStore();
-  const [userRole, setUserRole] = useState<string>('sales_officer');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Fetch follow-ups due today
   const { data: followUpLeads = [] } = useQuery({
@@ -127,13 +127,7 @@ export default function Dashboard() {
         .select('role')
         .eq('user_id', user.id);
       const userRoles = roles?.map(r => r.role) || [];
-      if (userRoles.includes('admin') || userRoles.includes('super_admin') || userRoles.includes('platform_admin')) {
-        setUserRole('admin');
-      } else if (userRoles.includes('branch_manager')) {
-        setUserRole('branch_manager');
-      } else {
-        setUserRole('sales_officer');
-      }
+      setIsAdmin(userRoles.some(r => ['admin', 'platform_admin'].includes(r)));
     }
     checkRole();
   }, [user]);
@@ -294,28 +288,14 @@ export default function Dashboard() {
       </div>
 
       {/* Role-based navigation banner */}
-      {userRole === 'admin' && (
-        <Card className="border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => navigate('/dashboard/branch-dashboard')}>
+      {isAdmin && (
+        <Card className="border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => navigate('/dashboard/team')}>
           <CardContent className="flex items-center justify-between py-3 px-4">
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 text-primary" />
               <div>
-                <p className="text-sm font-medium text-foreground">Branch Dashboard</p>
-                <p className="text-xs text-muted-foreground">View organization-wide performance</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-primary" />
-          </CardContent>
-        </Card>
-      )}
-      {userRole === 'branch_manager' && (
-        <Card className="border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => navigate('/dashboard/team-dashboard')}>
-          <CardContent className="flex items-center justify-between py-3 px-4">
-            <div className="flex items-center gap-2">
-              <LayoutDashboard className="h-4 w-4 text-primary" />
-              <div>
                 <p className="text-sm font-medium text-foreground">Team Dashboard</p>
-                <p className="text-xs text-muted-foreground">Monitor your team's performance</p>
+                <p className="text-xs text-muted-foreground">View organization-wide performance</p>
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-primary" />

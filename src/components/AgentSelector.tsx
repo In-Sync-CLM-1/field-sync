@@ -50,9 +50,7 @@ export function AgentSelector({ onAgentChange }: AgentSelectorProps) {
         .select('role')
         .eq('user_id', user.id);
       const userRoles = roles?.map(r => r.role) || [];
-      const is = userRoles.some(r =>
-        ['admin', 'super_admin', 'platform_admin', 'manager', 'branch_manager'].includes(r)
-      );
+      const is = userRoles.some(r => ['admin', 'platform_admin'].includes(r));
       setIsManagerOrAdmin(is);
     }
     checkRole();
@@ -164,9 +162,7 @@ export function useAgentSelector() {
         .eq('user_id', user.id);
       const userRoles = roles?.map(r => r.role) || [];
       setIsManagerOrAdmin(
-        userRoles.some(r =>
-          ['admin', 'super_admin', 'platform_admin', 'manager', 'branch_manager'].includes(r)
-        )
+        userRoles.some(r => ['admin', 'platform_admin'].includes(r))
       );
     }
     checkRole();

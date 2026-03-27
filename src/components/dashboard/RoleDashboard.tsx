@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import AgentDashboard from './AgentDashboard';
 import PlatformDashboard from '@/pages/PlatformDashboard';
 
-type DashboardTier = 'platform' | 'hq' | 'manager' | 'agent';
+type DashboardTier = 'platform' | 'admin' | 'agent';
 
 export default function RoleDashboard() {
   const { user } = useAuth();
@@ -17,7 +17,6 @@ export default function RoleDashboard() {
     async function detectRole() {
       if (!user) return;
 
-      // If already detected as platform admin by SubscriptionGate, skip query
       if (isPlatformAdmin) {
         setTier('platform');
         return;
@@ -33,12 +32,9 @@ export default function RoleDashboard() {
       if (userRoles.includes('platform_admin')) {
         setTier('platform');
       } else if (
-        userRoles.includes('super_admin') ||
-        userRoles.includes('admin')
+        userRoles.some(r => ['admin', 'super_admin', 'branch_manager'].includes(r))
       ) {
-        setTier('hq');
-      } else if (userRoles.includes('branch_manager') || userRoles.includes('manager')) {
-        setTier('manager');
+        setTier('admin');
       } else {
         setTier('agent');
       }

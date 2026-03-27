@@ -287,12 +287,12 @@ export default function Auth() {
 
           organizationId = newOrg.id;
 
-          // Remove auto-assigned sales_officer role and assign admin instead
+          // Remove auto-assigned agent role and assign admin instead
           await supabase
             .from('user_roles')
             .delete()
             .eq('user_id', newUser.id)
-            .eq('role', 'sales_officer');
+            .eq('role', 'agent');
 
           const { error: roleError } = await supabase
             .from('user_roles')

@@ -22,7 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import insyncLogoColor from '@/assets/insync-logo-color.png';
 
-type RoleType = 'agent' | 'manager' | 'admin' | 'platform';
+type RoleType = 'agent' | 'admin' | 'platform';
 
 interface NavSection {
   label: string;
@@ -113,10 +113,8 @@ export function AppSidebar() {
 
       if (userRoles.includes('platform_admin')) {
         setUserRole('platform');
-      } else if (userRoles.some(r => ['admin', 'super_admin'].includes(r))) {
+      } else if (userRoles.some(r => ['admin', 'super_admin', 'branch_manager'].includes(r))) {
         setUserRole('admin');
-      } else if (userRoles.some(r => ['branch_manager', 'sales_manager', 'manager'].includes(r))) {
-        setUserRole('manager');
       } else {
         setUserRole('agent');
       }

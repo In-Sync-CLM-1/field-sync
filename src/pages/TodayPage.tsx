@@ -31,7 +31,7 @@ const TodayPage = () => {
   const navigate = useNavigate();
   const { todayAttendance, punchIn, punchOut } = useAttendance();
   const { visits } = useVisits();
-  const [userRole, setUserRole] = useState<string>('agent');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMemberStatus[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(false);
 
@@ -80,13 +80,7 @@ const TodayPage = () => {
         .select('role')
         .eq('user_id', user.id);
       const userRoles = roles?.map(r => r.role) || [];
-      if (userRoles.includes('admin') || userRoles.includes('super_admin') || userRoles.includes('platform_admin')) {
-        setUserRole('admin');
-      } else if (userRoles.includes('manager') || userRoles.includes('branch_manager')) {
-        setUserRole('manager');
-      } else {
-        setUserRole('agent');
-      }
+      setIsAdmin(userRoles.some(r => ['admin', 'platform_admin'].includes(r)));
     }
     checkRole();
   }, [user]);
@@ -94,7 +88,7 @@ const TodayPage = () => {
   // Fetch team data for managers/admins
   useEffect(() => {
     async function fetchTeamData() {
-      if ((userRole !== 'manager' && userRole !== 'admin') || !currentOrganization) return;
+      if (!isAdmin || !currentOrganization) return;
       setLoadingTeam(true);
       try {
         const { data: orgMembers } = await supabase
@@ -149,7 +143,7 @@ const TodayPage = () => {
       }
     }
     fetchTeamData();
-  }, [userRole, currentOrganization]);
+  }, [isAdmin, currentOrganization]);
 
   const todayVisits = visits?.filter(v => {
     const visitDate = v.created_at ? format(new Date(v.created_at), 'yyyy-MM-dd') : '';
@@ -167,7 +161,6 @@ const TodayPage = () => {
   const totalPlanned = plannedLeads.length || todayVisits.length;
   const remainingVisits = totalPlanned - completedVisits;
   const isPunchedIn = todayAttendance && todayAttendance.punch_in_time && !todayAttendance.punch_out_time;
-  const isManagerOrAdmin = userRole === 'manager' || userRole === 'admin';
 
   // Open Google Maps directions
   const handleNavigate = (lead: Lead) => {
@@ -235,7 +228,7 @@ const TodayPage = () => {
       </Card>
 
       {/* Team View for Managers/Admins */}
-      {isManagerOrAdmin && (
+      {isAdmin && (
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Users className="h-5 w-5 text-primary" />
@@ -398,7 +391,7 @@ const TodayPage = () => {
       {plannedLeads.length === 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">{isManagerOrAdmin ? 'My Visits' : "Today's Visits"}</h2>
+            <h2 className="text-lg font-semibold">{isAdmin ? 'My Visits' : "Today's Visits"}</h2>
             <Button size="sm" onClick={() => navigate('/dashboard/visits/new')}>+ New Visit</Button>
           </div>
           {todayVisits.length === 0 ? (

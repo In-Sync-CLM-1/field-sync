@@ -17,7 +17,7 @@ export default function Attendance() {
   const { currentOrganization } = useAuthStore();
   const { todayAttendance, myHistory, teamAttendance, punchIn, punchOut } = useAttendance();
   const [loading, setLoading] = useState(false);
-  const [userRole, setUserRole] = useState<string>('sales_officer');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Check role
   useState(() => {
@@ -28,15 +28,9 @@ export default function Attendance() {
       .eq('user_id', user.id)
       .then(({ data }) => {
         const roles = data?.map((r) => r.role) || [];
-        if (roles.includes('admin') || roles.includes('super_admin') || roles.includes('platform_admin')) {
-          setUserRole('admin');
-        } else if (roles.includes('branch_manager') || roles.includes('manager')) {
-          setUserRole('manager');
-        }
+        setIsAdmin(roles.some(r => ['admin', 'platform_admin'].includes(r)));
       });
   });
-
-  const isManagerOrAdmin = userRole === 'admin' || userRole === 'manager';
   const activeAttendance = todayAttendance.data;
   const activeAttendanceId = activeAttendance?.status === 'active' ? activeAttendance.id : null;
 
@@ -165,7 +159,7 @@ export default function Attendance() {
 
 
       {/* Manager: Team Attendance */}
-      {isManagerOrAdmin && (
+      {isAdmin && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Team Attendance — Today</CardTitle>

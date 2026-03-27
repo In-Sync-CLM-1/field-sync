@@ -12,17 +12,8 @@ import { toast } from 'sonner';
 import { User, Mail, Phone, Building2, Shield, Save, Loader2 } from 'lucide-react';
 const ROLE_LABELS: Record<string, string> = {
   platform_admin: 'Platform Admin',
-  super_admin: 'Super Admin',
   admin: 'Admin',
-  branch_manager: 'Branch Manager',
-  sales_officer: 'Sales Officer',
-  field_agent: 'Field Agent',
-  manager: 'Manager',
-  sales_manager: 'Sales Manager',
-  sales_agent: 'Sales Agent',
-  support_manager: 'Support Manager',
-  support_agent: 'Support Agent',
-  analyst: 'Analyst',
+  agent: 'Agent',
 };
 const getRoleLabel = (role: string) => ROLE_LABELS[role] || role;
 

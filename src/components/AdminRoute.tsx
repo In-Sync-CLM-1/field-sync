@@ -20,29 +20,15 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
         return;
       }
 
-      // Check if user has admin, super_admin, or platform_admin role
-      const { data: isAdminRole, error: adminError } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin'
-      });
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
 
-      const { data: isSuperAdminRole, error: superAdminError } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'super_admin'
-      });
-
-      const { data: isPlatformAdminRole, error: platformAdminError } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'platform_admin'
-      });
-
-      if (adminError || superAdminError || platformAdminError) {
-        console.error('Error checking admin role:', adminError || superAdminError || platformAdminError);
-        setIsAdmin(false);
-      } else {
-        setIsAdmin(!!isAdminRole || !!isSuperAdminRole || !!isPlatformAdminRole);
-      }
-      
+      const userRoles = roles?.map(r => r.role) || [];
+      setIsAdmin(
+        userRoles.some(r => ['admin', 'super_admin', 'platform_admin'].includes(r))
+      );
       setCheckingRole(false);
     }
 

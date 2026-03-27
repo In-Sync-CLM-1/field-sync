@@ -61,7 +61,7 @@ export default function Layout() {
         .eq('user_id', user.id);
       
       const userRoles = roles?.map(r => r.role) || [];
-      setIsAdmin(userRoles.some(r => ['admin', 'super_admin'].includes(r)));
+      setIsAdmin(userRoles.some(r => ['admin', 'platform_admin'].includes(r)));
     }
 
     checkRole();

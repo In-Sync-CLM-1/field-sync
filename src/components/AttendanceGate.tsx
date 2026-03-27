@@ -12,7 +12,7 @@ interface AttendanceGateProps {
   children: ReactNode;
 }
 
-const GATED_ROLES = ['sales_officer', 'branch_manager'];
+const GATED_ROLES = ['agent'];
 
 export function AttendanceGate({ children }: AttendanceGateProps) {
   const user = useAuthStore((s) => s.user);

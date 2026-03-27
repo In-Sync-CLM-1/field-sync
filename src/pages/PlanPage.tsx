@@ -40,14 +40,13 @@ const PlanPage = () => {
   const [orderedLeadIds, setOrderedLeadIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Manager/admin state
-  const [userRole, setUserRole] = useState<'agent' | 'manager' | 'admin'>('agent');
+  // Admin state
+  const [isAdmin, setIsAdmin] = useState(false);
   const [orgMembers, setOrgMembers] = useState<OrgMember[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<OrgMember | null>(null);
   const [agentSearchQuery, setAgentSearchQuery] = useState('');
 
-  const isManagerOrAdmin = userRole === 'manager' || userRole === 'admin';
-  const totalSteps = isManagerOrAdmin ? 4 : 3;
+  const totalSteps = isAdmin ? 4 : 3;
 
   // Check user role
   useEffect(() => {
@@ -58,11 +57,7 @@ const PlanPage = () => {
         .select('role')
         .eq('user_id', user.id);
       const userRoles = roles?.map(r => r.role) || [];
-      if (userRoles.includes('admin') || userRoles.includes('super_admin') || userRoles.includes('platform_admin')) {
-        setUserRole('admin');
-      } else if (userRoles.includes('manager') || userRoles.includes('branch_manager')) {
-        setUserRole('manager');
-      }
+      setIsAdmin(userRoles.some(r => ['admin', 'platform_admin'].includes(r)));
     }
     checkRole();
   }, [user]);
@@ -115,7 +110,7 @@ const PlanPage = () => {
   // Get existing plans — managers see org-wide, agents see their own
   const existingPlans = useLiveQuery(async () => {
     if (!user) return [];
-    if (isManagerOrAdmin && currentOrganization) {
+    if (isAdmin && currentOrganization) {
       const plans = await db.dailyPlans
         .where('organizationId')
         .equals(currentOrganization.id)
@@ -127,7 +122,7 @@ const PlanPage = () => {
       .equals(user.id)
       .toArray();
     return plans.sort((a, b) => b.planDate.localeCompare(a.planDate));
-  }, [user?.id, currentOrganization?.id, isManagerOrAdmin]) || [];
+  }, [user?.id, currentOrganization?.id, isAdmin]) || [];
 
   // Filtered leads for the select step
   const filteredLeads = useMemo(() => {
@@ -227,7 +222,7 @@ const PlanPage = () => {
 
   // What the "Create" button does — managers pick agent first, agents go to date
   const handleCreateClick = () => {
-    if (isManagerOrAdmin) {
+    if (isAdmin) {
       setStep('agent');
     } else {
       setStep('date');
@@ -261,7 +256,7 @@ const PlanPage = () => {
         {existingPlans.length > 0 && (
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              {isManagerOrAdmin ? 'All Plans' : 'Your Plans'}
+              {isAdmin ? 'All Plans' : 'Your Plans'}
             </h2>
             {existingPlans.map(plan => {
               const leadCount = plan.plannedLeadIds?.length || 0;
@@ -274,10 +269,10 @@ const PlanPage = () => {
                         {format(new Date(plan.planDate + 'T00:00:00'), 'EEE, MMM d, yyyy')}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {isManagerOrAdmin && !isOwnPlan && plan.agentFullName && (
+                        {isAdmin && !isOwnPlan && plan.agentFullName && (
                           <span className="font-medium text-foreground">{plan.agentFullName} — </span>
                         )}
-                        {isManagerOrAdmin && isOwnPlan && (
+                        {isAdmin && isOwnPlan && (
                           <span className="font-medium text-foreground">You — </span>
                         )}
                         {leadCount} {leadCount === 1 ? 'lead' : 'leads'} planned
@@ -415,14 +410,14 @@ const PlanPage = () => {
 
   // ──────────────── STEP: DATE SELECTION ────────────────
   if (step === 'date') {
-    const dateStepNum = isManagerOrAdmin ? 2 : 1;
+    const dateStepNum = isAdmin ? 2 : 1;
     return (
       <div className="p-4 space-y-4 min-h-screen">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setStep(isManagerOrAdmin ? 'agent' : 'list')}
+            onClick={() => setStep(isAdmin ? 'agent' : 'list')}
             className="gap-1"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -461,7 +456,7 @@ const PlanPage = () => {
 
   // ──────────────── STEP: SELECT LEADS ────────────────
   if (step === 'select') {
-    const selectStepNum = isManagerOrAdmin ? 3 : 2;
+    const selectStepNum = isAdmin ? 3 : 2;
     return (
       <div className="p-4 space-y-4 min-h-screen">
         <div className="flex items-center justify-between">
@@ -562,7 +557,7 @@ const PlanPage = () => {
 
   // ──────────────── STEP: ORDER LEADS & SUBMIT ────────────────
   if (step === 'order') {
-    const orderStepNum = isManagerOrAdmin ? 4 : 3;
+    const orderStepNum = isAdmin ? 4 : 3;
     return (
       <div className="p-4 space-y-4 min-h-screen">
         <div className="flex items-center justify-between">

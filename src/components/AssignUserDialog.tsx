@@ -48,33 +48,22 @@ export function AssignUserDialog({
   const [selectedUserId, setSelectedUserId] = useState<string>(currentAssigneeId || 'none');
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check if current user is admin
   useEffect(() => {
     async function checkAdminRole() {
       if (!user) return;
 
-      const { data: isAdminRole } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin'
-      });
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
 
-      const { data: isSuperAdminRole } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'super_admin'
-      });
-
-      const { data: isPlatformAdminRole } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'platform_admin'
-      });
-
-      setIsAdmin(!!isAdminRole || !!isSuperAdminRole || !!isPlatformAdminRole);
+      const userRoles = roles?.map(r => r.role) || [];
+      setIsAdmin(userRoles.some(r => ['admin', 'platform_admin'].includes(r)));
     }
 
     checkAdminRole();
   }, [user]);
 
-  // Fetch all users in the organization
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ['assignable-users'],
     queryFn: async () => {
@@ -90,7 +79,6 @@ export function AssignUserDialog({
     enabled: open && isAdmin,
   });
 
-  // Mutation to assign user
   const assignMutation = useMutation({
     mutationFn: async (userId: string | null) => {
       if (entityType === 'lead') {
@@ -103,7 +91,7 @@ export function AssignUserDialog({
       } else if (entityType === 'visit') {
         const { error } = await supabase
           .from('visits')
-          .update({ user_id: userId! }) // visits must have a user_id
+          .update({ user_id: userId! })
           .eq('id', entityId);
 
         if (error) throw error;
@@ -124,17 +112,15 @@ export function AssignUserDialog({
 
   const handleAssign = () => {
     const userId = selectedUserId === 'none' ? null : selectedUserId;
-    
-    // Visits must have a user_id, so don't allow null
+
     if (entityType === 'visit' && !userId) {
       toast.error('Visits must be assigned to a user');
       return;
     }
-    
+
     assignMutation.mutate(userId);
   };
 
-  // Don't render if not admin
   if (!isAdmin) {
     return null;
   }
@@ -196,8 +182,8 @@ export function AssignUserDialog({
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleAssign} 
+          <Button
+            onClick={handleAssign}
             disabled={assignMutation.isPending || (entityType === 'visit' && selectedUserId === 'none')}
           >
             {assignMutation.isPending ? (

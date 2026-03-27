@@ -28,11 +28,6 @@ type UserRole = {
   role: string;
 };
 
-type Branch = {
-  id: string;
-  name: string;
-};
-
 type UserWithRoles = {
   id: string;
   full_name: string | null;
@@ -49,7 +44,7 @@ const createUserSchema = z.object({
   phone: z.string().min(10, 'Phone must be at least 10 characters').max(20),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
-  role: z.enum(['sales_officer', 'branch_manager', 'admin', 'super_admin']),
+  role: z.enum(['agent', 'admin']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -70,9 +65,7 @@ type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 const editUserSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
   phone: z.string().min(10, 'Phone must be at least 10 characters').max(20),
-  role: z.enum(['sales_officer', 'branch_manager', 'admin', 'super_admin']),
-  branchId: z.string().optional(),
-  reportingManagerId: z.string().optional(),
+  role: z.enum(['agent', 'admin']),
   isActive: z.boolean(),
 });
 
@@ -80,23 +73,18 @@ type EditUserForm = z.infer<typeof editUserSchema>;
 
 // Role display names for UI
 const ROLE_DISPLAY_NAMES: Record<string, string> = {
-  sales_officer: 'Sales Officer',
-  branch_manager: 'Branch Manager',
+  agent: 'Agent',
   admin: 'Admin',
-  super_admin: 'Super Admin',
   platform_admin: 'Platform Admin',
 };
 
 // Get badge variant based on role
 const getRoleBadgeVariant = (role: string) => {
   switch (role) {
-    case 'super_admin':
     case 'platform_admin':
       return 'destructive';
     case 'admin':
       return 'default';
-    case 'branch_manager':
-      return 'secondary';
     default:
       return 'outline';
   }
@@ -125,7 +113,7 @@ export default function Forms() {
       phone: '',
       password: '',
       confirmPassword: '',
-      role: 'sales_officer',
+      role: 'agent',
     },
   });
 
@@ -142,9 +130,7 @@ export default function Forms() {
     defaultValues: {
       fullName: '',
       phone: '',
-      role: 'sales_officer',
-      branchId: '',
-      reportingManagerId: '',
+      role: 'agent',
       isActive: true,
     },
   });
@@ -181,27 +167,6 @@ export default function Forms() {
     enabled: isAdmin,
   });
 
-  // Fetch branches for dropdown
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('branches')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) throw error;
-      return data as Branch[];
-    },
-    enabled: isAdmin,
-  });
-
-  // Get potential managers (branch_managers, admins, super_admins)
-  const potentialManagers = users.filter(u => 
-    u.user_roles.some(r => ['branch_manager', 'admin', 'super_admin'].includes(r.role))
-  );
-
   // Filter users based on search query
   const filteredUsers = users.filter((user) => {
     // Hide platform_admin users from the list
@@ -237,23 +202,13 @@ export default function Forms() {
     async function checkAdminRole() {
       if (!user) return;
 
-      // Check if user has admin, super_admin, or platform_admin role
-      const { data: isAdminRole } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin'
-      });
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
 
-      const { data: isSuperAdminRole } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'super_admin'
-      });
-
-      const { data: isPlatformAdminRole } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'platform_admin'
-      });
-
-      setIsAdmin(!!isAdminRole || !!isSuperAdminRole || !!isPlatformAdminRole);
+      const userRoles = roles?.map(r => r.role) || [];
+      setIsAdmin(userRoles.some(r => ['admin', 'platform_admin'].includes(r)));
     }
 
     checkAdminRole();
@@ -342,15 +297,11 @@ export default function Forms() {
 
   const handleEditClick = (user: UserWithRoles) => {
     setSelectedUser(user);
-    const primaryRole = user.user_roles[0]?.role || 'sales_officer';
+    const primaryRole = user.user_roles[0]?.role || 'agent';
     editForm.reset({
       fullName: user.full_name || '',
       phone: user.phone || '',
-      role: ['sales_officer', 'branch_manager', 'admin', 'super_admin'].includes(primaryRole) 
-        ? primaryRole as 'sales_officer' | 'branch_manager' | 'admin' | 'super_admin'
-        : 'sales_officer',
-      branchId: user.branch_id || '',
-      reportingManagerId: user.reporting_manager_id || '',
+      role: primaryRole === 'admin' ? 'admin' : 'agent',
       isActive: user.is_active,
     });
     setEditDialogOpen(true);
@@ -373,8 +324,6 @@ export default function Forms() {
           fullName: values.fullName,
           phone: values.phone,
           role: values.role,
-          branchId: values.branchId || null,
-          reportingManagerId: values.reportingManagerId || null,
           isActive: values.isActive,
         },
       });
@@ -553,10 +502,8 @@ export default function Forms() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="sales_officer">Sales Officer</SelectItem>
-                          <SelectItem value="branch_manager">Branch Manager</SelectItem>
+                          <SelectItem value="agent">Agent</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="super_admin">Super Admin</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -686,62 +633,8 @@ export default function Forms() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="sales_officer">Sales Officer</SelectItem>
-                        <SelectItem value="branch_manager">Branch Manager</SelectItem>
+                        <SelectItem value="agent">Agent</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="super_admin">Super Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="branchId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Branch</FormLabel>
-                    <Select onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} value={field.value || 'none'}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a branch (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">No Branch</SelectItem>
-                        {branches.map((branch) => (
-                          <SelectItem key={branch.id} value={branch.id}>
-                            {branch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="reportingManagerId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reporting Manager</FormLabel>
-                    <Select onValueChange={(val) => field.onChange(val === 'none' ? '' : val)} value={field.value || 'none'}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a manager (optional)" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">No Manager</SelectItem>
-                        {potentialManagers
-                          .filter(m => m.id !== selectedUser?.id)
-                          .map((manager) => (
-                            <SelectItem key={manager.id} value={manager.id}>
-                              {manager.full_name || 'Unnamed'} ({manager.user_roles[0]?.role || 'user'})
-                            </SelectItem>
-                          ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
