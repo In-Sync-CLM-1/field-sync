@@ -252,7 +252,7 @@ export default function Forms() {
     return savedFormValues || form.getValues();
   }, [savedFormValues, form]);
 
-  const sendOtp = async (channel: 'whatsapp' | 'email', values?: CreateUserForm) => {
+  const sendOtp = async (channel: 'whatsapp' | 'email', values?: CreateUserForm): Promise<boolean> => {
     const v = values || getFormValues();
     setIsSendingOtp(true);
     try {
@@ -263,8 +263,9 @@ export default function Forms() {
           ...(channel === 'whatsapp' ? { phone: v.phone } : { email: v.email }),
         },
       });
-      if (error) throw error;
+      // Check data.error first — supabase.functions.invoke returns both data AND error for non-2xx
       if (data?.error) throw new Error(data.error);
+      if (error && !data) throw error;
       setResendCooldown(60);
       toast({
         title: 'OTP Sent',
@@ -272,12 +273,14 @@ export default function Forms() {
           ? `WhatsApp OTP sent to ${v.phone}`
           : `Email OTP sent to ${v.email}`,
       });
+      return true;
     } catch (err) {
       toast({
         title: 'Failed to send OTP',
         description: err instanceof Error ? err.message : 'Try again',
         variant: 'destructive',
       });
+      return false;
     } finally {
       setIsSendingOtp(false);
     }
@@ -298,14 +301,23 @@ export default function Forms() {
           otp: code,
         },
       });
-      if (error) throw error;
+      // Check data first — for non-2xx, supabase returns both data (with error message) and error (generic)
       if (data?.error) throw new Error(data.error);
+      if (error && !data) throw error;
+      if (data?.verified !== true) throw new Error('Verification failed');
 
       if (channel === 'whatsapp') {
         setPhoneVerified(true);
         setCreateStep('email-otp');
         setResendCooldown(0);
-        await sendOtp('email', v);
+        const sent = await sendOtp('email', v);
+        if (!sent) {
+          toast({
+            title: 'Email OTP failed',
+            description: 'Could not send email OTP. Please use the Resend button.',
+            variant: 'destructive',
+          });
+        }
       } else {
         setEmailVerified(true);
         await createUserAfterVerification(v);
@@ -346,8 +358,8 @@ export default function Forms() {
         },
       });
 
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (error && !data) throw error;
 
       toast({
         title: 'User Created',
@@ -383,8 +395,8 @@ export default function Forms() {
         }
       });
 
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (error && !data) throw error;
 
       toast({
         title: 'Password Reset',
@@ -444,8 +456,8 @@ export default function Forms() {
         },
       });
 
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (error && !data) throw error;
 
       toast({
         title: 'User Updated',
@@ -477,8 +489,8 @@ export default function Forms() {
         body: { userId: selectedUser.id },
       });
 
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (error && !data) throw error;
 
       toast({
         title: 'User Deleted',
