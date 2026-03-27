@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, MapPin, UserCog, Globe } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, MapPin, UserCog, Globe, Building2 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -87,6 +87,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user } = useAuth();
   const isPlatformAdmin = useAuthStore((s) => s.isPlatformAdmin);
+  const currentOrganization = useAuthStore((s) => s.currentOrganization);
   const [userRole, setUserRole] = useState<RoleType>('agent');
 
   useEffect(() => {
@@ -139,6 +140,12 @@ export function AppSidebar() {
           <span className="text-[10px] font-semibold tracking-wider uppercase text-amber-400/80">Platform</span>
         )}
       </SidebarHeader>
+      {!collapsed && currentOrganization?.name && (
+        <div className="flex items-center gap-2 px-6 py-2 border-b border-white/10">
+          <Building2 className="h-3.5 w-3.5 text-[#01B8AA] flex-shrink-0" />
+          <span className="text-xs text-white/70 truncate">{currentOrganization.name}</span>
+        </div>
+      )}
       <SidebarContent>
         {sections.map((section) => (
           <SidebarGroup key={section.label}>

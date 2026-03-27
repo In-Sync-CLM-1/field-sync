@@ -129,9 +129,9 @@ export default function Layout() {
               <DropdownMenuContent className="w-56 border-border bg-popover" align="end">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-foreground">{user?.email}</p>
+                    <p className="text-sm font-medium leading-none text-foreground">{user?.user_metadata?.full_name || user?.email}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      Field Agent
+                      {user?.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
