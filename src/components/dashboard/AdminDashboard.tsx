@@ -1,15 +1,13 @@
-import { useAdminDashboard, TeamMember } from '@/hooks/useAdminDashboard';
+import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { useTeamMapData } from '@/hooks/useTeamMapData';
 import { StatusKPICard } from './StatusKPICard';
 import { ActivityFeed, ActivityItem } from './ActivityFeed';
 import TeamMap from './TeamMap';
-import DistanceLeaderboard from './DistanceLeaderboard';
 import AIInsights from './AIInsights';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Users, MapPin, ShoppingBag, RefreshCw, TrendingUp,
@@ -58,23 +56,10 @@ export default function AdminDashboard() {
     );
   }
 
-  const statusColor: Record<TeamMember['status'], string> = {
-    'on-visit': 'bg-green-500',
-    'punched-in': 'bg-blue-500',
-    'idle': 'bg-gray-300',
-  };
-
-  const statusLabel: Record<TeamMember['status'], string> = {
-    'on-visit': 'On Visit',
-    'punched-in': 'Available',
-    'idle': 'Absent',
-  };
-
-  const statusBadgeVariant: Record<TeamMember['status'], 'default' | 'secondary' | 'outline'> = {
-    'on-visit': 'default',
-    'punched-in': 'secondary',
-    'idle': 'outline',
-  };
+  // Team availability counts for KPI cards
+  const onVisitCount = teamMembers.filter(m => m.status === 'on-visit').length;
+  const availableCount = teamMembers.filter(m => m.status === 'punched-in').length;
+  const absentCount = teamMembers.filter(m => m.status === 'idle').length;
 
   // Build bar chart data for team comparison
   const teamBarData = teamPerformance.slice(0, 10).map(r => ({
@@ -102,105 +87,68 @@ export default function AdminDashboard() {
         </Button>
       </div>
 
-      {/* KPI Row — 6 cards on large, 3 on medium, 2 on mobile */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* KPI Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         <StatusKPICard
-          title="Team"
-          value={`${kpis.activeMembers}/${kpis.teamSize}`}
+          title="On Visit"
+          value={onVisitCount}
+          subtitle={`of ${kpis.teamSize} agents`}
+          icon={MapPin}
+          accent="success"
+        />
+        <StatusKPICard
+          title="Available"
+          value={availableCount}
+          subtitle="Punched in"
+          icon={UserCheck}
+          accent="primary"
+        />
+        <StatusKPICard
+          title="Absent"
+          value={absentCount}
           subtitle={`${kpis.attendanceRate}% attendance`}
           icon={Users}
-          accent={kpis.attendanceRate >= 80 ? 'success' : kpis.attendanceRate >= 50 ? 'warning' : 'destructive'}
+          accent={absentCount === 0 ? 'success' : 'destructive'}
+        />
+        <StatusKPICard
+          title="Distance"
+          value={`${mapData.totalDistance} km`}
+          subtitle={`${mapData.distances.length} tracked`}
+          icon={Route}
+          accent="warning"
         />
         <StatusKPICard
           title="Visits Today"
           value={kpis.visitsToday}
-          subtitle={kpis.visitsInProgress > 0 ? `${kpis.visitsInProgress} in progress` : 'No active visits'}
           badge={kpis.visitsInProgress > 0 ? `${kpis.visitsInProgress} live` : undefined}
           icon={MapPin}
           accent="primary"
         />
         <StatusKPICard
-          title="Orders Today"
+          title="Orders"
           value={kpis.ordersToday}
-          subtitle={kpis.ordersValueToday > 0 ? `₹${kpis.ordersValueToday.toLocaleString()}` : 'No orders yet'}
+          subtitle={kpis.ordersValueToday > 0 ? `₹${kpis.ordersValueToday.toLocaleString()}` : undefined}
           icon={ShoppingBag}
           accent="info"
         />
         <StatusKPICard
           title="Collections"
           value={kpis.collectionsToday}
-          subtitle={kpis.collectionsValueToday > 0 ? `₹${kpis.collectionsValueToday.toLocaleString()}` : 'No collections'}
+          subtitle={kpis.collectionsValueToday > 0 ? `₹${kpis.collectionsValueToday.toLocaleString()}` : undefined}
           icon={IndianRupee}
           accent="success"
         />
         <StatusKPICard
-          title="Distance"
-          value={`${mapData.totalDistance} km`}
-          subtitle={`${mapData.distances.length} agents tracked`}
-          icon={Route}
-          accent="warning"
-        />
-        <StatusKPICard
           title="Customers"
           value={kpis.customersTotal.toLocaleString()}
-          subtitle={collectionRate > 0 ? `${collectionRate}% collection rate` : 'Total base'}
+          subtitle={collectionRate > 0 ? `${collectionRate}% collected` : undefined}
           icon={Eye}
           accent="primary"
         />
       </div>
 
-      {/* Team Availability Strip */}
-      <Card>
-        <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-primary" />
-            Team Availability
-          </CardTitle>
-          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-500 inline-block" /> On Visit</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500 inline-block" /> Available</span>
-            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-gray-300 inline-block" /> Absent</span>
-          </div>
-        </CardHeader>
-        <CardContent className="pb-3">
-          {teamMembers.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No team members found</p>
-          ) : (
-            <ScrollArea className="w-full">
-              <div className="flex gap-2 pb-1">
-                {teamMembers.map(m => (
-                  <div
-                    key={m.id}
-                    className="flex-shrink-0 w-[130px] rounded-lg border p-2.5 space-y-1.5 hover:shadow-sm transition-shadow"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${statusColor[m.status]}`} />
-                      <p className="text-xs font-medium truncate">{m.name.split(' ')[0]}</p>
-                    </div>
-                    <Badge variant={statusBadgeVariant[m.status]} className="text-[10px] h-4 px-1.5">
-                      {statusLabel[m.status]}
-                    </Badge>
-                    {m.visitsToday > 0 && (
-                      <p className="text-[10px] text-muted-foreground">{m.visitsToday} visit{m.visitsToday !== 1 ? 's' : ''}</p>
-                    )}
-                    {m.punchInTime && (
-                      <p className="text-[10px] text-muted-foreground">In: {format(new Date(m.punchInTime), 'hh:mm a')}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* === LIVE MAP + DISTANCE === */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2">
-          <TeamMap agents={mapData.agents} visits={mapData.visits} loading={mapData.loading} />
-        </div>
-        <DistanceLeaderboard distances={mapData.distances} totalDistance={mapData.totalDistance} />
-      </div>
+      {/* === HERO: LIVE MAP (full width) === */}
+      <TeamMap agents={mapData.agents} visits={mapData.visits} loading={mapData.loading} />
 
       {/* === CHARTS ROW === */}
       <div className="grid lg:grid-cols-3 gap-4">

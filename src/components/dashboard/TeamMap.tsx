@@ -193,7 +193,7 @@ export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
         )}
         <div
           ref={mapContainer}
-          className={`w-full transition-all duration-300 ${expanded ? 'h-[calc(100vh-120px)]' : 'h-[350px]'}`}
+          className={`w-full transition-all duration-300 ${expanded ? 'h-[calc(100vh-120px)]' : 'h-[450px]'}`}
         />
         {/* Legend */}
         <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur rounded-lg px-3 py-2 flex items-center gap-3 text-[10px] shadow-sm border">
