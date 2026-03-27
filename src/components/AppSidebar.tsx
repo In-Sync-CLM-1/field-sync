@@ -75,8 +75,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
     {
       label: 'ADMIN',
       items: [
-        { icon: UserCog, label: 'Team', path: '/dashboard/team' },
-        { icon: UserCog, label: 'Users', path: '/dashboard/users' },
+        { icon: UserCog, label: 'Team', path: '/dashboard/users' },
       ],
     },
   ];
