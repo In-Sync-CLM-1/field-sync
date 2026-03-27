@@ -252,6 +252,15 @@ export default function Forms() {
     return savedFormValues || form.getValues();
   }, [savedFormValues, form]);
 
+  // Extract error message from supabase.functions.invoke response
+  // For non-2xx, data is null and the response body is in error.context
+  const getFunctionError = (data: any, error: any): string | null => {
+    if (data?.error) return data.error;
+    if (error?.context?.error) return error.context.error;
+    if (error?.message) return error.message;
+    return null;
+  };
+
   const sendOtp = async (channel: 'whatsapp' | 'email', values?: CreateUserForm): Promise<boolean> => {
     const v = values || getFormValues();
     setIsSendingOtp(true);
@@ -263,9 +272,8 @@ export default function Forms() {
           ...(channel === 'whatsapp' ? { phone: v.phone } : { email: v.email }),
         },
       });
-      // Check data.error first — supabase.functions.invoke returns both data AND error for non-2xx
-      if (data?.error) throw new Error(data.error);
-      if (error && !data) throw error;
+      const errMsg = getFunctionError(data, error);
+      if (errMsg) throw new Error(errMsg);
       setResendCooldown(60);
       toast({
         title: 'OTP Sent',
@@ -301,9 +309,8 @@ export default function Forms() {
           otp: code,
         },
       });
-      // Check data first — for non-2xx, supabase returns both data (with error message) and error (generic)
-      if (data?.error) throw new Error(data.error);
-      if (error && !data) throw error;
+      const errMsg = getFunctionError(data, error);
+      if (errMsg) throw new Error(errMsg);
       if (data?.verified !== true) throw new Error('Verification failed');
 
       if (channel === 'whatsapp') {
@@ -358,8 +365,8 @@ export default function Forms() {
         },
       });
 
-      if (data?.error) throw new Error(data.error);
-      if (error && !data) throw error;
+      const errMsg = getFunctionError(data, error);
+      if (errMsg) throw new Error(errMsg);
 
       toast({
         title: 'User Created',
@@ -395,8 +402,8 @@ export default function Forms() {
         }
       });
 
-      if (data?.error) throw new Error(data.error);
-      if (error && !data) throw error;
+      const errMsg = getFunctionError(data, error);
+      if (errMsg) throw new Error(errMsg);
 
       toast({
         title: 'Password Reset',
@@ -456,8 +463,8 @@ export default function Forms() {
         },
       });
 
-      if (data?.error) throw new Error(data.error);
-      if (error && !data) throw error;
+      const errMsg = getFunctionError(data, error);
+      if (errMsg) throw new Error(errMsg);
 
       toast({
         title: 'User Updated',
@@ -489,8 +496,8 @@ export default function Forms() {
         body: { userId: selectedUser.id },
       });
 
-      if (data?.error) throw new Error(data.error);
-      if (error && !data) throw error;
+      const errMsg = getFunctionError(data, error);
+      if (errMsg) throw new Error(errMsg);
 
       toast({
         title: 'User Deleted',
