@@ -63,15 +63,18 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, fullName, phone, role, organizationId } = await req.json()
+    const { email, password, fullName, phone, role: rawRole, organizationId } = await req.json()
 
     // Validate required fields
-    if (!email || !password || !fullName || !role) {
+    if (!email || !password || !fullName || !rawRole) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: email, password, fullName, role' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Map legacy role names to app_role enum values
+    const role = rawRole === 'agent' ? 'field_agent' : rawRole
 
     console.log(`Creating user: ${email} with role: ${role}`)
 
@@ -119,13 +122,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Add role to user_roles table (use upsert to handle case where role already exists)
+    // Replace any trigger-assigned default role with the requested role
+    await supabaseAdmin
+      .from('user_roles')
+      .delete()
+      .eq('user_id', newUser.user.id)
+
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .upsert(
-        { user_id: newUser.user.id, role },
-        { onConflict: 'user_id,role' }
-      )
+      .insert({ user_id: newUser.user.id, role })
 
     if (roleError) {
       console.error('Role insert error:', roleError)
