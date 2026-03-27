@@ -194,9 +194,9 @@ export default function AgentDashboard() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-medium text-foreground">All Visits</span>
           </Button>
-          <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/today')}>
+          <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/plan')}>
             <ClipboardList className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-foreground">Today</span>
+            <span className="text-xs font-medium text-foreground">Plan</span>
           </Button>
           <Button variant="outline" size="sm" className="h-10 flex flex-col items-center justify-center gap-0.5 py-1.5" onClick={() => navigate('/dashboard/orders')}>
             <MapPin className="h-4 w-4 text-muted-foreground" />

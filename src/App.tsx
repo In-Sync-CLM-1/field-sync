@@ -28,7 +28,7 @@ import SubscriptionManagement from "./pages/SubscriptionManagement";
 import Profile from "./pages/Profile";
 import Attendance from "./pages/Attendance";
 import NotFound from "./pages/NotFound";
-import TodayPage from "./pages/TodayPage";
+
 import OrdersPage from "./pages/OrdersPage";
 import PlanPage from "./pages/PlanPage";
 
@@ -70,7 +70,7 @@ const App = () => (
                 }
               >
                 <Route index element={<RoleDashboard />} />
-                <Route path="today" element={<TodayPage />} />
+
                 <Route path="customers" element={<Leads />} />
                 <Route path="customers/new" element={<NewLead />} />
                 <Route path="customers/:id" element={<LeadDetail />} />
