@@ -117,6 +117,8 @@ export default function Forms() {
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  // Store form values before fields unmount during OTP steps
+  const [savedFormValues, setSavedFormValues] = useState<CreateUserForm | null>(null);
 
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -241,18 +243,24 @@ export default function Forms() {
     setPhoneVerified(false);
     setEmailVerified(false);
     setResendCooldown(0);
+    setSavedFormValues(null);
     form.reset();
   }, [form]);
 
-  const sendOtp = async (channel: 'whatsapp' | 'email') => {
-    const values = form.getValues();
+  // Get the active form values — use saved values when form fields are unmounted
+  const getFormValues = useCallback(() => {
+    return savedFormValues || form.getValues();
+  }, [savedFormValues, form]);
+
+  const sendOtp = async (channel: 'whatsapp' | 'email', values?: CreateUserForm) => {
+    const v = values || getFormValues();
     setIsSendingOtp(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-public-otp', {
         body: {
           action: 'send',
           channel,
-          ...(channel === 'whatsapp' ? { phone: values.phone } : { email: values.email }),
+          ...(channel === 'whatsapp' ? { phone: v.phone } : { email: v.email }),
         },
       });
       if (error) throw error;
@@ -261,8 +269,8 @@ export default function Forms() {
       toast({
         title: 'OTP Sent',
         description: channel === 'whatsapp'
-          ? `WhatsApp OTP sent to ${values.phone}`
-          : `Email OTP sent to ${values.email}`,
+          ? `WhatsApp OTP sent to ${v.phone}`
+          : `Email OTP sent to ${v.email}`,
       });
     } catch (err) {
       toast({
@@ -276,7 +284,7 @@ export default function Forms() {
   };
 
   const verifyOtp = async (channel: 'whatsapp' | 'email') => {
-    const values = form.getValues();
+    const v = getFormValues();
     const code = channel === 'whatsapp' ? phoneOtp : emailOtp;
     if (code.length !== 6) return;
 
@@ -286,7 +294,7 @@ export default function Forms() {
         body: {
           action: 'verify',
           channel,
-          ...(channel === 'whatsapp' ? { phone: values.phone } : { email: values.email }),
+          ...(channel === 'whatsapp' ? { phone: v.phone } : { email: v.email }),
           otp: code,
         },
       });
@@ -295,15 +303,12 @@ export default function Forms() {
 
       if (channel === 'whatsapp') {
         setPhoneVerified(true);
-        // Move to email OTP step
         setCreateStep('email-otp');
         setResendCooldown(0);
-        // Auto-send email OTP
-        await sendOtp('email');
+        await sendOtp('email', v);
       } else {
         setEmailVerified(true);
-        // Both verified — create the user
-        await createUserAfterVerification();
+        await createUserAfterVerification(v);
       }
     } catch (err) {
       toast({
@@ -317,16 +322,17 @@ export default function Forms() {
   };
 
   const handleDetailsSubmit = async () => {
-    // Validate form first
     const valid = await form.trigger();
     if (!valid) return;
-    // Move to phone OTP step and send OTP
+    // Save values BEFORE unmounting form fields
+    const values = form.getValues();
+    setSavedFormValues(values);
     setCreateStep('phone-otp');
-    await sendOtp('whatsapp');
+    await sendOtp('whatsapp', values);
   };
 
-  const createUserAfterVerification = async () => {
-    const values = form.getValues();
+  const createUserAfterVerification = async (v?: CreateUserForm) => {
+    const values = v || getFormValues();
     setIsCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
@@ -535,10 +541,10 @@ export default function Forms() {
               <DialogDescription>
                 {createStep === 'details' && 'Add a new user with their details and role.'}
                 {createStep === 'phone-otp' && (
-                  <>Enter the 6-digit OTP sent via WhatsApp to <strong>{form.getValues('phone')}</strong></>
+                  <>Enter the 6-digit OTP sent via WhatsApp to <strong>{savedFormValues?.phone}</strong></>
                 )}
                 {createStep === 'email-otp' && (
-                  <>Enter the 6-digit OTP sent to <strong>{form.getValues('email')}</strong></>
+                  <>Enter the 6-digit OTP sent to <strong>{savedFormValues?.email}</strong></>
                 )}
               </DialogDescription>
             </DialogHeader>
