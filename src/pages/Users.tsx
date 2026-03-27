@@ -45,7 +45,7 @@ const createUserSchema = z.object({
   phone: z.string().min(10, 'Phone must be at least 10 characters').max(20),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
-  role: z.enum(['agent', 'admin']),
+  role: z.enum(['field_agent', 'admin']),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -66,7 +66,7 @@ type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 const editUserSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters').max(100),
   phone: z.string().min(10, 'Phone must be at least 10 characters').max(20),
-  role: z.enum(['agent', 'admin']),
+  role: z.enum(['field_agent', 'admin']),
   isActive: z.boolean(),
 });
 
@@ -74,7 +74,7 @@ type EditUserForm = z.infer<typeof editUserSchema>;
 
 // Role display names for UI
 const ROLE_DISPLAY_NAMES: Record<string, string> = {
-  agent: 'Agent',
+  field_agent: 'Agent',
   admin: 'Admin',
   platform_admin: 'Platform Admin',
 };
@@ -128,7 +128,7 @@ export default function Forms() {
       phone: '',
       password: '',
       confirmPassword: '',
-      role: 'agent',
+      role: 'field_agent',
     },
   });
 
@@ -145,7 +145,7 @@ export default function Forms() {
     defaultValues: {
       fullName: '',
       phone: '',
-      role: 'agent',
+      role: 'field_agent',
       isActive: true,
     },
   });
@@ -437,11 +437,11 @@ export default function Forms() {
 
   const handleEditClick = (user: UserWithRoles) => {
     setSelectedUser(user);
-    const primaryRole = user.user_roles[0]?.role || 'agent';
+    const primaryRole = user.user_roles[0]?.role || 'field_agent';
     editForm.reset({
       fullName: user.full_name || '',
       phone: user.phone || '',
-      role: primaryRole === 'admin' ? 'admin' : 'agent',
+      role: primaryRole === 'admin' ? 'admin' : 'field_agent',
       isActive: user.is_active,
     });
     setEditDialogOpen(true);
@@ -672,7 +672,7 @@ export default function Forms() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="agent">Agent</SelectItem>
+                            <SelectItem value="field_agent">Agent</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
                           </SelectContent>
                         </Select>
@@ -880,7 +880,7 @@ export default function Forms() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="agent">Agent</SelectItem>
+                        <SelectItem value="field_agent">Agent</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>

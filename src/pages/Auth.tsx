@@ -292,7 +292,7 @@ export default function Auth() {
             .from('user_roles')
             .delete()
             .eq('user_id', newUser.id)
-            .eq('role', 'agent');
+            .eq('role', 'field_agent');
 
           const { error: roleError } = await supabase
             .from('user_roles')
