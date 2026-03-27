@@ -87,7 +87,7 @@ export function useMyStats() {
         .select('prospects_target')
         .eq('user_id', user.id)
         .eq('plan_date', todayString)
-        .single();
+        .maybeSingle();
 
       const plannedVisitsToday = todayPlan?.prospects_target || 0;
 
@@ -413,7 +413,7 @@ export function useRecentVisits() {
         .select('id')
         .eq('user_id', user.id)
         .eq('plan_date', todayString)
-        .single();
+        .maybeSingle();
 
       if (!todayPlan) return [];
 

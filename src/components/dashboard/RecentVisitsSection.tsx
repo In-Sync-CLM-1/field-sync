@@ -246,7 +246,7 @@ export function RecentVisitsSection() {
                 <Button 
                   variant="outline"
                   size="sm" 
-                  onClick={() => navigate('/dashboard/planning')}
+                  onClick={() => navigate('/dashboard/plan')}
                 >
                   <Calendar className="h-4 w-4 mr-1" />
                   Plan Today

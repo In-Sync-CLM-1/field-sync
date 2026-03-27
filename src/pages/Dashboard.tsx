@@ -87,7 +87,7 @@ function getPrimaryAction(hour: number, visitsToday: number) {
       icon: FileText,
       label: 'Complete Day Report',
       description: 'Wrap up your daily activities',
-      action: '/dashboard/planning',
+      action: '/dashboard/plan',
     };
   }
 }
@@ -153,7 +153,7 @@ export default function Dashboard() {
       icon: ClipboardList,
       label: 'Daily Planning',
       description: 'Manage daily plans',
-      action: () => navigate('/dashboard/planning'),
+      action: () => navigate('/dashboard/plan'),
       priority: 3,
     },
     {
