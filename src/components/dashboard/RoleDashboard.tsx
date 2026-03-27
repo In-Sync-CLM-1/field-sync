@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import AgentDashboard from './AgentDashboard';
+import AdminDashboard from './AdminDashboard';
 import PlatformDashboard from '@/pages/PlatformDashboard';
 
 type DashboardTier = 'platform' | 'admin' | 'agent';
@@ -58,6 +59,10 @@ export default function RoleDashboard() {
 
   if (tier === 'platform') {
     return <PlatformDashboard />;
+  }
+
+  if (tier === 'admin') {
+    return <AdminDashboard />;
   }
 
   return <AgentDashboard />;
