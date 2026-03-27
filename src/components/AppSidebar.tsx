@@ -56,7 +56,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
   }
 
   // manager and admin
-  return [
+  const sections = [
     {
       label: 'OVERVIEW',
       items: [
@@ -74,6 +74,17 @@ function getSectionsForRole(role: RoleType): NavSection[] {
       ],
     },
   ];
+
+  if (role === 'admin') {
+    sections.push({
+      label: 'ADMIN',
+      items: [
+        { icon: UserCog, label: 'Users', path: '/dashboard/users' },
+      ],
+    });
+  }
+
+  return sections;
 }
 
 export function AppSidebar() {
