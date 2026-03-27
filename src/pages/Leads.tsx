@@ -42,6 +42,7 @@ import {
   Plus,
   Camera,
   Compass,
+  ClipboardList,
 } from 'lucide-react';
 import {
   Pagination,
@@ -200,6 +201,15 @@ export default function Leads() {
             >
               <Compass className="h-3 w-3" />
               {isDiscovering ? 'Searching...' : 'Explore Nearby'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={() => navigate('/dashboard/plan')}
+            >
+              <ClipboardList className="h-3 w-3" />
+              Plan Visits
             </Button>
             <LeadsUpload />
             <Button

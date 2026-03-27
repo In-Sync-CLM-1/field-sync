@@ -9,9 +9,9 @@ import { useCreatePlanOffline } from '@/hooks/useDailyPlansOffline';
 import { supabase } from '@/integrations/supabase/client';
 
 import {
-  ClipboardList, ArrowLeft, ArrowRight,
-  Search, ChevronUp, ChevronDown, MapPin, Phone, User, Users,
-  Plus, Send, CheckCircle2,
+  ClipboardList, ArrowLeft,
+  Search, MapPin, Phone, User, Users,
+  Plus, Send, CheckCircle2, Calendar as CalendarIcon,
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,7 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 
-type Step = 'list' | 'agent' | 'date' | 'select' | 'order';
+type Step = 'list' | 'agent' | 'create';
 
 interface OrgMember {
   id: string;
@@ -37,7 +37,6 @@ const PlanPage = () => {
   const [step, setStep] = useState<Step>('list');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
-  const [orderedLeadIds, setOrderedLeadIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Admin state
@@ -45,8 +44,6 @@ const PlanPage = () => {
   const [orgMembers, setOrgMembers] = useState<OrgMember[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<OrgMember | null>(null);
   const [agentSearchQuery, setAgentSearchQuery] = useState('');
-
-  const totalSteps = isAdmin ? 4 : 3;
 
   // Check user role
   useEffect(() => {
@@ -62,7 +59,7 @@ const PlanPage = () => {
     checkRole();
   }, [user]);
 
-  // Fetch org members for managers/admins
+  // Fetch org members for admins
   useEffect(() => {
     async function fetchMembers() {
       if (!isAdmin || !currentOrganization) return;
@@ -81,7 +78,6 @@ const PlanPage = () => {
         .eq('is_active', true)
         .order('full_name');
 
-      // Exclude the current user
       setOrgMembers(
         (profiles || [])
           .filter(p => p.id !== user?.id)
@@ -98,7 +94,7 @@ const PlanPage = () => {
     return orgMembers.filter(m => m.full_name.toLowerCase().includes(q));
   }, [orgMembers, agentSearchQuery]);
 
-  // Get all leads from IndexedDB for current org
+  // Get all leads from IndexedDB
   const allLeads = useLiveQuery(async () => {
     if (!currentOrganization) return [];
     return db.leads
@@ -107,7 +103,7 @@ const PlanPage = () => {
       .toArray();
   }, [currentOrganization?.id]) || [];
 
-  // Get existing plans — managers see org-wide, agents see their own
+  // Get existing plans
   const existingPlans = useLiveQuery(async () => {
     if (!user) return [];
     if (isAdmin && currentOrganization) {
@@ -124,7 +120,7 @@ const PlanPage = () => {
     return plans.sort((a, b) => b.planDate.localeCompare(a.planDate));
   }, [user?.id, currentOrganization?.id, isAdmin]) || [];
 
-  // Filtered leads for the select step
+  // Filtered leads
   const filteredLeads = useMemo(() => {
     if (!searchQuery) return allLeads;
     const q = searchQuery.toLowerCase();
@@ -136,14 +132,7 @@ const PlanPage = () => {
     );
   }, [allLeads, searchQuery]);
 
-  // Lead lookup map
-  const leadMap = useMemo(() => {
-    const map = new Map<string, Lead>();
-    allLeads.forEach(l => map.set(l.id, l));
-    return map;
-  }, [allLeads]);
-
-  // Toggle a lead's selection
+  // Toggle lead selection
   const toggleLead = (id: string) => {
     setSelectedLeadIds(prev => {
       const next = new Set(prev);
@@ -153,45 +142,20 @@ const PlanPage = () => {
     });
   };
 
-  // Move lead up/down in the ordered list
-  const moveLead = (index: number, direction: 'up' | 'down') => {
-    const newOrder = [...orderedLeadIds];
-    const target = direction === 'up' ? index - 1 : index + 1;
-    if (target < 0 || target >= newOrder.length) return;
-    [newOrder[index], newOrder[target]] = [newOrder[target], newOrder[index]];
-    setOrderedLeadIds(newOrder);
-  };
-
-  // Remove lead from the ordered list
-  const removeFromOrder = (id: string) => {
-    setOrderedLeadIds(prev => prev.filter(lid => lid !== id));
-    setSelectedLeadIds(prev => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  };
-
-  // Transition from select → order
-  const goToOrderStep = () => {
-    setOrderedLeadIds(Array.from(selectedLeadIds));
-    setStep('order');
-  };
-
-  // Submit the daily plan
+  // Submit the plan
   const handleSubmit = async () => {
-    if (!selectedDate || orderedLeadIds.length === 0) return;
+    if (!selectedDate || selectedLeadIds.size === 0) return;
 
     const planDate = format(selectedDate, 'yyyy-MM-dd');
+    const leadIds = Array.from(selectedLeadIds);
 
     try {
       await createPlan.mutateAsync({
         plan_date: planDate,
-        prospects_target: orderedLeadIds.length,
+        prospects_target: leadIds.length,
         quotes_target: 0,
         policies_target: 0,
-        planned_lead_ids: orderedLeadIds,
-        // If manager/admin assigned to an agent, pass target_user_id
+        planned_lead_ids: leadIds,
         ...(selectedAgent && {
           target_user_id: selectedAgent.id,
           agent_full_name: selectedAgent.full_name,
@@ -209,30 +173,19 @@ const PlanPage = () => {
     setStep('list');
     setSelectedDate(undefined);
     setSelectedLeadIds(new Set());
-    setOrderedLeadIds([]);
     setSearchQuery('');
     setSelectedAgent(null);
     setAgentSearchQuery('');
   };
 
-  // Step label helper
-  const getStepLabel = (currentStep: number) => {
-    return `Step ${currentStep} of ${totalSteps}`;
-  };
-
-  // What the "Create" button does — managers pick agent first, agents go to date
+  // What the "Create" button does
   const handleCreateClick = () => {
     if (isAdmin) {
       setStep('agent');
     } else {
-      setStep('date');
+      setStep('create');
     }
   };
-
-  // Context line showing who the plan is for
-  const planForLabel = selectedAgent
-    ? `for ${selectedAgent.full_name}`
-    : '';
 
   // ──────────────── STEP: LIST ────────────────
   if (step === 'list') {
@@ -240,7 +193,7 @@ const PlanPage = () => {
       <div className="p-4 space-y-4 min-h-screen">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="gap-1">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/customers')} className="gap-1">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <ClipboardList className="h-5 w-5 text-primary" />
@@ -275,7 +228,7 @@ const PlanPage = () => {
                         {isAdmin && isOwnPlan && (
                           <span className="font-medium text-foreground">You — </span>
                         )}
-                        {leadCount} {leadCount === 1 ? 'lead' : 'leads'} planned
+                        {leadCount} {leadCount === 1 ? 'customer' : 'customers'} planned
                         {plan.prospectsActual > 0 && ` \u00b7 ${plan.prospectsActual} visited`}
                       </p>
                     </div>
@@ -304,7 +257,7 @@ const PlanPage = () => {
     );
   }
 
-  // ──────────────── STEP: SELECT AGENT (managers/admins only) ────────────────
+  // ──────────────── STEP: SELECT AGENT (admins only) ────────────────
   if (step === 'agent') {
     return (
       <div className="p-4 space-y-4 min-h-screen">
@@ -314,7 +267,7 @@ const PlanPage = () => {
           </Button>
           <div>
             <h1 className="text-lg font-bold">Select Agent</h1>
-            <p className="text-xs text-muted-foreground">{getStepLabel(1)} — Who is this plan for?</p>
+            <p className="text-xs text-muted-foreground">Who is this plan for?</p>
           </div>
         </div>
 
@@ -339,14 +292,12 @@ const PlanPage = () => {
           )}
         </div>
 
-        {/* Divider */}
         <div className="flex items-center gap-2">
           <div className="flex-1 border-t" />
           <span className="text-xs text-muted-foreground">or assign to a team member</span>
           <div className="flex-1 border-t" />
         </div>
 
-        {/* Search members */}
         {orgMembers.length > 5 && (
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -359,7 +310,6 @@ const PlanPage = () => {
           </div>
         )}
 
-        {/* Members list */}
         <div className="space-y-1 max-h-[calc(100vh-380px)] overflow-y-auto">
           {filteredMembers.length === 0 ? (
             <Card>
@@ -396,266 +346,147 @@ const PlanPage = () => {
           )}
         </div>
 
-        {/* Next button */}
         <Button
           className="w-full h-11 gap-2"
-          onClick={() => setStep('date')}
+          onClick={() => setStep('create')}
         >
-          Next — Select Date {selectedAgent ? `(for ${selectedAgent.full_name})` : '(for myself)'}
-          <ArrowRight className="h-4 w-4" />
+          Next {selectedAgent ? `(for ${selectedAgent.full_name})` : '(for myself)'}
         </Button>
       </div>
     );
   }
 
-  // ──────────────── STEP: DATE SELECTION ────────────────
-  if (step === 'date') {
-    const dateStepNum = isAdmin ? 2 : 1;
+  // ──────────────── STEP: CREATE — Date + Select Customers ────────────────
+  if (step === 'create') {
+    const planForLabel = selectedAgent ? `for ${selectedAgent.full_name}` : '';
+
     return (
       <div className="p-4 space-y-4 min-h-screen">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setStep(isAdmin ? 'agent' : 'list')}
-            className="gap-1"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-bold">Select Date</h1>
-            <p className="text-xs text-muted-foreground">
-              {getStepLabel(dateStepNum)} — Choose the day
-              {planForLabel && ` ${planForLabel}`}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setStep(isAdmin ? 'agent' : 'list')}
+              className="gap-1"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-lg font-bold">Create Plan</h1>
+              <p className="text-xs text-muted-foreground">
+                Select date & customers{planForLabel && ` ${planForLabel}`}
+              </p>
+            </div>
           </div>
+          {selectedLeadIds.size > 0 && (
+            <Badge variant="outline" className="text-sm">
+              {selectedLeadIds.size} selected
+            </Badge>
+          )}
         </div>
 
+        {/* Date Picker */}
         <Card>
-          <CardContent className="p-3 flex justify-center">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <CalendarIcon className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {selectedDate ? format(selectedDate, 'EEE, MMM d, yyyy') : 'Pick a date'}
+              </span>
+            </div>
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              className="pointer-events-auto"
+              disabled={{ before: new Date() }}
+              className="pointer-events-auto mx-auto"
             />
           </CardContent>
         </Card>
 
-        <Button
-          className="w-full h-11 gap-2"
-          disabled={!selectedDate}
-          onClick={() => setStep('select')}
-        >
-          Next — Select Leads
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  }
-
-  // ──────────────── STEP: SELECT LEADS ────────────────
-  if (step === 'select') {
-    const selectStepNum = isAdmin ? 3 : 2;
-    return (
-      <div className="p-4 space-y-4 min-h-screen">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setStep('date')} className="gap-1">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold">Select Leads</h1>
-              <p className="text-xs text-muted-foreground">
-                {getStepLabel(selectStepNum)} — {selectedDate && format(selectedDate, 'EEE, MMM d')}
-                {planForLabel && ` ${planForLabel}`}
-              </p>
+        {/* Customer Selection */}
+        {selectedDate && (
+          <>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search customers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
             </div>
-          </div>
-          <Badge variant="outline" className="text-sm">
-            {selectedLeadIds.size} selected
-          </Badge>
-        </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search leads by name, phone, city..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        <div className="space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto">
-          {filteredLeads.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
-                <User className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">
-                  {searchQuery ? 'No leads match your search' : 'No leads found'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredLeads.map(lead => {
-              const isSelected = selectedLeadIds.has(lead.id);
-              return (
-                <div
-                  key={lead.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-primary/5 border-primary/30'
-                      : 'bg-card border-border hover:bg-muted/50'
-                  }`}
-                  onClick={() => toggleLead(lead.id)}
-                >
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={() => toggleLead(lead.id)}
-                    className="pointer-events-none"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{lead.name}</p>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                      {lead.villageCity && (
-                        <span className="flex items-center gap-1 truncate">
-                          <MapPin className="h-3 w-3 flex-shrink-0" />
-                          {lead.villageCity}
-                        </span>
-                      )}
-                      {lead.mobileNo && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="h-3 w-3 flex-shrink-0" />
-                          {lead.mobileNo}
-                        </span>
+            <div className="space-y-1 max-h-[calc(100vh-520px)] overflow-y-auto">
+              {filteredLeads.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    <User className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">
+                      {searchQuery ? 'No customers match your search' : 'No customers found'}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredLeads.map(lead => {
+                  const isSelected = selectedLeadIds.has(lead.id);
+                  return (
+                    <div
+                      key={lead.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        isSelected
+                          ? 'bg-primary/5 border-primary/30'
+                          : 'bg-card border-border hover:bg-muted/50'
+                      }`}
+                      onClick={() => toggleLead(lead.id)}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleLead(lead.id)}
+                        className="pointer-events-none"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{lead.name}</p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                          {lead.villageCity && (
+                            <span className="flex items-center gap-1 truncate">
+                              <MapPin className="h-3 w-3 flex-shrink-0" />
+                              {lead.villageCity}
+                            </span>
+                          )}
+                          {lead.mobileNo && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3 flex-shrink-0" />
+                              {lead.mobileNo}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
                       )}
                     </div>
-                  </div>
-                  {isSelected && (
-                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className="sticky bottom-0 bg-background pt-2 pb-4 border-t">
-          <Button
-            className="w-full h-11 gap-2"
-            disabled={selectedLeadIds.size === 0}
-            onClick={goToOrderStep}
-          >
-            Next — Set Visit Order ({selectedLeadIds.size})
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // ──────────────── STEP: ORDER LEADS & SUBMIT ────────────────
-  if (step === 'order') {
-    const orderStepNum = isAdmin ? 4 : 3;
-    return (
-      <div className="p-4 space-y-4 min-h-screen">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setStep('select')} className="gap-1">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-lg font-bold">Set Visit Order</h1>
-              <p className="text-xs text-muted-foreground">
-                {getStepLabel(orderStepNum)} — {selectedDate && format(selectedDate, 'EEE, MMM d')}
-                {planForLabel && ` ${planForLabel}`}
-              </p>
+                  );
+                })
+              )}
             </div>
-          </div>
-          <Badge variant="outline" className="text-sm">
-            {orderedLeadIds.length} leads
-          </Badge>
-        </div>
 
-        <p className="text-xs text-muted-foreground">
-          Arrange the leads in the order {selectedAgent ? `${selectedAgent.full_name} should` : 'you plan to'} visit them.
-        </p>
-
-        <div className="space-y-1.5 max-h-[calc(100vh-300px)] overflow-y-auto">
-          {orderedLeadIds.map((leadId, index) => {
-            const lead = leadMap.get(leadId);
-            if (!lead) return null;
-            return (
-              <div
-                key={leadId}
-                className="flex items-center gap-2 p-3 rounded-lg border bg-card"
+            {/* Submit */}
+            <div className="sticky bottom-0 bg-background pt-2 pb-4 border-t">
+              <Button
+                className="w-full h-11 gap-2"
+                disabled={selectedLeadIds.size === 0 || createPlan.isPending}
+                onClick={handleSubmit}
               >
-                <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex-shrink-0">
-                  {index + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{lead.name}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                    {lead.villageCity && (
-                      <span className="flex items-center gap-1 truncate">
-                        <MapPin className="h-3 w-3 flex-shrink-0" />
-                        {lead.villageCity}
-                      </span>
-                    )}
-                    {lead.mobileNo && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3 flex-shrink-0" />
-                        {lead.mobileNo}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-0.5 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    disabled={index === 0}
-                    onClick={() => moveLead(index, 'up')}
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    disabled={index === orderedLeadIds.length - 1}
-                    onClick={() => moveLead(index, 'down')}
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-destructive hover:text-destructive flex-shrink-0"
-                  onClick={() => removeFromOrder(leadId)}
-                >
-                  &times;
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="sticky bottom-0 bg-background pt-2 pb-4 border-t">
-          <Button
-            className="w-full h-11 gap-2"
-            disabled={orderedLeadIds.length === 0 || createPlan.isPending}
-            onClick={handleSubmit}
-          >
-            <Send className="h-4 w-4" />
-            {createPlan.isPending
-              ? 'Saving...'
-              : `Submit Plan ${planForLabel} (${orderedLeadIds.length} visits)`}
-          </Button>
-        </div>
+                <Send className="h-4 w-4" />
+                {createPlan.isPending
+                  ? 'Saving...'
+                  : `Save Plan (${selectedLeadIds.size} visits)`}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     );
   }

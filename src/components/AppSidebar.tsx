@@ -65,7 +65,6 @@ function getSectionsForRole(role: RoleType): NavSection[] {
     {
       label: 'MANAGEMENT',
       items: [
-        { icon: ClipboardList, label: 'Plan', path: '/dashboard/plan' },
         { icon: Users, label: 'Customers', path: '/dashboard/customers' },
         { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
       ],
@@ -128,7 +127,7 @@ export function AppSidebar() {
           <img
             src={insyncLogoColor}
             alt="In-Sync"
-            className="h-10 w-auto object-contain"
+            className="h-[120px] w-auto object-contain"
           />
         </div>
       </SidebarHeader>

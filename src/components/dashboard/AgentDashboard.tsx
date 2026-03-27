@@ -17,6 +17,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, isBefore, startOfDay } from 'date-fns';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/lib/db';
 
 export default function AgentDashboard() {
   const { user } = useAuth();
@@ -84,6 +86,24 @@ export default function AgentDashboard() {
     },
     enabled: !!currentOrganization?.id,
   });
+
+  // Today's plan from IndexedDB
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayPlan = useLiveQuery(async () => {
+    if (!user) return null;
+    return db.dailyPlans
+      .where('userId')
+      .equals(user.id)
+      .filter(p => p.planDate === todayStr)
+      .first() || null;
+  }, [user?.id, todayStr]);
+
+  // Resolve lead names for today's plan
+  const plannedLeads = useLiveQuery(async () => {
+    if (!todayPlan?.plannedLeadIds?.length) return [];
+    const leads = await db.leads.bulkGet(todayPlan.plannedLeadIds);
+    return leads.filter(Boolean);
+  }, [todayPlan?.plannedLeadIds]);
 
   const currentHour = new Date().getHours();
   const primaryAction = currentHour < 17
@@ -208,6 +228,44 @@ export default function AgentDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Today's Plan */}
+      {todayPlan && plannedLeads && plannedLeads.length > 0 && (
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-primary" />
+                Today's Plan ({plannedLeads.length} visits)
+              </CardTitle>
+              <Badge variant="outline" className="text-xs capitalize">{todayPlan.status}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-1.5">
+            {plannedLeads.map((lead, idx) => (
+              <div
+                key={lead!.id}
+                className="flex items-center gap-2.5 p-2 rounded-md bg-muted/50 cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={() => navigate(`/dashboard/customers/${lead!.id}`)}
+              >
+                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0">
+                  {idx + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{lead!.name}</p>
+                  {lead!.villageCity && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {lead!.villageCity}
+                    </p>
+                  )}
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Follow-ups */}
       {followUpLeads.length > 0 && (
