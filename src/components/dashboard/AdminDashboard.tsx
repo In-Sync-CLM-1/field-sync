@@ -1,6 +1,10 @@
-import { useAdminDashboard, TeamMember, TeamPerformanceRow } from '@/hooks/useAdminDashboard';
+import { useAdminDashboard, TeamMember } from '@/hooks/useAdminDashboard';
+import { useTeamMapData } from '@/hooks/useTeamMapData';
 import { StatusKPICard } from './StatusKPICard';
 import { ActivityFeed, ActivityItem } from './ActivityFeed';
+import TeamMap from './TeamMap';
+import DistanceLeaderboard from './DistanceLeaderboard';
+import AIInsights from './AIInsights';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,17 +12,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  Users, MapPin, ShoppingBag, Clock, RefreshCw, TrendingUp,
-  IndianRupee, UserCheck, Eye, CircleDot, Activity,
+  Users, MapPin, ShoppingBag, RefreshCw, TrendingUp,
+  IndianRupee, UserCheck, Eye, Activity, Route,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, Cell,
 } from 'recharts';
 
 export default function AdminDashboard() {
   const { data, loading, refresh } = useAdminDashboard();
   const { kpis, teamMembers, visitsTrend, teamPerformance, recentActivity } = data;
+  const mapData = useTeamMapData();
 
   // Map activity to ActivityFeed format
   const feedItems: ActivityItem[] = recentActivity.map(a => ({
@@ -42,7 +48,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
         </div>
-        <Skeleton className="h-16" />
+        <Skeleton className="h-[350px]" />
         <div className="grid lg:grid-cols-3 gap-4">
           <Skeleton className="h-72 lg:col-span-2" />
           <Skeleton className="h-72" />
@@ -70,6 +76,18 @@ export default function AdminDashboard() {
     'idle': 'outline',
   };
 
+  // Build bar chart data for team comparison
+  const teamBarData = teamPerformance.slice(0, 10).map(r => ({
+    name: r.name.split(' ')[0],
+    visits: r.visitsToday,
+    orders: r.ordersCount,
+  }));
+
+  // Collection rate
+  const totalOrders30d = data.teamPerformance.reduce((s, r) => s + r.ordersValue, 0);
+  const totalCollections30d = data.teamPerformance.reduce((s, r) => s + r.collectionsValue, 0);
+  const collectionRate = totalOrders30d > 0 ? Math.round((totalCollections30d / totalOrders30d) * 100) : 0;
+
   return (
     <div className="p-4 md:p-6 space-y-5">
       {/* Header */}
@@ -78,14 +96,14 @@ export default function AdminDashboard() {
           <h1 className="text-xl font-bold tracking-tight">Team Dashboard</h1>
           <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={refresh} className="gap-1.5">
+        <Button variant="outline" size="sm" onClick={() => { refresh(); mapData.refresh(); }} className="gap-1.5">
           <RefreshCw className="h-3.5 w-3.5" />
           Refresh
         </Button>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* KPI Row — 6 cards on large, 3 on medium, 2 on mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatusKPICard
           title="Team"
           value={`${kpis.activeMembers}/${kpis.teamSize}`}
@@ -111,9 +129,23 @@ export default function AdminDashboard() {
         <StatusKPICard
           title="Collections"
           value={kpis.collectionsToday}
-          subtitle={kpis.collectionsValueToday > 0 ? `₹${kpis.collectionsValueToday.toLocaleString()}` : 'No collections yet'}
+          subtitle={kpis.collectionsValueToday > 0 ? `₹${kpis.collectionsValueToday.toLocaleString()}` : 'No collections'}
           icon={IndianRupee}
           accent="success"
+        />
+        <StatusKPICard
+          title="Distance"
+          value={`${mapData.totalDistance} km`}
+          subtitle={`${mapData.distances.length} agents tracked`}
+          icon={Route}
+          accent="warning"
+        />
+        <StatusKPICard
+          title="Customers"
+          value={kpis.customersTotal.toLocaleString()}
+          subtitle={collectionRate > 0 ? `${collectionRate}% collection rate` : 'Total base'}
+          icon={Eye}
+          accent="primary"
         />
       </div>
 
@@ -162,14 +194,22 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Charts + Activity Feed */}
+      {/* === LIVE MAP + DISTANCE === */}
       <div className="grid lg:grid-cols-3 gap-4">
-        {/* Visit & Orders Trend Chart */}
+        <div className="lg:col-span-2">
+          <TeamMap agents={mapData.agents} visits={mapData.visits} loading={mapData.loading} />
+        </div>
+        <DistanceLeaderboard distances={mapData.distances} totalDistance={mapData.totalDistance} />
+      </div>
+
+      {/* === CHARTS ROW === */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* 30-Day Trend */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
-              30-Day Activity
+              30-Day Activity Trend
             </CardTitle>
           </CardHeader>
           <CardContent className="pb-2">
@@ -212,7 +252,100 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* Team Performance Table */}
+      {/* === TEAM COMPARISON BAR CHART + SUMMARY CARDS === */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Team Bar Chart */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              Team Comparison
+              <Badge variant="outline" className="text-[10px] ml-1">Today vs 30d Orders</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-2">
+            {teamBarData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={teamBarData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10 }} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '8px',
+                      border: '1px solid hsl(var(--border))',
+                      backgroundColor: 'hsl(var(--background))',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  <Bar dataKey="visits" name="Today's Visits" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="orders" name="30d Orders" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-12">No team data available</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Summary stat cards */}
+        <div className="space-y-3">
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-info/10">
+                <ShoppingBag className="h-5 w-5 text-info" />
+              </div>
+              <div>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">30-Day Orders</p>
+                <p className="text-xl font-bold">{data.teamPerformance.reduce((s, r) => s + r.ordersCount, 0)}</p>
+                <p className="text-xs text-muted-foreground">₹{totalOrders30d.toLocaleString()} value</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-success/10">
+                <IndianRupee className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">30-Day Collections</p>
+                <p className="text-xl font-bold">₹{totalCollections30d.toLocaleString()}</p>
+                {collectionRate > 0 && (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-success to-success/70 rounded-full transition-all"
+                        style={{ width: `${Math.min(collectionRate, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-medium text-success">{collectionRate}%</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-primary/10">
+                <Eye className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Avg Visits/Agent</p>
+                <p className="text-xl font-bold">
+                  {kpis.teamSize > 0 ? (data.teamPerformance.reduce((s, r) => s + r.visitsThisWeek, 0) / kpis.teamSize).toFixed(1) : '0'}
+                </p>
+                <p className="text-xs text-muted-foreground">this week</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* === AI INSIGHTS === */}
+      <AIInsights />
+
+      {/* === TEAM PERFORMANCE TABLE === */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -272,44 +405,6 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Bottom stats row */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-primary/10">
-              <Eye className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Total Customers</p>
-              <p className="text-xl font-bold">{kpis.customersTotal.toLocaleString()}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-info/10">
-              <ShoppingBag className="h-5 w-5 text-info" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">30-Day Orders</p>
-              <p className="text-xl font-bold">{data.teamPerformance.reduce((s, r) => s + r.ordersCount, 0)}</p>
-              <p className="text-xs text-muted-foreground">₹{data.teamPerformance.reduce((s, r) => s + r.ordersValue, 0).toLocaleString()}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-2 lg:col-span-1">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-success/10">
-              <IndianRupee className="h-5 w-5 text-success" />
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">30-Day Collections</p>
-              <p className="text-xl font-bold">₹{data.teamPerformance.reduce((s, r) => s + r.collectionsValue, 0).toLocaleString()}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
