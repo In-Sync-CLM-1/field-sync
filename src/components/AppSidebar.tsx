@@ -125,11 +125,13 @@ export function AppSidebar() {
     <Sidebar data-tour="sidebar" collapsible="offcanvas" className="md:w-56 border-r border-sidebar-border sidebar-gradient">
       <SidebarHeader className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-6">
         <div className="flex items-center gap-2">
-          <img
-            src={insyncLogoColor}
-            alt="In-Sync"
-            className="h-7 w-auto object-contain"
-          />
+          <div className="bg-white rounded-md px-2 py-1">
+            <img
+              src={insyncLogoColor}
+              alt="In-Sync"
+              className="h-10 w-auto object-contain"
+            />
+          </div>
           {!collapsed && (
             <span className="text-lg font-bold tracking-tight text-white">
               In-Sync
