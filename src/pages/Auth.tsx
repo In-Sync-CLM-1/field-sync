@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,6 +51,7 @@ type RegistrationStep = 'details' | 'otp-phone' | 'otp-email' | 'complete';
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, signIn, signUp } = useAuth();
   const { setCurrentOrganization } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -59,7 +60,7 @@ export default function Auth() {
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>('signin');
+  const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') === 'signup' ? 'register' : 'signin');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [sendingReset, setSendingReset] = useState(false);
@@ -329,7 +330,7 @@ export default function Auth() {
         // Redirect after showing success
         setTimeout(() => {
           if (validatedData.createNewOrg) {
-            navigate('/onboarding', { replace: true });
+            navigate('/dashboard', { replace: true });
           } else {
             navigate('/', { replace: true });
           }
