@@ -253,11 +253,16 @@ export default function Forms() {
   }, [savedFormValues, form]);
 
   // Extract error message from supabase.functions.invoke response
-  // For non-2xx, data is null and the response body is in error.context
-  const getFunctionError = (data: any, error: any): string | null => {
+  // For non-2xx: data is null, error.context is the raw Response object
+  const getFunctionError = async (data: any, error: any): Promise<string | null> => {
     if (data?.error) return data.error;
-    if (error?.context?.error) return error.context.error;
-    if (error?.message) return error.message;
+    if (error) {
+      try {
+        const body = await error.context?.json?.();
+        if (body?.error) return body.error;
+      } catch { /* response already consumed or not JSON */ }
+      return error.message;
+    }
     return null;
   };
 
@@ -272,7 +277,7 @@ export default function Forms() {
           ...(channel === 'whatsapp' ? { phone: v.phone } : { email: v.email }),
         },
       });
-      const errMsg = getFunctionError(data, error);
+      const errMsg = await getFunctionError(data, error);
       if (errMsg) throw new Error(errMsg);
       setResendCooldown(60);
       toast({
@@ -309,7 +314,7 @@ export default function Forms() {
           otp: code,
         },
       });
-      const errMsg = getFunctionError(data, error);
+      const errMsg = await getFunctionError(data, error);
       if (errMsg) throw new Error(errMsg);
       if (data?.verified !== true) throw new Error('Verification failed');
 
@@ -365,7 +370,7 @@ export default function Forms() {
         },
       });
 
-      const errMsg = getFunctionError(data, error);
+      const errMsg = await getFunctionError(data, error);
       if (errMsg) throw new Error(errMsg);
 
       toast({
@@ -402,7 +407,7 @@ export default function Forms() {
         }
       });
 
-      const errMsg = getFunctionError(data, error);
+      const errMsg = await getFunctionError(data, error);
       if (errMsg) throw new Error(errMsg);
 
       toast({
@@ -463,7 +468,7 @@ export default function Forms() {
         },
       });
 
-      const errMsg = getFunctionError(data, error);
+      const errMsg = await getFunctionError(data, error);
       if (errMsg) throw new Error(errMsg);
 
       toast({
@@ -496,7 +501,7 @@ export default function Forms() {
         body: { userId: selectedUser.id },
       });
 
-      const errMsg = getFunctionError(data, error);
+      const errMsg = await getFunctionError(data, error);
       if (errMsg) throw new Error(errMsg);
 
       toast({
