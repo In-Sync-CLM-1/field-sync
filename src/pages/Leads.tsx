@@ -173,10 +173,18 @@ export default function Leads() {
               <img src={insyncLogo} alt={currentOrganization.name} className="h-12 w-12 shrink-0" />
             )}
           </div>
+          {/* Primary CTA */}
+          <Button
+            className="w-full h-11 text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md gap-2"
+            onClick={() => navigate('/dashboard/plan')}
+          >
+            <ClipboardList className="h-4 w-4" />
+            Plan Visits
+          </Button>
           <div className="flex gap-2 flex-wrap">
             <Button
               onClick={() => navigate('/dashboard/leads/new')}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              variant="outline"
               size="sm"
             >
               <Plus className="h-3 w-3 mr-1" />
@@ -201,15 +209,6 @@ export default function Leads() {
             >
               <Compass className="h-3 w-3" />
               {isDiscovering ? 'Searching...' : 'Explore Nearby'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1"
-              onClick={() => navigate('/dashboard/plan')}
-            >
-              <ClipboardList className="h-3 w-3" />
-              Plan Visits
             </Button>
             <LeadsUpload />
             <Button
