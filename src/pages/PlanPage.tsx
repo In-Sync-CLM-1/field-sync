@@ -65,7 +65,7 @@ const PlanPage = () => {
   // Fetch org members for managers/admins
   useEffect(() => {
     async function fetchMembers() {
-      if (userRole === 'agent' || !currentOrganization) return;
+      if (!isAdmin || !currentOrganization) return;
 
       const { data: orgMemberIds } = await supabase
         .from('user_organizations')
@@ -89,7 +89,7 @@ const PlanPage = () => {
       );
     }
     fetchMembers();
-  }, [userRole, currentOrganization, user]);
+  }, [isAdmin, currentOrganization, user]);
 
   // Filtered org members
   const filteredMembers = useMemo(() => {
