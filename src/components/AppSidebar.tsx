@@ -55,7 +55,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
     ];
   }
 
-  // manager and admin
+  // admin
   const sections = [
     {
       label: 'OVERVIEW',
@@ -70,19 +70,16 @@ function getSectionsForRole(role: RoleType): NavSection[] {
         { icon: ClipboardList, label: 'Plan', path: '/dashboard/plan' },
         { icon: Users, label: 'Customers', path: '/dashboard/customers' },
         { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
+      ],
+    },
+    {
+      label: 'ADMIN',
+      items: [
         { icon: UserCog, label: 'Team', path: '/dashboard/team' },
+        { icon: UserCog, label: 'Users', path: '/dashboard/users' },
       ],
     },
   ];
-
-  if (role === 'admin') {
-    sections.push({
-      label: 'ADMIN',
-      items: [
-        { icon: UserCog, label: 'Users', path: '/dashboard/users' },
-      ],
-    });
-  }
 
   return sections;
 }
