@@ -122,21 +122,21 @@ export function AppSidebar() {
 
   return (
     <Sidebar data-tour="sidebar" collapsible="offcanvas" className="md:w-56 border-r border-sidebar-border sidebar-gradient">
-      <SidebarHeader className="border-b border-white/10 px-3 py-3 flex flex-col items-center">
-        <div className="relative group">
+      <SidebarHeader className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-6">
+        <div className="flex items-center gap-2">
           <img
             src={insyncLogoColor}
             alt="In-Sync"
-            className="h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+            className="h-7 w-auto object-contain"
           />
+          {!collapsed && (
+            <span className="text-lg font-bold tracking-tight text-white">
+              In-Sync
+            </span>
+          )}
         </div>
-        {(user?.user_metadata?.full_name || user?.email) && (
-          <p className="text-xs text-white/60 mt-1.5 truncate text-center max-w-full">
-            {user?.user_metadata?.full_name || user?.email}
-          </p>
-        )}
         {userRole === 'platform' && !collapsed && (
-          <span className="mt-1 text-[10px] font-semibold tracking-wider uppercase text-amber-400/80">Platform Admin</span>
+          <span className="text-[10px] font-semibold tracking-wider uppercase text-amber-400/80">Platform</span>
         )}
       </SidebarHeader>
       <SidebarContent>
