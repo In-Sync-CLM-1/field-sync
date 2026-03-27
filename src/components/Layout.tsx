@@ -21,11 +21,12 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { swManager } from '@/lib/serviceWorker';
 import { useAgentLocationTracker } from '@/hooks/useAgentLocationTracker';
-import { AttendanceGate } from '@/components/AttendanceGate';
+import { useAutoLogout } from '@/hooks/useAutoLogout';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
   const trackingStatus = useAgentLocationTracker();
+  useAutoLogout();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -73,7 +74,6 @@ export default function Layout() {
   };
 
   return (
-    <AttendanceGate>
     <SidebarProvider>
       <div className="flex min-h-screen w-full overflow-x-hidden bg-background">
         <AppSidebar />
@@ -161,6 +161,5 @@ export default function Layout() {
       </div>
       
     </SidebarProvider>
-    </AttendanceGate>
   );
 }

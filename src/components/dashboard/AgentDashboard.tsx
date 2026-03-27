@@ -1,6 +1,7 @@
 import { useMyStats } from '@/hooks/useDashboardData';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
+import { useAttendance } from '@/hooks/useAttendance';
 import { StatusKPICard } from './StatusKPICard';
 import { RecentVisitsSection } from './RecentVisitsSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,18 +9,62 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   MapPin, TrendingUp, Clock, AlertTriangle, Calendar, ClipboardList, Users,
-  ChevronRight, FileText, Phone, Sparkles,
+  ChevronRight, FileText, Phone, Sparkles, LogIn, LogOut, Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, isBefore, startOfDay } from 'date-fns';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function AgentDashboard() {
   const { user } = useAuth();
   const { currentOrganization } = useAuthStore();
   const myStats = useMyStats();
   const navigate = useNavigate();
+  const { todayAttendance, punchIn, punchOut } = useAttendance();
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
+  const isPunchedIn = todayAttendance.data?.punch_in_time && !todayAttendance.data?.punch_out_time;
+  const isDayComplete = todayAttendance.data?.punch_in_time && todayAttendance.data?.punch_out_time;
+
+  const handlePunchIn = async () => {
+    setAttendanceLoading(true);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true, timeout: 15000, maximumAge: 0,
+        });
+      });
+      await punchIn.mutateAsync(position);
+      toast.success('Punched in successfully!');
+    } catch (err: any) {
+      if (err.code === 1) toast.error('Location permission denied. Please enable GPS.');
+      else toast.error(err.message || 'Failed to punch in');
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
+  const handlePunchOut = async () => {
+    if (!todayAttendance.data?.id) return;
+    setAttendanceLoading(true);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true, timeout: 15000, maximumAge: 0,
+        });
+      });
+      await punchOut.mutateAsync({ id: todayAttendance.data.id, position });
+      toast.success('Punched out. Good work today!');
+    } catch (err: any) {
+      if (err.code === 1) toast.error('Location permission denied.');
+      else toast.error(err.message || 'Failed to punch out');
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
 
   // Follow-ups due
   const { data: followUpLeads = [] } = useQuery({
@@ -58,6 +103,44 @@ export default function AgentDashboard() {
           <p className="text-sm text-muted-foreground">{user?.user_metadata?.full_name || user?.email}</p>
         </div>
       </div>
+
+      {/* Attendance Card */}
+      <Card className={`border-l-4 ${isPunchedIn ? 'border-l-green-500 bg-green-50/30' : isDayComplete ? 'border-l-muted' : 'border-l-amber-500 bg-amber-50/30'}`}>
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${isPunchedIn ? 'bg-green-500/10' : isDayComplete ? 'bg-muted' : 'bg-amber-500/10'}`}>
+                <Clock className={`h-4 w-4 ${isPunchedIn ? 'text-green-600' : isDayComplete ? 'text-muted-foreground' : 'text-amber-600'}`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium">
+                  {isPunchedIn ? 'On Duty' : isDayComplete ? 'Day Complete' : 'Not Punched In'}
+                </p>
+                {todayAttendance.data?.punch_in_time && (
+                  <p className="text-xs text-muted-foreground">
+                    In: {format(new Date(todayAttendance.data.punch_in_time), 'hh:mm a')}
+                    {todayAttendance.data.punch_out_time && ` · Out: ${format(new Date(todayAttendance.data.punch_out_time), 'hh:mm a')}`}
+                    {todayAttendance.data.total_hours && ` · ${todayAttendance.data.total_hours}h`}
+                  </p>
+                )}
+              </div>
+            </div>
+            {!todayAttendance.data?.punch_in_time ? (
+              <Button size="sm" onClick={handlePunchIn} disabled={attendanceLoading} className="gap-1.5 bg-green-600 hover:bg-green-700">
+                {attendanceLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogIn className="h-3.5 w-3.5" />}
+                Punch In
+              </Button>
+            ) : !todayAttendance.data?.punch_out_time ? (
+              <Button size="sm" variant="outline" onClick={handlePunchOut} disabled={attendanceLoading} className="gap-1.5 border-red-300 text-red-600 hover:bg-red-50">
+                {attendanceLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogOut className="h-3.5 w-3.5" />}
+                Punch Out
+              </Button>
+            ) : (
+              <Badge variant="secondary" className="text-xs">Done</Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* KPI Cards */}
       <div data-tour="metrics" className="grid gap-3 grid-cols-2 lg:grid-cols-4">
