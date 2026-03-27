@@ -8,14 +8,20 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import { LeadsUpload } from '@/components/LeadsUpload';
 import insyncLogo from '@/assets/in-sync-logo.png';
 import { toast } from 'sonner';
 import { useImageParser } from '@/hooks/useImageParser';
 import { useNearbyDiscovery } from '@/hooks/useNearbyDiscovery';
-import { useRef, useState } from 'react';
+import { useCreatePlanOffline } from '@/hooks/useDailyPlansOffline';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const CUSTOMER_STATUSES = [
   { value: 'active', label: 'Active', color: 'bg-green-500' },
@@ -43,6 +49,11 @@ import {
   Camera,
   Compass,
   ClipboardList,
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  Send,
+  X,
+  Users,
 } from 'lucide-react';
 import {
   Pagination,
@@ -54,8 +65,14 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 
+interface OrgMember {
+  id: string;
+  full_name: string;
+}
+
 export default function Leads() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { currentOrganization } = useAuthStore();
   const {
     leads,
@@ -78,6 +95,112 @@ export default function Leads() {
   const { businesses, discoverNearby, isLoading: isDiscovering } = useNearbyDiscovery();
   const [showNearby, setShowNearby] = useState(false);
 
+  // ── Planning Mode State ──
+  const [planningMode, setPlanningMode] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
+  const createPlan = useCreatePlanOffline();
+
+  // Admin: agent selection
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [orgMembers, setOrgMembers] = useState<OrgMember[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<OrgMember | null>(null);
+
+  useEffect(() => {
+    async function checkRole() {
+      if (!user) return;
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      const userRoles = roles?.map(r => r.role) || [];
+      setIsAdmin(userRoles.some(r => ['admin', 'platform_admin'].includes(r)));
+    }
+    checkRole();
+  }, [user]);
+
+  useEffect(() => {
+    async function fetchMembers() {
+      if (!isAdmin || !currentOrganization) return;
+      const { data: orgMemberIds } = await supabase
+        .from('user_organizations')
+        .select('user_id')
+        .eq('organization_id', currentOrganization.id);
+      if (!orgMemberIds || orgMemberIds.length === 0) {
+        // Fallback: query profiles directly
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('organization_id', currentOrganization.id)
+          .eq('is_active', true)
+          .order('full_name');
+        setOrgMembers(
+          (profiles || [])
+            .filter(p => p.id !== user?.id)
+            .map(p => ({ id: p.id, full_name: p.full_name || 'Unknown' }))
+        );
+        return;
+      }
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', orgMemberIds.map(m => m.user_id))
+        .eq('is_active', true)
+        .order('full_name');
+      setOrgMembers(
+        (profiles || [])
+          .filter(p => p.id !== user?.id)
+          .map(p => ({ id: p.id, full_name: p.full_name || 'Unknown' }))
+      );
+    }
+    fetchMembers();
+  }, [isAdmin, currentOrganization, user]);
+
+  const togglePlanningMode = () => {
+    if (planningMode) {
+      // Exit planning
+      setPlanningMode(false);
+      setSelectedDate(undefined);
+      setSelectedLeadIds(new Set());
+      setSelectedAgent(null);
+    } else {
+      setPlanningMode(true);
+    }
+  };
+
+  const toggleLeadSelection = (id: string) => {
+    setSelectedLeadIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSubmitPlan = async () => {
+    if (!selectedDate || selectedLeadIds.size === 0) return;
+    const planDate = format(selectedDate, 'yyyy-MM-dd');
+    try {
+      await createPlan.mutateAsync({
+        plan_date: planDate,
+        prospects_target: selectedLeadIds.size,
+        quotes_target: 0,
+        policies_target: 0,
+        planned_lead_ids: Array.from(selectedLeadIds),
+        ...(selectedAgent && {
+          target_user_id: selectedAgent.id,
+          agent_full_name: selectedAgent.full_name,
+        }),
+      });
+      setPlanningMode(false);
+      setSelectedDate(undefined);
+      setSelectedLeadIds(new Set());
+      setSelectedAgent(null);
+    } catch {
+      // handled by mutation
+    }
+  };
+
   const handleScanCard = () => {
     fileInputRef.current?.click();
   };
@@ -92,7 +215,6 @@ export default function Leads() {
     } else {
       toast.error('Could not read the card. Try again with better lighting.');
     }
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -154,7 +276,7 @@ export default function Leads() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3 page-gradient min-h-screen">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-3 page-gradient min-h-screen pb-24">
       {/* Hero Header */}
       <div className="hero-gradient" data-tour="prospects-header">
         <div className="flex flex-col gap-2">
@@ -173,56 +295,107 @@ export default function Leads() {
               <img src={insyncLogo} alt={currentOrganization.name} className="h-12 w-12 shrink-0" />
             )}
           </div>
-          {/* Primary CTA */}
+          {/* Plan Visits toggle */}
           <Button
-            className="w-full h-11 text-sm font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-md gap-2"
-            onClick={() => navigate('/dashboard/plan')}
+            className={`w-full h-11 text-sm font-semibold shadow-md gap-2 ${
+              planningMode
+                ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                : 'bg-primary hover:bg-primary/90 text-primary-foreground'
+            }`}
+            onClick={togglePlanningMode}
           >
-            <ClipboardList className="h-4 w-4" />
-            Plan Visits
+            {planningMode ? (
+              <><X className="h-4 w-4" /> Cancel Planning</>
+            ) : (
+              <><ClipboardList className="h-4 w-4" /> Plan Visits</>
+            )}
           </Button>
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              onClick={() => navigate('/dashboard/leads/new')}
-              variant="outline"
-              size="sm"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1"
-              onClick={handleScanCard}
-              disabled={isParsing}
-            >
-              <Camera className="h-3 w-3" />
-              {isParsing ? 'Scanning...' : 'Scan Card'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1"
-              onClick={handleExploreNearby}
-              disabled={isDiscovering}
-            >
-              <Compass className="h-3 w-3" />
-              {isDiscovering ? 'Searching...' : 'Explore Nearby'}
-            </Button>
-            <LeadsUpload />
-            <Button
-              onClick={syncFromDatabase}
-              disabled={syncing || !currentOrganization}
-              className="btn-outline-info"
-              size="sm"
-            >
-              <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? 'Syncing' : 'Sync'}
-            </Button>
-          </div>
+          {!planningMode && (
+            <div className="flex gap-2 flex-wrap">
+              <Button onClick={() => navigate('/dashboard/leads/new')} variant="outline" size="sm">
+                <Plus className="h-3 w-3 mr-1" /> Add
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1" onClick={handleScanCard} disabled={isParsing}>
+                <Camera className="h-3 w-3" />
+                {isParsing ? 'Scanning...' : 'Scan Card'}
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1" onClick={handleExploreNearby} disabled={isDiscovering}>
+                <Compass className="h-3 w-3" />
+                {isDiscovering ? 'Searching...' : 'Explore Nearby'}
+              </Button>
+              <LeadsUpload />
+              <Button onClick={syncFromDatabase} disabled={syncing || !currentOrganization} className="btn-outline-info" size="sm">
+                <RefreshCw className={`h-3 w-3 mr-1 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing' : 'Sync'}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Planning Controls — inline when planning mode is on */}
+      {planningMode && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-3 space-y-3">
+            {/* Admin: Agent selector */}
+            {isAdmin && (
+              <div>
+                <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Plan for</Label>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => setSelectedAgent(null)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      selectedAgent === null
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-accent'
+                    }`}
+                  >
+                    Myself
+                  </button>
+                  {orgMembers.map(member => (
+                    <button
+                      key={member.id}
+                      onClick={() => setSelectedAgent(member)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        selectedAgent?.id === member.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-accent'
+                      }`}
+                    >
+                      {member.full_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Date picker */}
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                <CalendarIcon className="h-3 w-3 inline mr-1" />
+                {selectedDate ? format(selectedDate, 'EEE, MMM d, yyyy') : 'Select date'}
+              </Label>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={{ before: new Date() }}
+                className="pointer-events-auto mx-auto rounded-md border"
+              />
+            </div>
+
+            {selectedDate && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                <span>Now tap customers below to select them for {format(selectedDate, 'MMM d')}</span>
+                {selectedLeadIds.size > 0 && (
+                  <Badge className="ml-auto bg-primary text-primary-foreground">{selectedLeadIds.size} selected</Badge>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search and Filter */}
       <Card data-tour="prospects-search">
@@ -263,7 +436,6 @@ export default function Leads() {
               </button>
             ))}
           </div>
-
         </CardContent>
       </Card>
 
@@ -289,7 +461,7 @@ export default function Leads() {
               </p>
               {currentOrganization && (
                 <div className="flex gap-2">
-                    <Button
+                  <Button
                     onClick={() => navigate('/dashboard/leads/new')}
                     className="bg-primary text-primary-foreground hover:bg-primary/90"
                     size="sm"
@@ -308,43 +480,68 @@ export default function Leads() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {paginatedItems.map((lead) => (
-            <Card
-              key={lead.id}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => navigate(`/dashboard/leads/${lead.id}`)}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-start justify-between mb-1">
-                  <div>
-                    <CardTitle className="text-sm font-medium">{lead.name}</CardTitle>
-                  </div>
-                  <div className="flex gap-1 items-center">
-                    {lead.status && (
-                      <Badge className={`text-[10px] h-5 ${getStatusBadgeColor(lead.status)}`}>
-                        {getStatusLabel(lead.status)}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
-                  {(lead.villageCity || lead.district) && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {[lead.villageCity, lead.district].filter(Boolean).join(', ')}
-                    </span>
-                  )}
-                  {lead.mobileNo && (
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {lead.mobileNo}
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+            {paginatedItems.map((lead) => {
+              const isSelected = planningMode && selectedLeadIds.has(lead.id);
+              return (
+                <Card
+                  key={lead.id}
+                  className={`cursor-pointer transition-colors ${
+                    isSelected
+                      ? 'bg-primary/10 border-primary/40 ring-1 ring-primary/20'
+                      : 'hover:bg-accent/50'
+                  }`}
+                  onClick={() => {
+                    if (planningMode && selectedDate) {
+                      toggleLeadSelection(lead.id);
+                    } else if (!planningMode) {
+                      navigate(`/dashboard/leads/${lead.id}`);
+                    }
+                  }}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-2.5">
+                      {/* Checkbox in planning mode */}
+                      {planningMode && selectedDate && (
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleLeadSelection(lead.id)}
+                          className="mt-0.5 pointer-events-none"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-1">
+                          <CardTitle className="text-sm font-medium">{lead.name}</CardTitle>
+                          <div className="flex gap-1 items-center">
+                            {lead.status && (
+                              <Badge className={`text-[10px] h-5 ${getStatusBadgeColor(lead.status)}`}>
+                                {getStatusLabel(lead.status)}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
+                          {(lead.villageCity || lead.district) && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {[lead.villageCity, lead.district].filter(Boolean).join(', ')}
+                            </span>
+                          )}
+                          {lead.mobileNo && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {lead.mobileNo}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
@@ -401,6 +598,31 @@ export default function Leads() {
           </Pagination>
         )}
       </div>
+
+      {/* Sticky Save Plan footer */}
+      {planningMode && selectedDate && selectedLeadIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg p-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">
+                {selectedLeadIds.size} {selectedLeadIds.size === 1 ? 'customer' : 'customers'} selected
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {format(selectedDate, 'EEE, MMM d')}
+                {selectedAgent ? ` · for ${selectedAgent.full_name}` : ''}
+              </p>
+            </div>
+            <Button
+              className="h-10 gap-2 px-6"
+              disabled={createPlan.isPending}
+              onClick={handleSubmitPlan}
+            >
+              <Send className="h-4 w-4" />
+              {createPlan.isPending ? 'Saving...' : 'Save Plan'}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Hidden file input for card scanning */}
       <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileSelected} />
