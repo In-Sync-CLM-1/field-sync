@@ -1,0 +1,1 @@
+seed-insync-demo|seed-demo-data|{"organization_id":"eebd91f7-5e43-46ae-b956-5765ea842eb3","mode":"daily"}|30 2 * * *
