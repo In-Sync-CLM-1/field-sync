@@ -1,6 +1,5 @@
-import { useRef, useEffect, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { useRef, useState, useCallback, useEffect } from 'react';
+import { GoogleMap, useJsApiLoader, OverlayView, InfoWindow } from '@react-google-maps/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,8 @@ import { Map, Maximize2, Minimize2, Layers } from 'lucide-react';
 import { AgentLocation, VisitPin } from '@/hooks/useTeamMapData';
 import { format } from 'date-fns';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const INDIA_CENTER = { lat: 20.5937, lng: 78.9629 };
 
 const statusColors: Record<AgentLocation['status'], string> = {
   'on-visit': '#22c55e',
@@ -22,137 +22,93 @@ const statusLabels: Record<AgentLocation['status'], string> = {
   'idle': 'Absent',
 };
 
+// Dark theme to match the previous Mapbox dark style
+const DARK_MAP_STYLE: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#1d2c4d' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8ec3b9' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#1a3646' }] },
+  { featureType: 'administrative.country', elementType: 'geometry.stroke', stylers: [{ color: '#4b6878' }] },
+  { featureType: 'administrative.province', elementType: 'geometry.stroke', stylers: [{ color: '#4b6878' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#334e87' }] },
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#023e58' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#304a7d' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#98a5be' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2c6675' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4e6d70' }] },
+];
+
+const MAP_OPTIONS: google.maps.MapOptions = {
+  styles: DARK_MAP_STYLE,
+  disableDefaultUI: true,
+  zoomControl: true,
+  zoomControlOptions: { position: 9 /* RIGHT_BOTTOM */ },
+  clickableIcons: false,
+  gestureHandling: 'greedy',
+};
+
+const centerOffset = (w: number, h: number) => ({ x: -(w / 2), y: -(h / 2) });
+
 interface TeamMapProps {
   agents: AgentLocation[];
   visits: VisitPin[];
   loading?: boolean;
 }
 
+type Selected =
+  | { type: 'agent'; data: AgentLocation }
+  | { type: 'visit'; data: VisitPin };
+
 export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY || '',
+  });
+
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [showVisits, setShowVisits] = useState(true);
+  const [selected, setSelected] = useState<Selected | null>(null);
 
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainer.current || !MAPBOX_TOKEN) return;
-
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    const m = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [78.9629, 20.5937], // India center
-      zoom: 4.5,
-      attributionControl: false,
-    });
-
-    m.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
-    map.current = m;
-
-    return () => {
-      m.remove();
-      map.current = null;
-    };
+  const onLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+  }, []);
+  const onUnmount = useCallback(() => {
+    mapRef.current = null;
   }, []);
 
-  // Update markers
+  // Fit map to all visible points whenever data, visit toggle, or expand changes
   useEffect(() => {
-    if (!map.current) return;
+    const map = mapRef.current;
+    if (!map || !isLoaded) return;
 
-    // Clear old markers
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-
-    const bounds = new mapboxgl.LngLatBounds();
+    const bounds = new google.maps.LatLngBounds();
     let hasPoints = false;
-
-    // Agent markers — pulsing dots
-    agents.forEach(agent => {
-      const color = statusColors[agent.status];
-
-      const el = document.createElement('div');
-      el.className = 'agent-marker';
-      el.innerHTML = `
-        <div style="position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
-          ${agent.status === 'on-visit' ? `<div style="position:absolute;width:36px;height:36px;border-radius:50%;background:${color};opacity:0.25;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>` : ''}
-          <div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);position:relative;z-index:1;"></div>
-        </div>
-      `;
-
-      const popup = new mapboxgl.Popup({ offset: 20, closeButton: false, maxWidth: '200px' })
-        .setHTML(`
-          <div style="font-family:system-ui;padding:2px 0;">
-            <div style="font-weight:600;font-size:13px;color:#111;">${agent.name}</div>
-            <div style="display:flex;align-items:center;gap:4px;margin-top:3px;">
-              <span style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;"></span>
-              <span style="font-size:11px;color:#666;">${statusLabels[agent.status]}</span>
-            </div>
-            ${agent.accuracy ? `<div style="font-size:10px;color:#999;margin-top:2px;">Accuracy: ${Math.round(agent.accuracy)}m</div>` : ''}
-            <div style="font-size:10px;color:#999;margin-top:1px;">Updated ${format(new Date(agent.updatedAt), 'hh:mm a')}</div>
-          </div>
-        `);
-
-      const marker = new mapboxgl.Marker({ element: el })
-        .setLngLat([agent.longitude, agent.latitude])
-        .setPopup(popup)
-        .addTo(map.current!);
-
-      markersRef.current.push(marker);
-      bounds.extend([agent.longitude, agent.latitude]);
-      hasPoints = true;
-    });
-
-    // Visit markers — small diamond pins
+    agents.forEach(a => { bounds.extend({ lat: a.latitude, lng: a.longitude }); hasPoints = true; });
     if (showVisits) {
-      visits.forEach(visit => {
-        const isActive = visit.isActive;
-        const el = document.createElement('div');
-        el.innerHTML = `
-          <div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 1L14 8L8 15L2 8Z" fill="${isActive ? '#f59e0b' : '#6366f1'}" stroke="white" stroke-width="1.5"/>
-            </svg>
-          </div>
-        `;
-
-        const popup = new mapboxgl.Popup({ offset: 12, closeButton: false, maxWidth: '180px' })
-          .setHTML(`
-            <div style="font-family:system-ui;padding:2px 0;">
-              <div style="font-weight:600;font-size:12px;color:#111;">${visit.agentName}</div>
-              <div style="font-size:11px;color:#555;">${visit.purpose || 'Visit'}</div>
-              <div style="font-size:10px;color:#999;margin-top:2px;">${format(new Date(visit.checkInTime), 'hh:mm a')}${visit.checkOutTime ? ' - ' + format(new Date(visit.checkOutTime), 'hh:mm a') : ' (ongoing)'}</div>
-            </div>
-          `);
-
-        const marker = new mapboxgl.Marker({ element: el })
-          .setLngLat([visit.longitude, visit.latitude])
-          .setPopup(popup)
-          .addTo(map.current!);
-
-        markersRef.current.push(marker);
-        bounds.extend([visit.longitude, visit.latitude]);
-        hasPoints = true;
-      });
+      visits.forEach(v => { bounds.extend({ lat: v.latitude, lng: v.longitude }); hasPoints = true; });
     }
 
-    // Fit to bounds
-    if (hasPoints) {
-      map.current.fitBounds(bounds, { padding: 60, maxZoom: 14, duration: 800 });
-    }
-  }, [agents, visits, showVisits]);
+    // Container size may have just changed (expand/collapse); let it settle first
+    const t = setTimeout(() => {
+      google.maps.event.trigger(map, 'resize');
+      if (hasPoints) {
+        map.fitBounds(bounds, 60);
+        if (agents.length + (showVisits ? visits.length : 0) === 1) {
+          map.setZoom(14);
+        }
+      }
+    }, 120);
+    return () => clearTimeout(t);
+  }, [agents, visits, showVisits, expanded, isLoaded]);
 
-  // Resize on expand/collapse
-  useEffect(() => {
-    setTimeout(() => map.current?.resize(), 100);
-  }, [expanded]);
-
-  if (!MAPBOX_TOKEN) {
+  if (!GOOGLE_MAPS_API_KEY) {
     return (
       <Card>
         <CardContent className="p-6 text-center text-muted-foreground text-sm">
-          Map unavailable — Mapbox token not configured
+          Map unavailable — Google Maps API key not configured
         </CardContent>
       </Card>
     );
@@ -186,15 +142,98 @@ export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
         </div>
       </CardHeader>
       <CardContent className="p-0 relative">
-        {loading && (
+        {(loading || !isLoaded) && (
           <div className="absolute inset-0 bg-background/60 z-10 flex items-center justify-center">
             <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        <div
-          ref={mapContainer}
-          className={`w-full transition-all duration-300 ${expanded ? 'h-[calc(100vh-120px)]' : 'h-[450px]'}`}
-        />
+        <div className={`w-full transition-all duration-300 ${expanded ? 'h-[calc(100vh-120px)]' : 'h-[450px]'}`}>
+          {isLoaded && (
+            <GoogleMap
+              mapContainerStyle={{ width: '100%', height: '100%' }}
+              center={INDIA_CENTER}
+              zoom={5}
+              options={MAP_OPTIONS}
+              onLoad={onLoad}
+              onUnmount={onUnmount}
+              onClick={() => setSelected(null)}
+            >
+              {/* Agent markers — pulsing dots */}
+              {agents.map(agent => {
+                const color = statusColors[agent.status];
+                return (
+                  <OverlayView
+                    key={`agent-${agent.id}`}
+                    position={{ lat: agent.latitude, lng: agent.longitude }}
+                    mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    getPixelPositionOffset={centerOffset}
+                  >
+                    <div
+                      style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      onClick={() => setSelected({ type: 'agent', data: agent })}
+                    >
+                      {agent.status === 'on-visit' && (
+                        <div style={{ position: 'absolute', width: 36, height: 36, borderRadius: '50%', background: color, opacity: 0.25, animation: 'ping 1.5s cubic-bezier(0,0,0.2,1) infinite' }} />
+                      )}
+                      <div style={{ width: 14, height: 14, borderRadius: '50%', background: color, border: '2.5px solid white', boxShadow: '0 2px 6px rgba(0,0,0,0.35)', position: 'relative', zIndex: 1 }} />
+                    </div>
+                  </OverlayView>
+                );
+              })}
+
+              {/* Visit markers — small diamond pins */}
+              {showVisits && visits.map(visit => (
+                <OverlayView
+                  key={`visit-${visit.id}`}
+                  position={{ lat: visit.latitude, lng: visit.longitude }}
+                  mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                  getPixelPositionOffset={centerOffset}
+                >
+                  <div
+                    style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    onClick={() => setSelected({ type: 'visit', data: visit })}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 1L14 8L8 15L2 8Z" fill={visit.isActive ? '#f59e0b' : '#6366f1'} stroke="white" strokeWidth="1.5" />
+                    </svg>
+                  </div>
+                </OverlayView>
+              ))}
+
+              {/* Popup */}
+              {selected && (
+                <InfoWindow
+                  position={{ lat: selected.data.latitude, lng: selected.data.longitude }}
+                  options={{ pixelOffset: new google.maps.Size(0, selected.type === 'agent' ? -18 : -12) }}
+                  onCloseClick={() => setSelected(null)}
+                >
+                  {selected.type === 'agent' ? (
+                    <div style={{ fontFamily: 'system-ui', padding: '2px 0' }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: '#111' }}>{selected.data.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColors[selected.data.status], display: 'inline-block' }} />
+                        <span style={{ fontSize: 11, color: '#666' }}>{statusLabels[selected.data.status]}</span>
+                      </div>
+                      {selected.data.accuracy ? (
+                        <div style={{ fontSize: 10, color: '#999', marginTop: 2 }}>Accuracy: {Math.round(selected.data.accuracy)}m</div>
+                      ) : null}
+                      <div style={{ fontSize: 10, color: '#999', marginTop: 1 }}>Updated {format(new Date(selected.data.updatedAt), 'hh:mm a')}</div>
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: 'system-ui', padding: '2px 0' }}>
+                      <div style={{ fontWeight: 600, fontSize: 12, color: '#111' }}>{selected.data.agentName}</div>
+                      <div style={{ fontSize: 11, color: '#555' }}>{selected.data.purpose || 'Visit'}</div>
+                      <div style={{ fontSize: 10, color: '#999', marginTop: 2 }}>
+                        {format(new Date(selected.data.checkInTime), 'hh:mm a')}
+                        {selected.data.checkOutTime ? ' - ' + format(new Date(selected.data.checkOutTime), 'hh:mm a') : ' (ongoing)'}
+                      </div>
+                    </div>
+                  )}
+                </InfoWindow>
+              )}
+            </GoogleMap>
+          )}
+        </div>
         {/* Legend */}
         <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur rounded-lg px-3 py-2 flex items-center gap-3 text-[10px] shadow-sm border">
           <span className="flex items-center gap-1.5">
