@@ -29,3 +29,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# demo video tooling
+scripts/recordings/
+scripts/.browser-profile/

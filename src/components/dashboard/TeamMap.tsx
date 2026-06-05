@@ -71,9 +71,11 @@ export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
   const [expanded, setExpanded] = useState(false);
   const [showVisits, setShowVisits] = useState(true);
   const [selected, setSelected] = useState<Selected | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
+    setMapReady(true); // re-run the fit effect even when data arrived before the map mounted
   }, []);
   const onUnmount = useCallback(() => {
     mapRef.current = null;
@@ -82,7 +84,7 @@ export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
   // Fit map to all visible points whenever data, visit toggle, or expand changes
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !isLoaded) return;
+    if (!map || !isLoaded || !mapReady) return;
 
     const bounds = new google.maps.LatLngBounds();
     let hasPoints = false;
@@ -102,7 +104,7 @@ export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
       }
     }, 120);
     return () => clearTimeout(t);
-  }, [agents, visits, showVisits, expanded, isLoaded]);
+  }, [agents, visits, showVisits, expanded, isLoaded, mapReady]);
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
