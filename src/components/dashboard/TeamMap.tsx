@@ -1,10 +1,10 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { GoogleMap, useJsApiLoader, OverlayView, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, OverlayView, InfoWindow, Polyline } from '@react-google-maps/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Map, Maximize2, Minimize2, Layers } from 'lucide-react';
-import { AgentLocation, VisitPin } from '@/hooks/useTeamMapData';
+import { AgentLocation, VisitPin, AgentTrail } from '@/hooks/useTeamMapData';
 import { format } from 'date-fns';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -54,6 +54,7 @@ const centerOffset = (w: number, h: number) => ({ x: -(w / 2), y: -(h / 2) });
 interface TeamMapProps {
   agents: AgentLocation[];
   visits: VisitPin[];
+  trails?: AgentTrail[];
   loading?: boolean;
 }
 
@@ -61,7 +62,7 @@ type Selected =
   | { type: 'agent'; data: AgentLocation }
   | { type: 'visit'; data: VisitPin };
 
-export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
+export default function TeamMap({ agents, visits, trails = [], loading }: TeamMapProps) {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY || '',
@@ -92,6 +93,7 @@ export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
     if (showVisits) {
       visits.forEach(v => { bounds.extend({ lat: v.latitude, lng: v.longitude }); hasPoints = true; });
     }
+    trails.forEach(t => t.path.forEach(p => { bounds.extend({ lat: p.lat, lng: p.lng }); hasPoints = true; }));
 
     // Container size may have just changed (expand/collapse); let it settle first
     const t = setTimeout(() => {
@@ -104,7 +106,7 @@ export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
       }
     }, 120);
     return () => clearTimeout(t);
-  }, [agents, visits, showVisits, expanded, isLoaded, mapReady]);
+  }, [agents, visits, trails, showVisits, expanded, isLoaded, mapReady]);
 
   if (!GOOGLE_MAPS_API_KEY) {
     return (
@@ -160,6 +162,24 @@ export default function TeamMap({ agents, visits, loading }: TeamMapProps) {
               onUnmount={onUnmount}
               onClick={() => setSelected(null)}
             >
+              {/* Movement trails — each agent's path today */}
+              {trails.map(trail => (
+                <Polyline
+                  key={`trail-${trail.userId}`}
+                  path={trail.path.map(p => ({ lat: p.lat, lng: p.lng }))}
+                  options={{
+                    strokeColor: statusColors[trail.status],
+                    strokeOpacity: 0.9,
+                    strokeWeight: 3,
+                    geodesic: true,
+                    icons: [{
+                      icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 2, strokeColor: statusColors[trail.status] },
+                      offset: '100%', repeat: '120px',
+                    }],
+                  }}
+                />
+              ))}
+
               {/* Agent markers — pulsing dots */}
               {agents.map(agent => {
                 const color = statusColors[agent.status];

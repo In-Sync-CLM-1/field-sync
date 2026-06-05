@@ -148,7 +148,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* === HERO: LIVE MAP (full width) === */}
-      <TeamMap agents={mapData.agents} visits={mapData.visits} loading={mapData.loading} />
+      <TeamMap agents={mapData.agents} visits={mapData.visits} trails={mapData.trails} loading={mapData.loading} />
 
       {/* === CHARTS ROW === */}
       <div className="grid lg:grid-cols-3 gap-4">

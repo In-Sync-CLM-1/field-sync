@@ -31,6 +31,13 @@ export interface AgentDistance {
   pointCount: number;
 }
 
+export interface AgentTrail {
+  userId: string;
+  name: string;
+  status: AgentLocation['status'];
+  path: { lat: number; lng: number }[];
+}
+
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -46,6 +53,7 @@ export function useTeamMapData() {
   const [agents, setAgents] = useState<AgentLocation[]>([]);
   const [visits, setVisits] = useState<VisitPin[]>([]);
   const [distances, setDistances] = useState<AgentDistance[]>([]);
+  const [trails, setTrails] = useState<AgentTrail[]>([]);
   const [totalDistance, setTotalDistance] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -135,9 +143,23 @@ export function useTeamMapData() {
       }
       agentDistances.sort((a, b) => b.distanceKm - a.distanceKm);
 
+      // Movement trails — each agent's ordered path today (for drawing on the map)
+      const statusByUser = new Map(agentLocations.map(a => [a.userId, a.status]));
+      const agentTrails: AgentTrail[] = [];
+      for (const [userId, points] of userPoints) {
+        if (points.length < 2) continue;
+        agentTrails.push({
+          userId,
+          name: profileMap.get(userId) || 'Unknown',
+          status: statusByUser.get(userId) || 'idle',
+          path: points,
+        });
+      }
+
       setAgents(agentLocations);
       setVisits(visitPins);
       setDistances(agentDistances);
+      setTrails(agentTrails);
       setTotalDistance(Math.round(total * 10) / 10);
     } catch (err) {
       console.error('Team map data error:', err);
@@ -152,5 +174,5 @@ export function useTeamMapData() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  return { agents, visits, distances, totalDistance, loading, refresh: fetchData };
+  return { agents, visits, distances, trails, totalDistance, loading, refresh: fetchData };
 }
