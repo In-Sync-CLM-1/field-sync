@@ -85,7 +85,7 @@ export function usePlatformDashboard() {
         supabase.from('visits').select('id, created_at').gte('created_at', thirtyDaysAgo),
         supabase.from('leads').select('id, organization_id, created_at'),
         supabase.from('attendance').select('id, organization_id, user_id, date, punch_in_time').eq('date', todayStr),
-        supabase.from('orders').select('id, organization_id, total_amount, created_at'),
+        supabase.from('order_collections').select('id, organization_id, total_amount, created_at').eq('type', 'sales_order'),
       ]);
 
       if (signal?.cancelled) return;

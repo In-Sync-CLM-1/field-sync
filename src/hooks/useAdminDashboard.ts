@@ -111,8 +111,8 @@ export function useAdminDashboard() {
         supabase.from('visits').select('id, user_id, check_in_time, check_out_time, status, purpose').eq('organization_id', orgId).gte('check_in_time', todayStart),
         supabase.from('visits').select('id, check_in_time, created_at').eq('organization_id', orgId).gte('created_at', thirtyDaysAgo),
         supabase.from('visits').select('id, user_id').eq('organization_id', orgId).gte('check_in_time', weekStart.toISOString()).lte('check_in_time', weekEnd.toISOString()),
-        supabase.from('orders').select('id, user_id, total_amount, created_at').eq('organization_id', orgId).gte('created_at', thirtyDaysAgo),
-        supabase.from('collections').select('id, user_id, amount, created_at').eq('organization_id', orgId).gte('created_at', thirtyDaysAgo),
+        supabase.from('order_collections').select('id, user_id, total_amount, created_at').eq('organization_id', orgId).eq('type', 'sales_order').gte('created_at', thirtyDaysAgo),
+        supabase.from('order_collections').select('id, user_id, amount:total_amount, created_at').eq('organization_id', orgId).eq('type', 'payment_collection').gte('created_at', thirtyDaysAgo),
         supabase.from('leads').select('id').eq('organization_id', orgId),
       ]);
 

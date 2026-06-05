@@ -38,8 +38,8 @@ serve(async (req) => {
       supabase.from('profiles').select('id, full_name').eq('organization_id', organization_id).eq('is_active', true),
       supabase.from('attendance').select('user_id, date, punch_in_time, punch_out_time, total_hours').eq('organization_id', organization_id).gte('date', thirtyDaysAgo.split('T')[0]),
       supabase.from('visits').select('id, user_id, status, check_in_time, check_out_time, purpose').eq('organization_id', organization_id).gte('check_in_time', thirtyDaysAgo),
-      supabase.from('orders').select('id, user_id, total_amount, created_at').eq('organization_id', organization_id).gte('created_at', thirtyDaysAgo),
-      supabase.from('collections').select('id, user_id, amount, created_at').eq('organization_id', organization_id).gte('created_at', thirtyDaysAgo),
+      supabase.from('order_collections').select('id, user_id, total_amount, created_at').eq('organization_id', organization_id).eq('type', 'sales_order').gte('created_at', thirtyDaysAgo),
+      supabase.from('order_collections').select('id, user_id, amount:total_amount, created_at').eq('organization_id', organization_id).eq('type', 'payment_collection').gte('created_at', thirtyDaysAgo),
       supabase.from('leads').select('id, status, assigned_user_id, created_at').eq('organization_id', organization_id),
       supabase.from('attendance').select('user_id, date, total_hours').eq('organization_id', organization_id).gte('date', sevenDaysAgo.split('T')[0]),
     ]);
