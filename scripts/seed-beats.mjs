@@ -40,6 +40,11 @@ async function sql(query) {
 
 const Q = (s) => `'${String(s).replace(/'/g, "''")}'`;
 
+// Curated Bangalore demo customers (d1c000NN), owner-assigned, all located.
+// Kavya's route is ordered so the visited stops come first and Harish Khanna
+// (the customer the later video scenes visit) is her NEXT planned stop.
+const C = (nn) => `d1c000${nn}-0000-4000-8000-0000000000${nn}`;
+
 async function main() {
   // Today (IST) + weekday so generation yields data the moment we seed.
   const [{ ist_today: today, dow }] = await sql(
@@ -49,34 +54,27 @@ async function main() {
   const todayDow = Number(dow);
   console.log(`Today (IST): ${today}  dow=${todayDow}`);
 
-  // Real demo leads (the brief's d1c000NN ids are stale). Prefer active + located.
-  const leads = await sql(
-    `select id, name, (latitude is not null and longitude is not null) as has_loc
-     from leads
-     where organization_id = ${Q(DEMO)} and coalesce(status,'active') <> 'lost'
-     order by has_loc desc, name
-     limit 24`,
-  );
-  if (leads.length < 12) throw new Error(`Not enough demo leads (${leads.length})`);
-
-  // 4 beats; include the themed weekdays + today's dow so each shows now.
+  // 4 beats; weekdays = themed days + today's dow so each shows the moment we seed.
   const themes = [
-    { key: 'kavya', name: 'Koramangala – Mon/Thu', agent: REPS.kavya, days: [1, 4] },
-    { key: 'priya', name: 'Indiranagar – Tue/Fri', agent: REPS.priya, days: [2, 5] },
-    { key: 'arjun', name: 'Whitefield – Mon/Wed', agent: REPS.arjun, days: [1, 3] },
-    { key: 'deepa', name: 'BTM/JP Nagar – Wed/Sat', agent: REPS.deepa, days: [3, 6] },
+    // Kavya: Vikram(05), Suresh(09) done earlier; Harish(01) next; Manish(13) after.
+    { key: 'kavya', name: 'Koramangala – Mon/Thu', agent: REPS.kavya, days: [1, 4], customers: ['05', '09', '01', '13'], visited: 2 },
+    { key: 'priya', name: 'Indiranagar – Tue/Fri', agent: REPS.priya, days: [2, 5], customers: ['02', '10', '14'], visited: 0 },
+    { key: 'arjun', name: 'Whitefield – Mon/Wed', agent: REPS.arjun, days: [1, 3], customers: ['03', '07', '11', '15'], visited: 0 },
+    { key: 'deepa', name: 'BTM/JP Nagar – Wed/Sat', agent: REPS.deepa, days: [3, 6], customers: ['04', '08', '16'], visited: 0 },
   ];
 
-  // Distribute leads 4 per beat.
-  const beats = themes.map((t, i) => {
-    const slice = leads.slice(i * 4, i * 4 + 4);
-    const weekdays = [...new Set([...t.days, todayDow])].sort((a, b) => a - b);
-    return { id: randomUUID(), ...t, weekdays, customers: slice };
-  });
+  const beats = themes.map((t) => ({
+    id: randomUUID(),
+    ...t,
+    weekdays: [...new Set([...t.days, todayDow])].sort((a, b) => a - b),
+    customers: t.customers.map((nn) => ({ id: C(nn) })),
+  }));
 
   // --- reset prior demo seed (idempotent) ---
+  // Only remove THIS seed's progress visits (tagged), so other demo data is untouched.
   await sql(
     `delete from plan_visits where organization_id = ${Q(DEMO)} and plan_date = ${Q(today)};
+     delete from visits where organization_id = ${Q(DEMO)} and notes = '__beatseed';
      delete from beats where organization_id = ${Q(DEMO)};`,
   );
 
@@ -104,22 +102,25 @@ async function main() {
     console.log(`  ${b.name}: ${rows[0].n} plan items for ${b.key}`);
   }
 
-  // --- show progress: mark Kavya's first 2 items visited (with real visit rows) ---
-  const kavyaPlan = await sql(
-    `select pv.id, pv.customer_id from plan_visits pv
-     where pv.agent_id = ${Q(REPS.kavya)} and pv.plan_date = ${Q(today)} order by pv.seq limit 2`,
-  );
-  for (const item of kavyaPlan) {
-    const visitId = randomUUID();
-    await sql(
-      `insert into visits (id, organization_id, user_id, customer_id, check_in_time, check_out_time,
-         check_in_latitude, check_in_longitude, status, purpose)
-       values (${Q(visitId)}, ${Q(DEMO)}, ${Q(REPS.kavya)}, ${Q(item.customer_id)}, now(), now(),
-         12.9352, 77.6245, 'completed', 'follow-up');
-       update plan_visits set status = 'visited', visit_id = ${Q(visitId)} where id = ${Q(item.id)};`,
+  // --- show progress: mark the first N items of each beat visited (real visit rows) ---
+  for (const b of beats) {
+    if (!b.visited) continue;
+    const items = await sql(
+      `select pv.id, pv.customer_id from plan_visits pv
+       where pv.agent_id = ${Q(b.agent)} and pv.plan_date = ${Q(today)} order by pv.seq limit ${b.visited}`,
     );
+    for (const item of items) {
+      const visitId = randomUUID();
+      await sql(
+        `insert into visits (id, organization_id, user_id, customer_id, check_in_time, check_out_time,
+           check_in_latitude, check_in_longitude, status, purpose, notes)
+         values (${Q(visitId)}, ${Q(DEMO)}, ${Q(b.agent)}, ${Q(item.customer_id)}, now(), now(),
+           12.9352, 77.6245, 'completed', 'follow-up', '__beatseed');
+         update plan_visits set status = 'visited', visit_id = ${Q(visitId)} where id = ${Q(item.id)};`,
+      );
+    }
+    console.log(`  ${b.key}: marked ${items.length} visited.`);
   }
-  console.log(`Marked ${kavyaPlan.length} of Kavya's items visited.`);
 
   // --- summary ---
   const summary = await sql(
