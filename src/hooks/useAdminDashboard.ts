@@ -79,7 +79,7 @@ const EMPTY: AdminDashboardData = {
 };
 
 export function useAdminDashboard() {
-  const { currentOrganization } = useAuthStore();
+  const { currentOrganization, user } = useAuthStore();
   const [data, setData] = useState<AdminDashboardData>(EMPTY);
   const [loading, setLoading] = useState(true);
 
@@ -118,7 +118,8 @@ export function useAdminDashboard() {
 
       if (signal?.cancelled) return;
 
-      const profiles = (profilesRes.data ?? []).filter(p => p.is_active !== false);
+      // exclude the logged-in manager (the viewer) — they're not a tracked field rep
+      const profiles = (profilesRes.data ?? []).filter(p => p.is_active !== false && p.id !== user?.id);
       const attendance = attendanceRes.data ?? [];
       const visitsToday = visitsTodayRes.data ?? [];
       const visitsChart = visitsChartRes.data ?? [];
@@ -279,7 +280,7 @@ export function useAdminDashboard() {
     } finally {
       if (!signal?.cancelled) setLoading(false);
     }
-  }, [currentOrganization?.id]);
+  }, [currentOrganization?.id, user?.id]);
 
   useEffect(() => {
     const signal = { cancelled: false };

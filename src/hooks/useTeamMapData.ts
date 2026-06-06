@@ -49,7 +49,7 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 }
 
 export function useTeamMapData() {
-  const { currentOrganization } = useAuthStore();
+  const { currentOrganization, user } = useAuthStore();
   const [agents, setAgents] = useState<AgentLocation[]>([]);
   const [visits, setVisits] = useState<VisitPin[]>([]);
   const [distances, setDistances] = useState<AgentDistance[]>([]);
@@ -63,6 +63,7 @@ export function useTeamMapData() {
 
     try {
       const orgId = currentOrganization.id;
+      const viewerId = user?.id; // the logged-in manager is the viewer, not a tracked field rep
       const todayStart = startOfDay(new Date()).toISOString();
       const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -74,7 +75,7 @@ export function useTeamMapData() {
         supabase.from('location_history').select('user_id, latitude, longitude, recorded_at').eq('organization_id', orgId).gte('recorded_at', todayStart).order('recorded_at', { ascending: true }),
       ]);
 
-      const profiles = profilesRes.data ?? [];
+      const profiles = (profilesRes.data ?? []).filter(p => p.id !== viewerId);
       const locations = locationsRes.data ?? [];
       const visitsToday = visitsTodayRes.data ?? [];
       const attendance = attendanceRes.data ?? [];
@@ -166,7 +167,7 @@ export function useTeamMapData() {
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization?.id]);
+  }, [currentOrganization?.id, user?.id]);
 
   useEffect(() => {
     fetchData();
