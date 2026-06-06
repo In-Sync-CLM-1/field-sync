@@ -24,42 +24,48 @@ const statusLabels: Record<AgentLocation['status'], string> = {
 
 // Each rep gets a distinct, stable identity colour so their route line + pin are
 // instantly distinguishable on the map ("whose route is that?" at a glance).
+// Tuned for legibility on a LIGHT basemap — saturated, mid-dark hues that read
+// clearly against pale land/roads.
 const AGENT_PALETTE = [
-  '#22d3ee', // cyan
-  '#f59e0b', // amber
-  '#a78bfa', // violet
-  '#f472b6', // pink
-  '#34d399', // emerald
-  '#60a5fa', // blue
-  '#facc15', // yellow
-  '#fb7185', // rose
+  '#0891b2', // cyan-600
+  '#d97706', // amber-600
+  '#7c3aed', // violet-600
+  '#db2777', // pink-600
+  '#059669', // emerald-600
+  '#2563eb', // blue-600
+  '#ca8a04', // yellow-600
+  '#e11d48', // rose-600
 ];
 
-// Dark theme to match the previous Mapbox dark style
-const DARK_MAP_STYLE: google.maps.MapTypeStyle[] = [
-  { elementType: 'geometry', stylers: [{ color: '#1d2c4d' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#8ec3b9' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#1a3646' }] },
-  { featureType: 'administrative.country', elementType: 'geometry.stroke', stylers: [{ color: '#4b6878' }] },
-  { featureType: 'administrative.province', elementType: 'geometry.stroke', stylers: [{ color: '#4b6878' }] },
-  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#334e87' }] },
-  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#023e58' }] },
+// Clean light theme — soft greys, dimmed POIs and transit so the rep routes pop.
+const LIGHT_MAP_STYLE: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#f3f4f6' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#6b7280' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#d1d5db' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#eceef1' }] },
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#e8efe6' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#304a7d' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#98a5be' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2c6675' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#dcebd6' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e5e7eb' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#9ca3af' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#fdf3e7' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#f3d9b5' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4e6d70' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#bfe0ef' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#6b9fb5' }] },
 ];
 
 const MAP_OPTIONS: google.maps.MapOptions = {
-  styles: DARK_MAP_STYLE,
+  styles: LIGHT_MAP_STYLE,
   disableDefaultUI: true,
   zoomControl: true,
   zoomControlOptions: { position: 9 /* RIGHT_BOTTOM */ },
   clickableIcons: false,
   gestureHandling: 'greedy',
+  backgroundColor: '#f3f4f6',
 };
 
 const centerOffset = (w: number, h: number) => ({ x: -(w / 2), y: -(h / 2) });
@@ -127,15 +133,16 @@ export default function TeamMap({ agents, visits, trails = [], loading }: TeamMa
     const t = setTimeout(() => {
       google.maps.event.trigger(map, 'resize');
       if (hasPoints) {
-        map.fitBounds(bounds, 48);
+        map.fitBounds(bounds, 22);
         if (agents.length + (showVisits ? visits.length : 0) === 1) {
-          map.setZoom(14);
+          map.setZoom(15);
         } else {
-          // Keep the team view tight — never fall back to a far-out regional zoom.
+          // Keep the team view tight so individual rep routes stay legible —
+          // never fall back to a far-out regional zoom.
           google.maps.event.addListenerOnce(map, 'idle', () => {
-            const z = map.getZoom() ?? 12;
-            if (z < 11) map.setZoom(11);
-            else if (z > 15) map.setZoom(15);
+            const z = map.getZoom() ?? 13;
+            if (z < 12) map.setZoom(12);
+            else if (z > 16) map.setZoom(16);
           });
         }
       }
@@ -229,13 +236,24 @@ export default function TeamMap({ agents, visits, trails = [], loading }: TeamMa
                     getPixelPositionOffset={centerOffset}
                   >
                     <div
-                      style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      style={{ position: 'relative', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                       onClick={() => setSelected({ type: 'agent', data: agent })}
                     >
-                      {agent.status === 'on-visit' && (
-                        <div style={{ position: 'absolute', width: 36, height: 36, borderRadius: '50%', background: color, opacity: 0.25, animation: 'ping 1.5s cubic-bezier(0,0,0.2,1) infinite' }} />
+                      {/* Live pulse — every active rep reads as real-time. On-visit pulses
+                          stronger/faster; available (en route) pulses gently; idle stays still. */}
+                      {agent.status !== 'idle' && (
+                        <div style={{
+                          position: 'absolute', width: 40, height: 40, borderRadius: '50%', background: color,
+                          opacity: agent.status === 'on-visit' ? 0.3 : 0.18,
+                          animation: `ping ${agent.status === 'on-visit' ? '1.4s' : '2.2s'} cubic-bezier(0,0,0.2,1) infinite`,
+                        }} />
                       )}
-                      <div style={{ width: 14, height: 14, borderRadius: '50%', background: color, border: '2.5px solid white', boxShadow: '0 2px 6px rgba(0,0,0,0.35)', position: 'relative', zIndex: 1 }} />
+                      <div style={{
+                        width: agent.status === 'idle' ? 12 : 15, height: agent.status === 'idle' ? 12 : 15,
+                        borderRadius: '50%', background: agent.status === 'idle' ? '#9ca3af' : color,
+                        border: '3px solid white', boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
+                        position: 'relative', zIndex: 1,
+                      }} />
                     </div>
                   </OverlayView>
                 );
