@@ -55,12 +55,13 @@ async function main() {
   console.log(`Today (IST): ${today}  dow=${todayDow}`);
 
   // 4 beats; weekdays = themed days + today's dow so each shows the moment we seed.
+  // End-of-day: each rep has worked their route. Kavya keeps her LAST stop (Harish)
+  // open so the video's navigate/check-in arc has a live "next stop".
   const themes = [
-    // Kavya: Vikram(05), Suresh(09) done earlier; Harish(01) next; Manish(13) after.
-    { key: 'kavya', name: 'Koramangala – Mon/Thu', agent: REPS.kavya, days: [1, 4], customers: ['05', '09', '01', '13'], visited: 2 },
-    { key: 'priya', name: 'Indiranagar – Tue/Fri', agent: REPS.priya, days: [2, 5], customers: ['02', '10', '14'], visited: 0 },
-    { key: 'arjun', name: 'Whitefield – Mon/Wed', agent: REPS.arjun, days: [1, 3], customers: ['03', '07', '11', '15'], visited: 0 },
-    { key: 'deepa', name: 'BTM/JP Nagar – Wed/Sat', agent: REPS.deepa, days: [3, 6], customers: ['04', '08', '16'], visited: 0 },
+    { key: 'kavya', name: 'Koramangala – Mon/Thu', agent: REPS.kavya, days: [1, 4], customers: ['05', '09', '13', '01'], visited: 3 },
+    { key: 'priya', name: 'Indiranagar – Tue/Fri', agent: REPS.priya, days: [2, 5], customers: ['02', '10', '14'], visited: 3 },
+    { key: 'arjun', name: 'Whitefield – Mon/Wed', agent: REPS.arjun, days: [1, 3], customers: ['03', '07', '11', '15'], visited: 4 },
+    { key: 'deepa', name: 'BTM/JP Nagar – Wed/Sat', agent: REPS.deepa, days: [3, 6], customers: ['04', '08', '16'], visited: 3 },
   ];
 
   const beats = themes.map((t) => ({
@@ -70,12 +71,19 @@ async function main() {
     customers: t.customers.map((nn) => ({ id: C(nn) })),
   }));
 
+  const agentIds = themes.map((t) => REPS[t.key]);
+
   // --- reset prior demo seed (idempotent) ---
   // Only remove THIS seed's progress visits (tagged), so other demo data is untouched.
   await sql(
     `delete from plan_visits where organization_id = ${Q(DEMO)} and plan_date = ${Q(today)};
-     delete from visits where organization_id = ${Q(DEMO)} and notes = '__beatseed';
-     delete from beats where organization_id = ${Q(DEMO)};`,
+     delete from visits where organization_id = ${Q(DEMO)}
+       and user_id in (${agentIds.map(Q).join(',')}) and check_in_time::date = current_date;
+     delete from beats where organization_id = ${Q(DEMO)};
+     delete from location_history where organization_id = ${Q(DEMO)} and recorded_at::date = current_date
+       and user_id in (${agentIds.map(Q).join(',')});
+     delete from attendance where organization_id = ${Q(DEMO)} and date = current_date
+       and user_id in (${agentIds.map(Q).join(',')});`,
   );
 
   // --- insert beats + beat_customers ---
@@ -102,24 +110,45 @@ async function main() {
     console.log(`  ${b.name}: ${rows[0].n} plan items for ${b.key}`);
   }
 
-  // --- show progress: mark the first N items of each beat visited (real visit rows) ---
+  // --- customer coordinates (for real movement trails) ---
+  const allIds = [...new Set(beats.flatMap((b) => b.customers.map((c) => c.id)))];
+  const coordRows = await sql(
+    `select id::text id, latitude lat, longitude lng from leads where id::text in (${allIds.map(Q).join(',')})`,
+  );
+  const coord = new Map(coordRows.map((r) => [r.id, { lat: Number(r.lat), lng: Number(r.lng) }]));
+
+  // --- end-of-day: attendance (punched in + out) + completed visits at real coords ---
+  // Staggered check-in times across the day so the map trail reads start → A → B → C.
   for (const b of beats) {
-    if (!b.visited) continue;
-    const items = await sql(
-      `select pv.id, pv.customer_id from plan_visits pv
-       where pv.agent_id = ${Q(b.agent)} and pv.plan_date = ${Q(today)} order by pv.seq limit ${b.visited}`,
+    const first = coord.get(b.customers[0].id);
+    const att = randomUUID();
+    await sql(
+      `insert into attendance (id, user_id, organization_id, date, punch_in_time,
+         punch_in_latitude, punch_in_longitude, punch_in_accuracy, punch_out_time,
+         punch_out_latitude, punch_out_longitude, status)
+       values (${Q(att)}, ${Q(b.agent)}, ${Q(DEMO)}, current_date,
+         date_trunc('day', now()) + interval '195 minutes',
+         ${(first.lat - 0.025).toFixed(6)}, ${(first.lng - 0.025).toFixed(6)}, 9,
+         now() - interval '25 minutes', ${first.lat.toFixed(6)}, ${first.lng.toFixed(6)}, 'completed');`,
     );
-    for (const item of items) {
+
+    const visitedCust = b.customers.slice(0, b.visited);
+    for (let idx = 0; idx < visitedCust.length; idx++) {
+      const c = coord.get(visitedCust[idx].id);
       const visitId = randomUUID();
+      const cmin = 210 + idx * 100; // UTC minutes → ~09:00, 10:40, 12:20, 14:00 IST
       await sql(
         `insert into visits (id, organization_id, user_id, customer_id, check_in_time, check_out_time,
            check_in_latitude, check_in_longitude, status, purpose, notes)
-         values (${Q(visitId)}, ${Q(DEMO)}, ${Q(b.agent)}, ${Q(item.customer_id)}, now(), now(),
-           12.9352, 77.6245, 'completed', 'follow-up', '__beatseed');
-         update plan_visits set status = 'visited', visit_id = ${Q(visitId)} where id = ${Q(item.id)};`,
+         values (${Q(visitId)}, ${Q(DEMO)}, ${Q(b.agent)}, ${Q(visitedCust[idx].id)},
+           date_trunc('day', now()) + interval '${cmin} minutes',
+           date_trunc('day', now()) + interval '${cmin + 25} minutes',
+           ${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}, 'completed', 'follow-up', '__beatseed');
+         update plan_visits set status='visited', visit_id=${Q(visitId)}
+           where agent_id=${Q(b.agent)} and plan_date=${Q(today)} and customer_id=${Q(visitedCust[idx].id)};`,
       );
     }
-    console.log(`  ${b.key}: marked ${items.length} visited.`);
+    console.log(`  ${b.key}: attendance + ${visitedCust.length} completed visits`);
   }
 
   // --- summary ---
