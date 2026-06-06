@@ -67,19 +67,32 @@ const OrdersPage = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const orderId = crypto.randomUUID();
+      // Sales orders live in order_collections (type=sales_order). visit_id is optional
+      // for standalone captures.
       const orderRecord = {
         id: orderId,
-        user_id: onBehalfUserId || user?.id || null,
-        items_text: orderData.items_text || orderData.items || '',
-        total_amount: parseFloat(orderData.total_amount || orderData.total || '0') || 0,
-        notes: orderData.notes || '',
         organization_id: currentOrganization?.id || null,
+        user_id: onBehalfUserId || user?.id || null,
+        type: 'sales_order',
+        product_name: orderData.items_text || orderData.items || 'Order',
+        product_description: orderData.notes || null,
+        total_amount: parseFloat(orderData.total_amount || orderData.total || '0') || 0,
+        customer_name: orderData.customer_name || orderData.customer || null,
+        remarks: orderData.notes || null,
+        status: 'confirmed',
+        email_sent: false,
         created_at: new Date().toISOString(),
       };
 
       if (navigator.onLine) {
-        const { error } = await supabase.from('orders').insert(orderRecord);
+        const { error } = await supabase.from('order_collections').insert(orderRecord);
         if (error) throw error;
+        // Email the captured order to the admin (org notification address).
+        const { error: mailErr } = await supabase.functions.invoke('send-order-email', {
+          body: { order_collection_id: orderId },
+        });
+        if (mailErr) console.warn('Order saved but email failed:', mailErr.message);
+        toast.success(mailErr ? 'Order saved' : 'Order saved & emailed to admin');
       } else {
         await db.orders.add({ ...orderRecord, synced: false });
         await db.syncQueue.add({
@@ -93,11 +106,11 @@ const OrdersPage = () => {
           maxRetries: 3,
           createdAt: new Date(),
         });
+        toast.success('Order saved offline — will sync & email when back online');
       }
 
       setShowOrderDialog(false);
       setOrderData(null);
-      toast.success('Order saved!');
     } catch (err: any) {
       console.error('Save order error:', err);
       toast.error('Failed to save order');
@@ -132,10 +145,13 @@ const OrdersPage = () => {
       const invoiceId = crypto.randomUUID();
       const invoiceRecord = {
         id: invoiceId,
+        organization_id: currentOrganization?.id || null,
         user_id: onBehalfUserId || user?.id || null,
+        vendor: invoiceData.vendor || invoiceData.seller || null,
         extracted_data: invoiceData,
         amount: parseFloat(invoiceData.total || invoiceData.amount || '0') || 0,
-        organization_id: currentOrganization?.id || null,
+        gst: invoiceData.gst || invoiceData.tax || null,
+        status: 'captured',
         created_at: new Date().toISOString(),
       };
 
@@ -199,18 +215,29 @@ const OrdersPage = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const collectionId = crypto.randomUUID();
+      // Payments live in order_collections (type=payment_collection).
       const collectionRecord = {
         id: collectionId,
-        user_id: onBehalfUserId || user?.id || null,
-        amount: parseFloat(collectionAmount) || 0,
-        description: collectionDescription || null,
         organization_id: currentOrganization?.id || null,
+        user_id: onBehalfUserId || user?.id || null,
+        type: 'payment_collection',
+        total_amount: parseFloat(collectionAmount) || 0,
+        customer_name: collectionCustomer || null,
+        remarks: collectionDescription || null,
+        status: 'confirmed',
+        email_sent: false,
         created_at: new Date().toISOString(),
       };
 
       if (navigator.onLine) {
-        const { error } = await supabase.from('collections').insert(collectionRecord);
+        const { error } = await supabase.from('order_collections').insert(collectionRecord);
         if (error) throw error;
+        // Notify the admin of the payment, same as orders.
+        const { error: mailErr } = await supabase.functions.invoke('send-order-email', {
+          body: { order_collection_id: collectionId },
+        });
+        if (mailErr) console.warn('Collection saved but email failed:', mailErr.message);
+        toast.success(mailErr ? 'Collection recorded' : 'Collection recorded & emailed to admin');
       } else {
         await db.collections.add({ ...collectionRecord, synced: false });
         await db.syncQueue.add({
@@ -224,10 +251,10 @@ const OrdersPage = () => {
           maxRetries: 3,
           createdAt: new Date(),
         });
+        toast.success('Collection saved offline — will sync when back online');
       }
 
       setShowCollectionDialog(false);
-      toast.success('Collection recorded!');
     } catch (err: any) {
       console.error('Save collection error:', err);
       toast.error('Failed to save collection');
