@@ -144,6 +144,29 @@ export interface DailyPlanLocal {
   updatedAt: Date;
 }
 
+// Cached copy of a generated "Today" plan item (Beat Plan / PJP)
+export interface PlanVisitLocal {
+  id: string;
+  organizationId: string;
+  agentId: string;
+  planDate: string;          // yyyy-mm-dd (IST)
+  customerId: string;
+  beatId?: string | null;
+  beatName?: string | null;
+  seq: number;
+  source: 'beat' | 'ad_hoc';
+  status: 'planned' | 'visited' | 'skipped';
+  visitId?: string | null;
+  // Denormalised customer info for offline rendering
+  customerName?: string;
+  area?: string;             // village_city / district
+  mobileNo?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  syncStatus: 'synced' | 'pending';
+  updatedAt: Date;
+}
+
 export interface SyncQueueItem {
   id: string;
   type: 'visit' | 'photo' | 'customer' | 'lead' | 'daily_plan' | 'order' | 'field_invoice' | 'collection';
@@ -159,8 +182,8 @@ export interface SyncQueueItem {
 }
 
 // Database version - INCREMENT when schema changes
-// Current: 18 (add orders, fieldInvoices, collections; remove unused stores)
-export const DB_VERSION = 18;
+// Current: 19 (add planVisits store for Beat Plan / PJP "Today" list)
+export const DB_VERSION = 19;
 
 class FieldSyncDatabase extends Dexie {
   leads!: Table<Lead, string>;
@@ -171,6 +194,7 @@ class FieldSyncDatabase extends Dexie {
   orders!: Table<OrderLocal, string>;
   fieldInvoices!: Table<FieldInvoiceLocal, string>;
   collections!: Table<CollectionLocal, string>;
+  planVisits!: Table<PlanVisitLocal, string>;
 
   constructor() {
     super('FieldSyncDB');
@@ -185,6 +209,7 @@ class FieldSyncDatabase extends Dexie {
       orders: '++id, customer_id, user_id, organization_id, created_at',
       fieldInvoices: '++id, customer_id, user_id, organization_id, created_at',
       collections: '++id, customer_id, user_id, organization_id, created_at',
+      planVisits: 'id, agentId, planDate, customerId, status, syncStatus, updatedAt',
       // Remove old stores
       forms: null,
       formResponses: null,

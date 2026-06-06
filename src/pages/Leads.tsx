@@ -295,20 +295,12 @@ export default function Leads() {
               <img src={insyncLogo} alt={currentOrganization.name} className="h-12 w-12 shrink-0" />
             )}
           </div>
-          {/* Plan Visits toggle */}
+          {/* Plan Visits → the Beat Plan surface (single planning path) */}
           <Button
-            className={`w-full h-11 text-sm font-semibold shadow-md gap-2 ${
-              planningMode
-                ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-            }`}
-            onClick={togglePlanningMode}
+            className="w-full h-11 text-sm font-semibold shadow-md gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+            onClick={() => navigate(isAdmin ? '/dashboard/beats' : '/dashboard/plan')}
           >
-            {planningMode ? (
-              <><X className="h-4 w-4" /> Cancel Planning</>
-            ) : (
-              <><ClipboardList className="h-4 w-4" /> Plan Visits</>
-            )}
+            <ClipboardList className="h-4 w-4" /> Plan Visits
           </Button>
           {!planningMode && (
             <div className="flex gap-2 flex-wrap">
