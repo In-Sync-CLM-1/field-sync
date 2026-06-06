@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { GoogleMap, useJsApiLoader, OverlayView, InfoWindow, Polyline } from '@react-google-maps/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,19 @@ const statusLabels: Record<AgentLocation['status'], string> = {
   'available': 'Available',
   'idle': 'Absent',
 };
+
+// Each rep gets a distinct, stable identity colour so their route line + pin are
+// instantly distinguishable on the map ("whose route is that?" at a glance).
+const AGENT_PALETTE = [
+  '#22d3ee', // cyan
+  '#f59e0b', // amber
+  '#a78bfa', // violet
+  '#f472b6', // pink
+  '#34d399', // emerald
+  '#60a5fa', // blue
+  '#facc15', // yellow
+  '#fb7185', // rose
+];
 
 // Dark theme to match the previous Mapbox dark style
 const DARK_MAP_STYLE: google.maps.MapTypeStyle[] = [
@@ -82,6 +95,21 @@ export default function TeamMap({ agents, visits, trails = [], loading }: TeamMa
     mapRef.current = null;
   }, []);
 
+  // Stable identity colour per rep (by name, so it doesn't shuffle between refreshes).
+  const colorByUser = useMemo(() => {
+    const ids = new Map<string, string>(); // userId -> name
+    agents.forEach(a => ids.set(a.userId, a.name));
+    trails.forEach(t => { if (!ids.has(t.userId)) ids.set(t.userId, t.name); });
+    const ordered = [...ids.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+    const map = new Map<string, string>();
+    ordered.forEach(([id], i) => map.set(id, AGENT_PALETTE[i % AGENT_PALETTE.length]));
+    return map;
+  }, [agents, trails]);
+  const agentColor = useCallback(
+    (userId: string) => colorByUser.get(userId) || '#9ca3af',
+    [colorByUser],
+  );
+
   // Fit map to all visible points whenever data, visit toggle, or expand changes
   useEffect(() => {
     const map = mapRef.current;
@@ -99,9 +127,16 @@ export default function TeamMap({ agents, visits, trails = [], loading }: TeamMa
     const t = setTimeout(() => {
       google.maps.event.trigger(map, 'resize');
       if (hasPoints) {
-        map.fitBounds(bounds, 60);
+        map.fitBounds(bounds, 48);
         if (agents.length + (showVisits ? visits.length : 0) === 1) {
           map.setZoom(14);
+        } else {
+          // Keep the team view tight — never fall back to a far-out regional zoom.
+          google.maps.event.addListenerOnce(map, 'idle', () => {
+            const z = map.getZoom() ?? 12;
+            if (z < 11) map.setZoom(11);
+            else if (z > 15) map.setZoom(15);
+          });
         }
       }
     }, 120);
@@ -162,27 +197,30 @@ export default function TeamMap({ agents, visits, trails = [], loading }: TeamMa
               onUnmount={onUnmount}
               onClick={() => setSelected(null)}
             >
-              {/* Movement trails — each agent's path today */}
-              {trails.map(trail => (
-                <Polyline
-                  key={`trail-${trail.userId}`}
-                  path={trail.path.map(p => ({ lat: p.lat, lng: p.lng }))}
-                  options={{
-                    strokeColor: statusColors[trail.status],
-                    strokeOpacity: 0.9,
-                    strokeWeight: 3,
-                    geodesic: true,
-                    icons: [{
-                      icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 2, strokeColor: statusColors[trail.status] },
-                      offset: '100%', repeat: '120px',
-                    }],
-                  }}
-                />
-              ))}
+              {/* Movement trails — each agent's path today, in their own identity colour */}
+              {trails.map(trail => {
+                const trailColor = agentColor(trail.userId);
+                return (
+                  <Polyline
+                    key={`trail-${trail.userId}`}
+                    path={trail.path.map(p => ({ lat: p.lat, lng: p.lng }))}
+                    options={{
+                      strokeColor: trailColor,
+                      strokeOpacity: 0.95,
+                      strokeWeight: 4,
+                      geodesic: true,
+                      icons: [{
+                        icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 2.2, strokeColor: trailColor },
+                        offset: '100%', repeat: '110px',
+                      }],
+                    }}
+                  />
+                );
+              })}
 
               {/* Agent markers — pulsing dots */}
               {agents.map(agent => {
-                const color = statusColors[agent.status];
+                const color = agentColor(agent.userId);
                 return (
                   <OverlayView
                     key={`agent-${agent.id}`}
@@ -256,23 +294,23 @@ export default function TeamMap({ agents, visits, trails = [], loading }: TeamMa
             </GoogleMap>
           )}
         </div>
-        {/* Legend */}
-        <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur rounded-lg px-3 py-2 flex items-center gap-3 text-[10px] shadow-sm border">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-green-500 inline-block" /> On Visit
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-blue-500 inline-block" /> Available
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-gray-400 inline-block" /> Absent
-          </span>
-          {showVisits && (
-            <span className="flex items-center gap-1.5">
-              <svg width="10" height="10" viewBox="0 0 16 16"><path d="M8 1L14 8L8 15L2 8Z" fill="#6366f1" /></svg>
-              Visit
-            </span>
-          )}
+        {/* Legend — one colour per rep, so each route line is identifiable at a glance */}
+        <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur rounded-lg px-3 py-2 text-[10px] shadow-sm border max-w-[60%]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {agents.map(a => (
+              <span key={a.userId} className="flex items-center gap-1.5">
+                <span className="inline-block h-1 w-4 rounded-full" style={{ background: agentColor(a.userId) }} />
+                <span className="font-medium">{a.name.split(' ')[0]}</span>
+                <span className="text-muted-foreground">· {statusLabels[a.status]}</span>
+              </span>
+            ))}
+            {showVisits && (
+              <span className="flex items-center gap-1.5">
+                <svg width="10" height="10" viewBox="0 0 16 16"><path d="M8 1L14 8L8 15L2 8Z" fill="#f59e0b" /></svg>
+                Visit
+              </span>
+            )}
+          </div>
         </div>
       </CardContent>
       {/* Inject pulse animation */}
