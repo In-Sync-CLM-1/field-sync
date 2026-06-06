@@ -3,7 +3,7 @@ import { GoogleMap, useJsApiLoader, OverlayView, InfoWindow, Polyline } from '@r
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Map, Maximize2, Minimize2, Layers } from 'lucide-react';
+import { Map as MapIcon, Maximize2, Minimize2, Layers } from 'lucide-react';
 import { AgentLocation, VisitPin, AgentTrail } from '@/hooks/useTeamMapData';
 import { format } from 'date-fns';
 
@@ -157,7 +157,7 @@ export default function TeamMap({ agents, visits, trails = [], loading }: TeamMa
     <Card className={`overflow-hidden transition-all duration-300 ${expanded ? 'fixed inset-4 z-50 shadow-2xl' : ''}`}>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Map className="h-4 w-4 text-primary" />
+          <MapIcon className="h-4 w-4 text-primary" />
           Live Team Map
           {agents.filter(a => a.status === 'on-visit').length > 0 && (
             <Badge variant="secondary" className="text-[10px] h-4 px-1.5 bg-green-500/15 text-green-600">
