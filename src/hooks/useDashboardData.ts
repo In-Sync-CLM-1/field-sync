@@ -65,12 +65,15 @@ export function useMyStats() {
         .gte('check_in_time', lastWeekStart.toISOString())
         .lte('check_in_time', lastWeekEnd.toISOString());
 
-      // Get active visits with oldest start time
+      // Get active visits with oldest start time — only TODAY's still-open visits.
+      // (Without the date floor this counted every never-checked-out visit in history,
+      // inflating "Active Visits" into the hundreds.)
       const { data: activeVisitsData } = await supabase
         .from('visits')
         .select('check_in_time')
         .eq('user_id', user.id)
         .is('check_out_time', null)
+        .gte('check_in_time', todayStart.toISOString())
         .order('check_in_time', { ascending: true });
 
       const activeVisits = activeVisitsData?.length || 0;
