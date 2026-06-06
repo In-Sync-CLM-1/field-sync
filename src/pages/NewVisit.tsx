@@ -15,6 +15,7 @@ import { Check, ChevronsUpDown, MapPin, Loader2, ArrowLeft, Plus } from 'lucide-
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { AgentSelector } from '@/components/AgentSelector';
+import { markPlanVisitVisited } from '@/hooks/usePlanVisits';
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -45,6 +46,7 @@ export default function NewVisit() {
   const [searchParams] = useSearchParams();
   const preselectedLeadId = searchParams.get('leadId');
   const preselectedDate = searchParams.get('date');
+  const planVisitId = searchParams.get('planVisitId');
 
   const { leads, syncing: loadingLeads, syncFromDatabase } = useLeads();
   const { createVisit, isCreating } = useVisits();
@@ -176,7 +178,11 @@ export default function NewVisit() {
         target_user_id: onBehalfUserId || undefined,
       },
       {
-        onSuccess: (visit: any) => {
+        onSuccess: async (visit: any) => {
+          // If this check-in came from a Beat Plan item, mark it visited.
+          if (planVisitId && !isScheduling) {
+            await markPlanVisitVisited(planVisitId, visit?.id);
+          }
           if (isScheduling) {
             navigate('/dashboard/visits');
           } else {

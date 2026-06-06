@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, MapPin, UserCog, Globe, Building2 } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, MapPin, UserCog, Globe, Building2, Route as RouteIcon } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -46,6 +46,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
       {
         label: 'MY WORK',
         items: [
+          { icon: RouteIcon, label: "Today's Plan", path: '/dashboard/plan' },
           { icon: Users, label: 'Customers', path: '/dashboard/customers' },
           { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
           { icon: ShoppingBag, label: 'Orders', path: '/dashboard/orders' },
@@ -65,6 +66,8 @@ function getSectionsForRole(role: RoleType): NavSection[] {
     {
       label: 'MANAGEMENT',
       items: [
+        { icon: RouteIcon, label: 'Beat Plan', path: '/dashboard/beats' },
+        { icon: ClipboardList, label: "Today's Plan", path: '/dashboard/plan' },
         { icon: Users, label: 'Customers', path: '/dashboard/customers' },
         { icon: MapPin, label: 'Visits', path: '/dashboard/visits' },
       ],
