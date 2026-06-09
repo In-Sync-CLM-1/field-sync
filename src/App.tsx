@@ -26,7 +26,6 @@ import ResetPassword from "./pages/ResetPassword";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import SubscriptionManagement from "./pages/SubscriptionManagement";
 import Profile from "./pages/Profile";
-import Attendance from "./pages/Attendance";
 import NotFound from "./pages/NotFound";
 
 import OrdersPage from "./pages/OrdersPage";
