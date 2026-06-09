@@ -43,15 +43,19 @@ const PlanPage = () => {
   const done = items.filter((i) => i.status === 'visited').length;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
-  // Group items by beat, preserving order.
+  // Group items into three lanes — Beat · Assigned · Added — beats first.
   const groups = useMemo(() => {
-    const map = new Map<string, { name: string; items: PlanItem[] }>();
+    const map = new Map<string, { name: string; rank: number; items: PlanItem[] }>();
     for (const it of items) {
-      const k = it.beatId || 'adhoc';
-      if (!map.has(k)) map.set(k, { name: it.beatId ? it.beatName || 'Beat' : 'Added today', items: [] });
+      const k = it.beatId ? `beat:${it.beatId}` : it.source === 'assigned' ? 'assigned' : 'adhoc';
+      if (!map.has(k)) {
+        const name = it.beatId ? (it.beatName || 'Beat') : it.source === 'assigned' ? 'Assigned to you' : 'Added today';
+        const rank = it.beatId ? 0 : it.source === 'assigned' ? 1 : 2;
+        map.set(k, { name, rank, items: [] });
+      }
       map.get(k)!.items.push(it);
     }
-    return [...map.values()];
+    return [...map.values()].sort((a, b) => a.rank - b.rank);
   }, [items]);
 
   // Customers already on today's list (to exclude from the ad-hoc picker).
@@ -156,8 +160,11 @@ const PlanPage = () => {
                         </p>
                         {visited && <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />}
                         {skipped && <Badge variant="outline" className="text-[10px]">Skipped</Badge>}
+                        {it.source === 'assigned' && (
+                          <Badge variant="secondary" className="text-[10px]">Assigned</Badge>
+                        )}
                         {it.source === 'ad_hoc' && (
-                          <Badge variant="secondary" className="text-[10px]">Added</Badge>
+                          <Badge variant="outline" className="text-[10px]">Added</Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
@@ -177,8 +184,8 @@ const PlanPage = () => {
                     {/* Row actions menu */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 flex-shrink-0">
-                          <MoreVertical className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0">
+                          <MoreVertical className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -206,17 +213,17 @@ const PlanPage = () => {
                     <div className="flex gap-2 mt-3">
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="flex-1 gap-1"
+                        size="lg"
+                        className="flex-1 gap-1.5 h-11 text-base"
                         disabled={!hasLoc}
                         onClick={() => openMaps(it.latitude, it.longitude)}
                         title={hasLoc ? 'Open directions' : 'No location saved for this customer'}
                       >
-                        <Navigation className="h-4 w-4" /> Navigate
+                        <Navigation className="h-5 w-5" /> Navigate
                       </Button>
                       <Button
-                        size="sm"
-                        className="flex-1 gap-1"
+                        size="lg"
+                        className="flex-1 gap-1.5 h-11 text-base"
                         onClick={() => navigate(`/dashboard/visits/new?leadId=${it.customerId}&planVisitId=${it.id}`)}
                       >
                         Start Visit
@@ -233,8 +240,8 @@ const PlanPage = () => {
       {/* Add ad-hoc visit */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" className="w-full gap-2 mt-2" disabled={!navigator.onLine}>
-            <Plus className="h-4 w-4" /> Add a visit
+          <Button variant="outline" size="lg" className="w-full gap-2 mt-2 h-12 text-base" disabled={!navigator.onLine}>
+            <Plus className="h-5 w-5" /> Add a visit
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-md">
