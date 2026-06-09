@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { LogOut, User, Activity, RefreshCw, Locate } from 'lucide-react';
+import { LogOut, User, Activity, RefreshCw, Locate, Sparkles, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import inSyncLogo from '@/assets/in-sync-logo.png';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -22,6 +22,8 @@ import { db } from '@/lib/db';
 import { swManager } from '@/lib/serviceWorker';
 import { useAgentLocationTracker } from '@/hooks/useAgentLocationTracker';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
+import AgentWalkthrough from '@/components/walkthrough/AgentWalkthrough';
+import ManagerWalkthrough from '@/components/walkthrough/ManagerWalkthrough';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
@@ -30,6 +32,7 @@ export default function Layout() {
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [_showUpgradeDialog, _setShowUpgradeDialog] = useState(false);
 
   const pendingCount = useLiveQuery(
@@ -92,6 +95,16 @@ export default function Layout() {
               </div>
 
               <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTour(true)}
+                  className="h-8 gap-1.5 text-xs hover:bg-muted"
+                  title="Take a guided tour"
+                >
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="hidden sm:inline">Take a tour</span>
+                </Button>
                 {/* Location tracking indicator */}
                 {trackingStatus !== 'idle' && (
                   <div
@@ -159,7 +172,22 @@ export default function Layout() {
           </main>
         </div>
       </div>
-      
+
+      {/* Guided tour — manual launch (role-aware) */}
+      {showTour && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-2 sm:p-6">
+          <div className="relative h-full max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-xl bg-background shadow-2xl">
+            <button
+              onClick={() => setShowTour(false)}
+              className="absolute right-3 top-3 z-[70] flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60"
+              aria-label="Close tour"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {isAdmin ? <ManagerWalkthrough /> : <AgentWalkthrough />}
+          </div>
+        </div>
+      )}
     </SidebarProvider>
   );
 }

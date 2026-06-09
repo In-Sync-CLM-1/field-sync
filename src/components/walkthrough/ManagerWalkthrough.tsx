@@ -270,7 +270,7 @@ function SceneStart() {
             </motion.div>
 
             <motion.div {...slideUp(0.3)} className="text-xl font-extrabold tracking-tight text-[#0F172A]">
-              <Tw text="Good morning, Priya" delay={0.5} speed={40} />
+              <Tw text="Good morning, Rohan" delay={0.5} speed={40} />
             </motion.div>
 
             <motion.div
