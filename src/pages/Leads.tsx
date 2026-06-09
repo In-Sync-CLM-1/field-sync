@@ -94,6 +94,8 @@ export default function Leads() {
   // Explore Nearby state
   const { businesses, discoverNearby, isLoading: isDiscovering } = useNearbyDiscovery();
   const [showNearby, setShowNearby] = useState(false);
+  const [nearbyRadius, setNearbyRadius] = useState(1000);
+  const [nearbyCenter, setNearbyCenter] = useState<{ lat: number; lon: number } | null>(null);
 
   // ── Planning Mode State ──
   const [planningMode, setPlanningMode] = useState(false);
@@ -236,11 +238,32 @@ export default function Leads() {
 
   const handleExploreNearby = () => {
     navigator.geolocation.getCurrentPosition(async (pos) => {
-      await discoverNearby(pos.coords.latitude, pos.coords.longitude, 500);
+      const c = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      setNearbyCenter(c);
       setShowNearby(true);
+      await discoverNearby(c.lat, c.lon, nearbyRadius);
     }, () => {
       toast.error('Location access required');
     });
+  };
+
+  const searchNearbyRadius = async (r: number) => {
+    setNearbyRadius(r);
+    if (nearbyCenter) await discoverNearby(nearbyCenter.lat, nearbyCenter.lon, r);
+  };
+
+  const distKm = (lat: number, lon: number) => {
+    if (!nearbyCenter) return 0;
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(lat - nearbyCenter.lat);
+    const dLon = toRad(lon - nearbyCenter.lon);
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(nearbyCenter.lat)) * Math.cos(toRad(lat)) * Math.sin(dLon / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+  const distLabel = (lat: number, lon: number) => {
+    const km = distKm(lat, lon);
+    return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
   };
 
   const handleAddNearbyAsCustomer = async (biz: any) => {
@@ -307,13 +330,13 @@ export default function Leads() {
               <Button onClick={() => navigate('/dashboard/leads/new')} variant="outline" size="sm">
                 <Plus className="h-3 w-3 mr-1" /> Add
               </Button>
-              <Button variant="outline" size="sm" className="gap-1" onClick={handleScanCard} disabled={isParsing}>
-                <Camera className="h-3 w-3" />
-                {isParsing ? 'Scanning...' : 'Scan Card'}
+              <Button variant="secondary" size="sm" className="h-9 gap-1.5 font-medium" onClick={handleScanCard} disabled={isParsing}>
+                <Camera className="h-4 w-4" />
+                {isParsing ? 'Scanning…' : 'Scan card'}
               </Button>
-              <Button variant="outline" size="sm" className="gap-1" onClick={handleExploreNearby} disabled={isDiscovering}>
-                <Compass className="h-3 w-3" />
-                {isDiscovering ? 'Searching...' : 'Explore Nearby'}
+              <Button variant="secondary" size="sm" className="h-9 gap-1.5 font-medium" onClick={handleExploreNearby} disabled={isDiscovering}>
+                <Compass className="h-4 w-4" />
+                {isDiscovering ? 'Searching…' : 'Businesses nearby'}
               </Button>
               <LeadsUpload />
               <Button onClick={syncFromDatabase} disabled={syncing || !currentOrganization} className="btn-outline-info" size="sm">
@@ -643,25 +666,55 @@ export default function Leads() {
 
       {/* Nearby Businesses Sheet */}
       <Sheet open={showNearby} onOpenChange={setShowNearby}>
-        <SheetContent>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Nearby Businesses</SheetTitle>
+            <SheetTitle className="flex items-center gap-2">
+              <Compass className="h-5 w-5 text-primary" /> Businesses nearby
+            </SheetTitle>
           </SheetHeader>
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Within</span>
+            {[500, 1000, 2000, 5000].map((r) => (
+              <button
+                key={r}
+                onClick={() => searchNearbyRadius(r)}
+                disabled={isDiscovering}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  nearbyRadius === r ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted'
+                }`}
+              >
+                {r < 1000 ? `${r} m` : `${r / 1000} km`}
+              </button>
+            ))}
+          </div>
           <div className="mt-4 space-y-2">
             {isDiscovering ? (
-              <p className="text-muted-foreground text-center py-8">Searching nearby...</p>
+              <p className="text-muted-foreground text-center py-8">Searching nearby\u2026</p>
             ) : businesses.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No businesses found within 500m</p>
+              <p className="text-muted-foreground text-center py-8">No businesses found in this radius.</p>
             ) : (
-              businesses.map(biz => (
-                <div key={biz.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{biz.name}</p>
-                    <p className="text-sm text-muted-foreground capitalize">{biz.type}{biz.address ? ` \u00b7 ${biz.address}` : ''}</p>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => handleAddNearbyAsCustomer(biz)}>Add</Button>
-                </div>
-              ))
+              <>
+                <p className="text-xs text-muted-foreground">
+                  {businesses.length} found \u2014 tap Add to turn any into a customer.
+                </p>
+                {[...businesses]
+                  .sort((a, b) => distKm(a.lat, a.lon) - distKm(b.lat, b.lon))
+                  .map((biz) => (
+                    <div key={biz.id} className="flex items-center justify-between gap-3 p-3 border rounded-lg">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{biz.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize truncate">
+                          {biz.type}
+                          {biz.address ? ` \u00b7 ${biz.address}` : ''}
+                          {nearbyCenter ? ` \u00b7 ${distLabel(biz.lat, biz.lon)}` : ''}
+                        </p>
+                      </div>
+                      <Button size="sm" className="flex-shrink-0 gap-1" onClick={() => handleAddNearbyAsCustomer(biz)}>
+                        <Plus className="h-4 w-4" /> Add
+                      </Button>
+                    </div>
+                  ))}
+              </>
             )}
           </div>
         </SheetContent>
