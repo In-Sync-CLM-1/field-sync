@@ -154,7 +154,7 @@ export interface PlanVisitLocal {
   beatId?: string | null;
   beatName?: string | null;
   seq: number;
-  source: 'beat' | 'ad_hoc';
+  source: 'beat' | 'ad_hoc' | 'assigned';
   status: 'planned' | 'visited' | 'skipped';
   visitId?: string | null;
   // Denormalised customer info for offline rendering
