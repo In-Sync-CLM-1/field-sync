@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import { db } from '@/lib/db';
@@ -54,6 +54,11 @@ export default function Assignments() {
   const [agentId, setAgentId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
+
+  // Default to the first rep so the page shows a list on open instead of being empty.
+  useEffect(() => {
+    if (!agentId && members.length) setAgentId(members[0].id);
+  }, [members, agentId]);
 
   const { data: assigned = [], isLoading } = useAssignedList(agentId || undefined, dateStr);
   const { data: priorDate } = usePriorAssignmentDate(agentId || undefined, dateStr);

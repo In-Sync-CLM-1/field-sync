@@ -1,6 +1,8 @@
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useEffect, useState } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { syncLeadsForOrg } from '@/hooks/useLeads';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -30,6 +32,8 @@ export default function Layout() {
   const trackingStatus = useAgentLocationTracker();
   useAutoLogout();
   const location = useLocation();
+  const currentOrganization = useAuthStore((s) => s.currentOrganization);
+  const leadsSyncedRef = useRef<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showTour, setShowTour] = useState(false);
@@ -70,6 +74,24 @@ export default function Layout() {
 
     checkRole();
   }, [user]);
+
+  // Offline-first pages read the local cache; on a fresh session it's empty, so the
+  // customer list (and the pickers that depend on it) would show blank until a manual
+  // Sync. Pull the org's customers into the cache automatically when online.
+  useEffect(() => {
+    const orgId = currentOrganization?.id;
+    if (!orgId || !navigator.onLine || leadsSyncedRef.current === orgId) return;
+    leadsSyncedRef.current = orgId;
+    (async () => {
+      try {
+        const count = await db.leads.where('organizationId').equals(orgId).count();
+        if (count === 0) await syncLeadsForOrg(orgId);
+      } catch (e) {
+        console.error('Auto customer sync failed', e);
+        leadsSyncedRef.current = null; // allow retry on next mount
+      }
+    })();
+  }, [currentOrganization?.id]);
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
