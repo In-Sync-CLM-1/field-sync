@@ -6,6 +6,42 @@ import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+/** Pull all leads for an org from Supabase into the local cache (no toasts). Returns count. */
+export async function syncLeadsForOrg(orgId: string): Promise<number> {
+  const { data, error } = await supabase.from('leads').select('*').eq('organization_id', orgId);
+  if (error) throw error;
+  await db.leads.where('organizationId').equals(orgId).delete();
+  const rows = data || [];
+  if (rows.length) {
+    const leads: Lead[] = rows.map((l: any) => ({
+      id: l.id,
+      organizationId: l.organization_id,
+      branch: l.branch,
+      customerId: l.customer_id,
+      status: l.status,
+      assignedUserId: l.assigned_user_id,
+      name: l.name,
+      villageCity: l.village_city,
+      district: l.district,
+      state: l.state,
+      latitude: l.latitude ? Number(l.latitude) : undefined,
+      longitude: l.longitude ? Number(l.longitude) : undefined,
+      customerResponse: l.customer_response,
+      mobileNo: l.mobile_no,
+      followUpDate: l.follow_up_date,
+      leadSource: l.lead_source,
+      createdBy: l.created_by,
+      createdAt: l.created_at ? new Date(l.created_at) : undefined,
+      approvedBy: l.approved_by,
+      approvedAt: l.approved_at ? new Date(l.approved_at) : undefined,
+      syncStatus: 'synced',
+      updatedAt: new Date(l.updated_at),
+    }));
+    await db.leads.bulkPut(leads);
+  }
+  return rows.length;
+}
+
 export const useLeads = () => {
   const [syncing, setSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,46 +88,8 @@ export const useLeads = () => {
 
     setSyncing(true);
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('organization_id', currentOrganization.id);
-
-      if (error) throw error;
-
-      // Clear existing leads for this org and add fresh data
-      await db.leads.where('organizationId').equals(currentOrganization.id).delete();
-      
-      if (data && data.length > 0) {
-        const leads: Lead[] = data.map(l => ({
-          id: l.id,
-          organizationId: l.organization_id,
-          branch: l.branch,
-          customerId: l.customer_id,
-          status: l.status,
-          assignedUserId: l.assigned_user_id,
-          name: l.name,
-          villageCity: l.village_city,
-          district: l.district,
-          state: l.state,
-          latitude: l.latitude ? Number(l.latitude) : undefined,
-          longitude: l.longitude ? Number(l.longitude) : undefined,
-          customerResponse: l.customer_response,
-          mobileNo: l.mobile_no,
-          followUpDate: l.follow_up_date,
-          leadSource: l.lead_source,
-          createdBy: l.created_by,
-          createdAt: l.created_at ? new Date(l.created_at) : undefined,
-          approvedBy: l.approved_by,
-          approvedAt: l.approved_at ? new Date(l.approved_at) : undefined,
-          syncStatus: 'synced',
-          updatedAt: new Date(l.updated_at),
-        }));
-        
-        await db.leads.bulkAdd(leads);
-      }
-
-      toast.success(`Synced ${data?.length || 0} prospects`);
+      const n = await syncLeadsForOrg(currentOrganization.id);
+      toast.success(`Synced ${n} prospects`);
     } catch (error) {
       console.error('Error syncing prospects:', error);
       toast.error('Failed to sync prospects');
