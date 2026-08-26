@@ -1,4 +1,4 @@
-project_id = "jmxpudhpdltktuupfbxs"
+project_id = "mcwmrzgtrcrpkxhjugkp"
 
 [functions.create-user]
 verify_jwt = false
@@ -19,4 +19,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-performance-insights]
+verify_jwt = false
+
+[functions.seed-demo-live]
+verify_jwt = false
+
+[functions.seed-demo-data]
 verify_jwt = false
