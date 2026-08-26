@@ -61,12 +61,15 @@ serve(async (req) => {
     const summary: any[] = [];
 
     for (const orgId of orgIds) {
-      const [{ data: profiles }, { data: dsas }, { data: subDsas }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, email, reporting_manager_id, is_active").eq("organization_id", orgId).eq("is_active", true),
+      const [{ data: profilesRaw }, { data: dsas }, { data: subDsas }] = await Promise.all([
+        // profiles.email is masked (DPDP PII encryption) -- use the decrypted view so
+        // escalation emails actually reach a real, deliverable address.
+        supabase.from("profiles_decrypted").select("id, full_name, email_real, reporting_manager_id, is_active").eq("organization_id", orgId).eq("is_active", true),
         supabase.from("dsas").select("id, name, created_at").eq("organization_id", orgId).eq("is_active", true),
         supabase.from("sub_dsas").select("id, name, dsa_id, created_at").eq("organization_id", orgId).eq("is_active", true),
       ]);
-      const profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
+      const profiles = (profilesRaw || []).map((p: any) => ({ ...p, email: p.email_real }));
+      const profileById = new Map(profiles.map((p: any) => [p.id, p]));
 
       const { data: admin_roles } = await supabase.from("user_roles").select("user_id, role").in("role", ["admin", "super_admin", "platform_admin"]);
       const orgAdminEmails = [...new Set(
