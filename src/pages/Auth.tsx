@@ -220,8 +220,18 @@ export default function Auth() {
           ? { action: 'verify', channel: 'whatsapp', phone: signUpData.phone.replace(/\D/g, ''), otp: otpCode }
           : { action: 'verify', channel: 'email', email: signUpData.email, otp: otpCode },
       });
-      if (error) throw error;
-      
+      if (error) {
+        // A rejected OTP comes back as a non-2xx, which supabase-js surfaces as `error`
+        // rather than `data` — the real message is in the response body.
+        let message = 'Invalid verification code';
+        try {
+          const body = await (error as any)?.context?.json?.();
+          if (body?.error) message = body.error;
+        } catch { /* fall back to default */ }
+        toast.error(message);
+        return;
+      }
+
       if (data.verified) {
         if (isPhone) {
           setPhoneVerified(true);

@@ -17,6 +17,16 @@ import { toast } from 'sonner';
 import { AgentSelector } from '@/components/AgentSelector';
 import { markPlanVisitVisited } from '@/hooks/usePlanVisits';
 import { useActiveDSAs, useSubDSAs, useDSAMutations } from '@/hooks/useDSAs';
+import { supabase } from '@/integrations/supabase/client';
+import type { VisitOutcome } from '@/hooks/useVisits';
+
+const OUTCOME_OPTIONS: { value: VisitOutcome; label: string }[] = [
+  { value: 'satisfactory', label: 'Satisfactory' },
+  { value: 'positive', label: 'Positive' },
+  { value: 'follow_up_required', label: 'Follow-up Required' },
+  { value: 'no_business_opportunity', label: 'No Business Opportunity' },
+  { value: 'other', label: 'Other' },
+];
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -75,6 +85,68 @@ export default function NewVisit() {
   const { data: dsas = [] } = useActiveDSAs();
   const { data: subDsas = [] } = useSubDSAs(dsaId || undefined);
   const { addSubDSA } = useDSAMutations();
+
+  // OTP-witness + outcome — only required when a DSA channel visit (SOP core principle)
+  const [personMetName, setPersonMetName] = useState('');
+  const [personMetMobile, setPersonMetMobile] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [outcome, setOutcome] = useState<VisitOutcome | ''>('');
+
+  const isChannelVisit = !!dsaId;
+
+  const sendVisitOtp = async () => {
+    if (!personMetMobile.trim()) { toast.error('Enter the mobile number of the person met'); return; }
+    setSendingOtp(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-public-otp', {
+        body: { action: 'send', channel: 'whatsapp', phone: personMetMobile.replace(/\D/g, '') },
+      });
+      if (error) throw error;
+      setOtpSent(true);
+      setOtpVerified(false);
+      setOtpCode('');
+      toast.success('OTP sent to the person met');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to send OTP');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const verifyVisitOtp = async () => {
+    if (otpCode.length !== 6) { toast.error('Enter the 6-digit code'); return; }
+    setVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-public-otp', {
+        body: { action: 'verify', channel: 'whatsapp', phone: personMetMobile.replace(/\D/g, ''), otp: otpCode },
+      });
+      if (error) {
+        // A rejected OTP (invalid/expired) comes back as a non-2xx, which supabase-js
+        // surfaces as `error` rather than `data` — the real message is in the response body.
+        let message = 'Invalid OTP';
+        try {
+          const body = await (error as any)?.context?.json?.();
+          if (body?.error) message = body.error;
+        } catch { /* fall back to default */ }
+        toast.error(message);
+        return;
+      }
+      if (data.verified) {
+        setOtpVerified(true);
+        toast.success('Visit confirmed by person met');
+      } else {
+        toast.error(data.error || 'Invalid OTP');
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to verify OTP');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   const selectedLead = leads.find((l) => l.id === leadId);
   const leadHasLocation = selectedLead?.latitude && selectedLead?.longitude;
@@ -188,6 +260,10 @@ export default function NewVisit() {
         target_user_id: onBehalfUserId || undefined,
         dsa_id: dsaId || undefined,
         sub_dsa_id: subDsaId || undefined,
+        person_met_name: personMetName || undefined,
+        person_met_mobile: personMetMobile || undefined,
+        otp_verified: otpVerified,
+        outcome: outcome || undefined,
       },
       {
         onSuccess: async (visit: any) => {
@@ -387,6 +463,70 @@ export default function NewVisit() {
             </div>
           )}
 
+          {/* OTP witness + outcome — required once a DSA channel is selected */}
+          {isChannelVisit && !isScheduling && (
+            <div className="space-y-3 p-3 border rounded-md bg-muted/20">
+              <p className="text-sm font-medium">Confirm with person met</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Person met — name</Label>
+                  <Input value={personMetName} onChange={(e) => setPersonMetName(e.target.value)} placeholder="Full name" />
+                </div>
+                <div>
+                  <Label>Mobile number</Label>
+                  <Input
+                    value={personMetMobile}
+                    onChange={(e) => { setPersonMetMobile(e.target.value); setOtpSent(false); setOtpVerified(false); }}
+                    placeholder="10-digit mobile"
+                    disabled={otpVerified}
+                  />
+                </div>
+              </div>
+
+              {!otpVerified && (
+                <div className="flex items-end gap-2">
+                  {!otpSent ? (
+                    <Button type="button" size="sm" variant="outline" disabled={!personMetMobile.trim() || sendingOtp} onClick={sendVisitOtp}>
+                      {sendingOtp && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                      Send OTP
+                    </Button>
+                  ) : (
+                    <>
+                      <div className="flex-1">
+                        <Label className="text-xs">Enter OTP</Label>
+                        <Input value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="6-digit code" />
+                      </div>
+                      <Button type="button" size="sm" disabled={otpCode.length !== 6 || verifyingOtp} onClick={verifyVisitOtp}>
+                        {verifyingOtp && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                        Verify
+                      </Button>
+                      <Button type="button" size="sm" variant="ghost" disabled={sendingOtp} onClick={sendVisitOtp}>
+                        Resend
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+              {otpVerified && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <Check className="h-4 w-4" /> Confirmed by {personMetName || 'person met'}
+                </p>
+              )}
+
+              <div>
+                <Label>Visit Outcome *</Label>
+                <Select value={outcome} onValueChange={(v) => setOutcome(v as VisitOutcome)}>
+                  <SelectTrigger><SelectValue placeholder="Select outcome" /></SelectTrigger>
+                  <SelectContent>
+                    {OUTCOME_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {selectedLead && !leadHasLocation && !isScheduling && (
             <div className="space-y-3">
               <div className="flex items-center gap-2 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
@@ -473,7 +613,12 @@ export default function NewVisit() {
       <div className="flex gap-3 mt-6">
         <Button
           onClick={handleSubmit}
-          disabled={!leadId || (!isScheduling && !location && !(useManualLocation && (manualLatitude || manualAddress))) || isCreating}
+          disabled={
+            !leadId ||
+            (!isScheduling && !location && !(useManualLocation && (manualLatitude || manualAddress))) ||
+            (isChannelVisit && !isScheduling && (!otpVerified || !outcome)) ||
+            isCreating
+          }
           className="flex-1"
           size="lg"
         >

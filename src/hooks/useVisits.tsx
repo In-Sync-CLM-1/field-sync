@@ -56,7 +56,13 @@ export interface VisitInput {
   target_user_id?: string; // Create visit on behalf of another user (manager/admin)
   dsa_id?: string;
   sub_dsa_id?: string;
+  person_met_name?: string;
+  person_met_mobile?: string;
+  otp_verified?: boolean;
+  outcome?: VisitOutcome;
 }
+
+export type VisitOutcome = 'satisfactory' | 'positive' | 'follow_up_required' | 'no_business_opportunity' | 'other';
 
 export interface BulkVisitInput {
   customer_ids: string[];
@@ -131,6 +137,10 @@ export const useVisits = () => {
           user_id: input.target_user_id || user.id,
           dsa_id: input.dsa_id || null,
           sub_dsa_id: input.sub_dsa_id || null,
+          person_met_name: input.person_met_name || null,
+          person_met_mobile: input.person_met_mobile || null,
+          otp_verified: input.otp_verified || false,
+          outcome: input.outcome || null,
         } as any)
         .select()
         .single();
