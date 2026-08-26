@@ -50,9 +50,12 @@ export default function ChannelPartners() {
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Network className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">DSA Channels</h1>
+        <div>
+          <span className="text-xs font-medium text-primary uppercase tracking-wider">Management</span>
+          <h1 className="text-2xl font-display font-semibold tracking-tight flex items-center gap-2 text-foreground">
+            <Network className="h-5 w-5 text-primary" />
+            DSA Channels
+          </h1>
         </div>
         <Button size="sm" onClick={openNew} className="gap-1">
           <Plus className="h-4 w-4" /> New DSA

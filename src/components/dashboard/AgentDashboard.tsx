@@ -119,7 +119,7 @@ export default function AgentDashboard() {
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-xs font-medium text-primary uppercase tracking-wider">Dashboard</span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">Welcome back!</h1>
+          <h1 className="text-2xl font-display font-semibold tracking-tight text-foreground">Welcome back!</h1>
           <p className="text-sm text-muted-foreground">{user?.user_metadata?.full_name || user?.email}</p>
         </div>
       </div>

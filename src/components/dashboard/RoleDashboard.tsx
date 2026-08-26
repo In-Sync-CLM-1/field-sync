@@ -33,7 +33,7 @@ export default function RoleDashboard() {
       if (userRoles.includes('platform_admin')) {
         setTier('platform');
       } else if (
-        userRoles.some(r => ['admin', 'super_admin', 'branch_manager'].includes(r))
+        userRoles.some(r => ['admin', 'super_admin', 'manager', 'branch_manager'].includes(r))
       ) {
         setTier('admin');
       } else {

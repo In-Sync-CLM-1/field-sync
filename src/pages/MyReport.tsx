@@ -21,7 +21,8 @@ export default function MyReport() {
     <div className="w-full max-w-3xl mx-auto px-3 sm:px-4 lg:px-6 py-4 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+          <span className="text-xs font-medium text-primary uppercase tracking-wider">Reports</span>
+          <h1 className="text-2xl font-display font-semibold tracking-tight flex items-center gap-2 text-foreground">
             <FileText className="h-5 w-5 text-primary" />
             My Report
           </h1>
