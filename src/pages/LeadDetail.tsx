@@ -1,11 +1,15 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useLead } from '@/hooks/useLeads';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   ArrowLeft,
   Phone,
@@ -17,6 +21,7 @@ import {
   FileText,
   CheckCircle2,
   Circle,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -63,6 +68,26 @@ export default function LeadDetail() {
       toast.success('Status updated');
     },
     onError: () => toast.error('Failed to update status'),
+  });
+
+  const user = useAuthStore((s) => s.user);
+  const pipelineMutation = useMutation({
+    mutationFn: async (input: { stage: 'login' | 'sanction' | 'disbursement'; amount?: number }) => {
+      if (!id) return;
+      const payload: Record<string, any> =
+        input.stage === 'login'
+          ? { login_at: new Date().toISOString(), login_by: user?.id }
+          : input.stage === 'sanction'
+          ? { sanction_at: new Date().toISOString(), sanction_amount: input.amount ?? null }
+          : { disbursement_at: new Date().toISOString(), disbursement_amount: input.amount ?? null };
+      const { error } = await supabase.from('leads').update(payload).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lead', id] });
+      toast.success('Pipeline updated');
+    },
+    onError: () => toast.error('Failed to update pipeline'),
   });
 
   const handleCall = () => {
@@ -201,6 +226,11 @@ export default function LeadDetail() {
         </CardContent>
       </Card>
 
+      {/* Channel pipeline (Login -> Sanction -> Disbursement) — only for DSA-sourced leads */}
+      {lead.dsa_id && (
+        <ChannelPipelineCard lead={lead} onMark={(stage, amount) => pipelineMutation.mutate({ stage, amount })} pending={pipelineMutation.isPending} />
+      )}
+
       {/* Location Card */}
       {(lead.latitude && lead.longitude) && (
         <Card>
@@ -264,5 +294,83 @@ export default function LeadDetail() {
       </Button>
 
     </div>
+  );
+}
+
+function ChannelPipelineCard({
+  lead, onMark, pending,
+}: {
+  lead: any;
+  onMark: (stage: 'login' | 'sanction' | 'disbursement', amount?: number) => void;
+  pending: boolean;
+}) {
+  const [sanctionAmount, setSanctionAmount] = useState('');
+  const [disbursementAmount, setDisbursementAmount] = useState('');
+
+  const steps: { key: 'login' | 'sanction' | 'disbursement'; label: string; at?: string; amount?: number }[] = [
+    { key: 'login', label: 'Login', at: lead.login_at },
+    { key: 'sanction', label: 'Sanction', at: lead.sanction_at, amount: lead.sanction_amount },
+    { key: 'disbursement', label: 'Disbursement', at: lead.disbursement_at, amount: lead.disbursement_amount },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium">Channel Pipeline</CardTitle>
+        <CardDescription>Login → Sanction → Disbursement</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {steps.map((step, idx) => {
+          const prevDone = idx === 0 || !!steps[idx - 1].at;
+          const done = !!step.at;
+          return (
+            <div key={step.key} className="flex items-start gap-3">
+              {done ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">{step.label}</p>
+                {done ? (
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(step.at!), 'dd MMM yyyy, hh:mm a')}
+                    {step.amount != null && ` · ₹${Number(step.amount).toLocaleString('en-IN')}`}
+                  </p>
+                ) : prevDone ? (
+                  step.key === 'login' ? (
+                    <Button size="sm" variant="outline" className="mt-1" disabled={pending} onClick={() => onMark('login')}>
+                      {pending && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                      Mark Login
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        type="number"
+                        placeholder="Amount (₹)"
+                        className="h-8 w-32 text-sm"
+                        value={step.key === 'sanction' ? sanctionAmount : disbursementAmount}
+                        onChange={(e) => (step.key === 'sanction' ? setSanctionAmount(e.target.value) : setDisbursementAmount(e.target.value))}
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={pending}
+                        onClick={() => onMark(step.key, Number(step.key === 'sanction' ? sanctionAmount : disbursementAmount) || undefined)}
+                      >
+                        {pending && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                        Mark {step.label}
+                      </Button>
+                    </div>
+                  )
+                ) : (
+                  <p className="text-xs text-muted-foreground">Waiting on {steps[idx - 1].label.toLowerCase()}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
