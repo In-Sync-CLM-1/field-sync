@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, MapPin, UserCog, Globe, Building2, Route as RouteIcon, FileText, Send, Network } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardList, LogOut, ShoppingBag, MapPin, UserCog, Globe, Building2, Route as RouteIcon, FileText, Send, Network, ShieldCheck } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -79,6 +79,7 @@ function getSectionsForRole(role: RoleType): NavSection[] {
       items: [
         { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
         { icon: UserCog, label: 'Team', path: '/dashboard/users' },
+        { icon: ShieldCheck, label: 'DPDP Compliance', path: '/dashboard/dpdp' },
       ],
     },
   ];
@@ -113,7 +114,7 @@ export function AppSidebar() {
 
       if (userRoles.includes('platform_admin')) {
         setUserRole('platform');
-      } else if (userRoles.some(r => ['admin', 'super_admin', 'branch_manager'].includes(r))) {
+      } else if (userRoles.some(r => ['admin', 'super_admin', 'manager', 'branch_manager'].includes(r))) {
         setUserRole('admin');
       } else {
         setUserRole('agent');

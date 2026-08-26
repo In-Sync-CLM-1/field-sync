@@ -47,7 +47,7 @@ export function StatusKPICard({
           <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide truncate">
             {title}
           </p>
-          <p className="text-2xl font-bold text-foreground mt-0.5 leading-tight">{value}</p>
+          <p className="text-2xl font-display font-semibold text-foreground mt-0.5 leading-tight">{value}</p>
           {subtitle && (
             <p className="text-xs text-muted-foreground mt-0.5 truncate">{subtitle}</p>
           )}

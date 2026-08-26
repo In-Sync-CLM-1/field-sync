@@ -85,6 +85,7 @@ export default {
       fontFamily: {
         sans: ['Nunito Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         mono: ['JetBrains Mono', 'SF Mono', 'monospace'],
+        display: ['Playfair Display', 'Georgia', 'serif'],
       },
       fontSize: {
         xs: ['0.875rem', { lineHeight: '1.4' }],     // 14px

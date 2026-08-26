@@ -32,6 +32,8 @@ import OrdersPage from "./pages/OrdersPage";
 import PlanPage from "./pages/PlanPage";
 import Beats from "./pages/Beats";
 import ChannelPartners from "./pages/ChannelPartners";
+import DpdpCompliance from "./pages/DpdpCompliance";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Assignments from "./pages/Assignments";
 import Reports from "./pages/Reports";
 import MyReport from "./pages/MyReport";
@@ -53,6 +55,7 @@ const App = () => (
               <Route path="/" element={<LandingRoute />} />
               <Route path="/landing" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Protected but subscription-exempt routes */}
@@ -87,6 +90,7 @@ const App = () => (
                 <Route path="reports" element={<AdminRoute><Reports /></AdminRoute>} />
                 <Route path="beats" element={<AdminRoute><Beats /></AdminRoute>} />
                 <Route path="channel-partners" element={<AdminRoute><ChannelPartners /></AdminRoute>} />
+                <Route path="dpdp" element={<AdminRoute><DpdpCompliance /></AdminRoute>} />
                 <Route path="assign" element={<AdminRoute><Assignments /></AdminRoute>} />
                 <Route path="team" element={<AdminRoute><Users /></AdminRoute>} />
                 <Route path="users" element={<AdminRoute><Users /></AdminRoute>} />

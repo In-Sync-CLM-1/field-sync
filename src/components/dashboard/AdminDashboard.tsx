@@ -78,7 +78,8 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Team Dashboard</h1>
+          <span className="text-xs font-medium text-primary uppercase tracking-wider">Overview</span>
+          <h1 className="text-2xl font-display font-semibold tracking-tight text-foreground">Team Dashboard</h1>
           <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => { refresh(); mapData.refresh(); }} className="gap-1.5">
@@ -246,7 +247,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide">30-Day Orders</p>
-                <p className="text-xl font-bold">{data.teamPerformance.reduce((s, r) => s + r.ordersCount, 0)}</p>
+                <p className="text-xl font-display font-semibold">{data.teamPerformance.reduce((s, r) => s + r.ordersCount, 0)}</p>
                 <p className="text-xs text-muted-foreground">₹{totalOrders30d.toLocaleString()} value</p>
               </div>
             </CardContent>
@@ -258,7 +259,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide">30-Day Collections</p>
-                <p className="text-xl font-bold">₹{totalCollections30d.toLocaleString()}</p>
+                <p className="text-xl font-display font-semibold">₹{totalCollections30d.toLocaleString()}</p>
                 {collectionRate > 0 && (
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -280,7 +281,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Avg Visits/Agent</p>
-                <p className="text-xl font-bold">
+                <p className="text-xl font-display font-semibold">
                   {kpis.teamSize > 0 ? (data.teamPerformance.reduce((s, r) => s + r.visitsThisWeek, 0) / kpis.teamSize).toFixed(1) : '0'}
                 </p>
                 <p className="text-xs text-muted-foreground">this week</p>

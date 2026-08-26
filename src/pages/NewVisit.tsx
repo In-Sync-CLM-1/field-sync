@@ -19,6 +19,8 @@ import { markPlanVisitVisited } from '@/hooks/usePlanVisits';
 import { useActiveDSAs, useSubDSAs, useDSAMutations } from '@/hooks/useDSAs';
 import { supabase } from '@/integrations/supabase/client';
 import type { VisitOutcome } from '@/hooks/useVisits';
+import { recordConsent } from '@/hooks/useDpdp';
+import { useAuthStore } from '@/store/authStore';
 
 const OUTCOME_OPTIONS: { value: VisitOutcome; label: string }[] = [
   { value: 'satisfactory', label: 'Satisfactory' },
@@ -60,6 +62,8 @@ export default function NewVisit() {
   const planVisitId = searchParams.get('planVisitId');
 
   const { leads, syncing: loadingLeads, syncFromDatabase } = useLeads();
+  const currentOrganization = useAuthStore((s) => s.currentOrganization);
+  const authUser = useAuthStore((s) => s.user);
   const { createVisit, isCreating } = useVisits();
 
   const [leadId, setLeadId] = useState(preselectedLeadId || '');
@@ -138,6 +142,15 @@ export default function NewVisit() {
       if (data.verified) {
         setOtpVerified(true);
         toast.success('Visit confirmed by person met');
+        if (currentOrganization) {
+          recordConsent({
+            organizationId: currentOrganization.id,
+            subjectType: 'person_met',
+            subjectName: personMetName || undefined,
+            subjectMobile: personMetMobile || undefined,
+            recordedBy: authUser?.id,
+          }).catch(() => { /* consent logging is best-effort, never blocks the visit */ });
+        }
       } else {
         toast.error(data.error || 'Invalid OTP');
       }

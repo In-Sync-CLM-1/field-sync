@@ -514,6 +514,7 @@ const Landing = () => {
                 { label: "Solution", action: () => scrollTo("solution") },
                 { label: "Pricing", action: () => scrollTo("pricing") },
                 { label: "FAQ", action: () => scrollTo("faq") },
+                { label: "Privacy Policy", action: () => navigate("/privacy-policy") },
               ].map((link, i) => (
                 <button key={i} onClick={link.action} className="text-[13px] text-[#94A3B8] hover:text-[#0F172A] transition-colors bg-transparent border-none cursor-pointer">{link.label}</button>
               ))}
