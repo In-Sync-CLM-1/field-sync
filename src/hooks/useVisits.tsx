@@ -54,6 +54,8 @@ export interface VisitInput {
   checklist?: ChecklistItem[];
   updateLeadLocation?: boolean;
   target_user_id?: string; // Create visit on behalf of another user (manager/admin)
+  dsa_id?: string;
+  sub_dsa_id?: string;
 }
 
 export interface BulkVisitInput {
@@ -127,7 +129,9 @@ export const useVisits = () => {
           checklist: input.checklist as any,
           organization_id: currentOrganization.id,
           user_id: input.target_user_id || user.id,
-        })
+          dsa_id: input.dsa_id || null,
+          sub_dsa_id: input.sub_dsa_id || null,
+        } as any)
         .select()
         .single();
 

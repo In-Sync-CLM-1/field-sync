@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { AgentSelector } from '@/components/AgentSelector';
 import { markPlanVisitVisited } from '@/hooks/usePlanVisits';
+import { useActiveDSAs, useSubDSAs, useDSAMutations } from '@/hooks/useDSAs';
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -65,6 +66,15 @@ export default function NewVisit() {
   const [useManualLocation, setUseManualLocation] = useState(false);
   const [autoSelectedNearest, setAutoSelectedNearest] = useState(false);
   const [onBehalfUserId, setOnBehalfUserId] = useState<string | null>(null);
+  const [dsaId, setDsaId] = useState('');
+  const [subDsaId, setSubDsaId] = useState('');
+  const [addingSubDsa, setAddingSubDsa] = useState(false);
+  const [newSubDsaName, setNewSubDsaName] = useState('');
+  const [newSubDsaPhone, setNewSubDsaPhone] = useState('');
+
+  const { data: dsas = [] } = useActiveDSAs();
+  const { data: subDsas = [] } = useSubDSAs(dsaId || undefined);
+  const { addSubDSA } = useDSAMutations();
 
   const selectedLead = leads.find((l) => l.id === leadId);
   const leadHasLocation = selectedLead?.latitude && selectedLead?.longitude;
@@ -176,6 +186,8 @@ export default function NewVisit() {
         scheduled_time: scheduledTime || undefined,
         updateLeadLocation: shouldUpdateLeadLocation && (checkInLat !== 0 || checkInLng !== 0),
         target_user_id: onBehalfUserId || undefined,
+        dsa_id: dsaId || undefined,
+        sub_dsa_id: subDsaId || undefined,
       },
       {
         onSuccess: async (visit: any) => {
@@ -315,6 +327,65 @@ export default function NewVisit() {
               </Button>
             </div>
           </div>
+
+          {/* DSA / Sub-DSA source (optional) */}
+          {dsas.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Corporate DSA</Label>
+                <Select value={dsaId} onValueChange={(v) => { setDsaId(v); setSubDsaId(''); setAddingSubDsa(false); }}>
+                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    {dsas.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.name} ({d.code})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Sub-DSA</Label>
+                <Select
+                  value={subDsaId}
+                  onValueChange={(v) => { if (v === '__add_new__') { setAddingSubDsa(true); } else { setSubDsaId(v); setAddingSubDsa(false); } }}
+                  disabled={!dsaId}
+                >
+                  <SelectTrigger><SelectValue placeholder={dsaId ? 'Select Sub-DSA' : 'Select a DSA first'} /></SelectTrigger>
+                  <SelectContent>
+                    {subDsas.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
+                    ))}
+                    <SelectItem value="__add_new__">+ Add new Sub-DSA…</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {addingSubDsa && (
+                <div className="col-span-2 flex gap-2 items-end p-2 border rounded-md bg-muted/30">
+                  <div className="flex-1">
+                    <Label className="text-xs">New Sub-DSA name</Label>
+                    <Input value={newSubDsaName} onChange={(e) => setNewSubDsaName(e.target.value)} />
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs">Mobile</Label>
+                    <Input value={newSubDsaPhone} onChange={(e) => setNewSubDsaPhone(e.target.value)} />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!newSubDsaName.trim() || addSubDSA.isPending}
+                    onClick={() => {
+                      addSubDSA.mutate(
+                        { dsa_id: dsaId, name: newSubDsaName, phone: newSubDsaPhone },
+                        { onSuccess: (s: any) => { setSubDsaId(s.id); setAddingSubDsa(false); setNewSubDsaName(''); setNewSubDsaPhone(''); } },
+                      );
+                    }}
+                  >
+                    {addSubDSA.isPending && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                    Add
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           {selectedLead && !leadHasLocation && !isScheduling && (
             <div className="space-y-3">
