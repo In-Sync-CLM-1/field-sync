@@ -205,17 +205,8 @@ END $$;
 -- 6. ROLE MIGRATION
 -- ============================================================================
 
--- Add 'agent' to app_role enum if it doesn't already exist
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum
-    WHERE enumlabel = 'agent'
-      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'app_role')
-  ) THEN
-    ALTER TYPE public.app_role ADD VALUE 'agent';
-  END IF;
-END $$;
+-- 'agent' enum value is added in 20260317235959_add_agent_role_enum_value.sql
+-- (must be committed in a separate transaction before use below).
 
 -- Map legacy role values in user_roles table:
 --   sales_officer  -> agent
