@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import {
   Route, Users, MapPin, ShoppingBag, IndianRupee, Download, FileText, ChevronRight, Activity,
 } from 'lucide-react';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const inr = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
 
@@ -24,7 +25,7 @@ const statusDot: Record<string, string> = {
 };
 
 export default function Reports() {
-  const [period, setPeriod] = useState<ReportPeriod>('today');
+  const [period, setPeriod] = useUrlState<ReportPeriod>('period', 'today');
   const { data, loading } = useReportData(period);
   const [openRep, setOpenRep] = useState<string | null>(null);
   const navigate = useNavigate();

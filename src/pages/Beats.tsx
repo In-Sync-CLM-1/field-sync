@@ -25,6 +25,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { UrlTabs } from '@/components/UrlTabs';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const cadenceLabel = (c: Cadence) =>
@@ -154,7 +155,7 @@ export default function Beats() {
         </Button>
       </div>
 
-      <Tabs defaultValue="beats">
+      <UrlTabs param="beats_tab" defaultValue="beats">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="beats">Beats</TabsTrigger>
           <TabsTrigger value="coverage">Coverage</TabsTrigger>
@@ -223,7 +224,7 @@ export default function Beats() {
         <TabsContent value="coverage" className="mt-4">
           <CoverageView />
         </TabsContent>
-      </Tabs>
+      </UrlTabs>
 
       {/* ───── Beat editor ───── */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>

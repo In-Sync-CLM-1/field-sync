@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useReportData, ReportPeriod } from '@/hooks/useReportData';
@@ -8,9 +7,10 @@ import { exportRepReportCsv } from '@/lib/reportExport';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Download } from 'lucide-react';
+import { useUrlState } from '@/hooks/useUrlState';
 
 export default function MyReport() {
-  const [period, setPeriod] = useState<ReportPeriod>('today');
+  const [period, setPeriod] = useUrlState<ReportPeriod>('period', 'today');
   const { user } = useAuthStore();
   const { data, loading } = useReportData(period, { repId: user?.id });
   const navigate = useNavigate();

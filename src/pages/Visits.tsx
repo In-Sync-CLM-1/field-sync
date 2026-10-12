@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVisits } from '@/hooks/useVisits';
 import { usePagination } from '@/hooks/usePagination';
@@ -18,6 +17,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { format } from 'date-fns';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   scheduled: { label: 'SCHEDULED', className: 'bg-blue-500 text-white border-0' },
@@ -29,8 +29,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 export default function Visits() {
   const navigate = useNavigate();
   const { visits, isLoading } = useVisits();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useUrlState('q', '');
+  const [statusFilter, setStatusFilter] = useUrlState<string>('status', 'all');
 
   const filteredVisits = visits.filter((visit) => {
     const matchesSearch =
