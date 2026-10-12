@@ -19,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { format } from 'date-fns';
+import { UrlTabs } from '@/components/UrlTabs';
 
 export default function DpdpCompliance() {
   return (
@@ -32,7 +33,7 @@ export default function DpdpCompliance() {
         <p className="text-sm text-muted-foreground">Personal data protection — audit trail, data-principal requests, and breach reporting under the DPDP Act 2023.</p>
       </div>
 
-      <Tabs defaultValue="audit">
+      <UrlTabs param="dpdpcompliance_tab" defaultValue="audit">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="audit">Audit Log</TabsTrigger>
           <TabsTrigger value="requests">Data Requests</TabsTrigger>
@@ -41,7 +42,7 @@ export default function DpdpCompliance() {
         <TabsContent value="audit" className="mt-4"><AuditLogView /></TabsContent>
         <TabsContent value="requests" className="mt-4"><DataRequestsView /></TabsContent>
         <TabsContent value="breach" className="mt-4"><BreachView /></TabsContent>
-      </Tabs>
+      </UrlTabs>
     </div>
   );
 }

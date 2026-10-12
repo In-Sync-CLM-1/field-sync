@@ -21,6 +21,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const openMaps = (lat?: number | null, lng?: number | null) => {
   if (!lat || !lng) return;
@@ -36,7 +37,7 @@ const PlanPage = () => {
   const { markVisited, markSkipped, undoStatus, addAdHoc } = usePlanVisitActions();
 
   const [addOpen, setAddOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useUrlState('q', '');
 
   const today = istToday();
   const total = items.length;

@@ -21,6 +21,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { UrlTabs } from '@/components/UrlTabs';
 
 interface DSADraft { id?: string; name: string; contact_name: string; contact_phone: string; is_active: boolean; }
 const emptyDraft = (): DSADraft => ({ name: '', contact_name: '', contact_phone: '', is_active: true });
@@ -65,7 +66,7 @@ export default function ChannelPartners() {
         Corporate DSAs and their Sub-DSAs. Each gets a unique code, used to source and trace visits, leads and business.
       </p>
 
-      <Tabs defaultValue="dsas">
+      <UrlTabs param="channelpartners_tab" defaultValue="dsas">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="dsas">DSAs</TabsTrigger>
           <TabsTrigger value="productivity">Productivity</TabsTrigger>
@@ -133,7 +134,7 @@ export default function ChannelPartners() {
         <TabsContent value="escalations" className="mt-4">
           <EscalationsView />
         </TabsContent>
-      </Tabs>
+      </UrlTabs>
 
       {/* ───── DSA editor ───── */}
       <Dialog open={editorOpen} onOpenChange={setEditorOpen}>

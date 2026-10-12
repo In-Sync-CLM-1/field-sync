@@ -12,9 +12,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { db } from '@/lib/db';
 import { AgentSelector } from '@/components/AgentSelector';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const OrdersPage = () => {
-  const [activeTab, setActiveTab] = useState('orders');
+  const [activeTab, setActiveTab] = useUrlState('tab', 'orders');
   const { currentOrganization } = useAuthStore();
 
   // Agent selector for managers/admins

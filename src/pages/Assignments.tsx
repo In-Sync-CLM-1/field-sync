@@ -24,6 +24,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
+import { useUrlState } from '@/hooks/useUrlState';
 
 /** Tiny CSV parser — header row + comma-separated values, matches the template we hand out. */
 function parseCsv(text: string): CsvRow[] {
@@ -51,7 +52,7 @@ export default function Assignments() {
   const currentOrganization = useAuthStore((s) => s.currentOrganization);
   const { data: members = [] } = useOrgMembers();
 
-  const [agentId, setAgentId] = useState<string>('');
+  const [agentId, setAgentId] = useUrlState<string>('agent', '');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
 
@@ -65,7 +66,7 @@ export default function Assignments() {
   const { assign, remove, repeatFrom, uploadCsv } = useAssignmentActions(agentId || undefined, dateStr);
 
   const [pickOpen, setPickOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useUrlState('q', '');
   const [csvPreview, setCsvPreview] = useState<CsvRow[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
